@@ -89,7 +89,15 @@ Follow `CC-1` to `CC-11` in `docs/REQUIREMENTS.md`.
 
 Do not add a dependency without saying why it is needed.
 
-After the project is scaffolded, add the real restore, build, test, and run commands here.
+Commands, run from the repo root:
+
+```powershell
+dotnet restore AcMod.slnx
+dotnet build AcMod.slnx      # must finish with 0 warnings; warnings are errors in every project
+dotnet test AcMod.slnx
+```
+
+There is nothing to run yet: M1 has no app, CLI, or MCP server. `LutReader/` is the warm-up and is not part of the solution.
 
 ## Windows constraints
 

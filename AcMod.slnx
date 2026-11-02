@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AcMod.Core/AcMod.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AcMod.Core.Tests/AcMod.Core.Tests.csproj" />
+  </Folder>
+</Solution>
