@@ -156,6 +156,29 @@ The first rule set comes from one community tutorial, so every rule must be test
 | V-14 | The car may use model encryption | Warning, read-only | [Steam post](https://steamcommunity.com/app/244210/discussions/0/3759977302532019084); detection method is an open question |
 | V-15 | Development files remain in the car folder | Info | Tutorial |
 
+### M0 verdicts (2026-11-02, BRITOD-DESK)
+
+Each rule was checked against 250 installed cars, the tutorial car in game, and the owner's reports. Evidence is in `docs/VERIFIED_FACTS.md` and `docs/ACD.md`.
+"Effective data" means `data.acd` when it exists and `data\` otherwise, because AC ignores `data\` while `data.acd` exists (V-12).
+
+| ID | Verdict | Rule after M0 | Evidence |
+| --- | --- | --- | --- |
+| V-01 | Changed | Warning for capital letters, spaces, or non-ASCII characters. Info if the name is longer than 32 characters | Owner confirmed the rule. The Kunos car `ks_lamborghini_huracan_performante` has 35 characters. 9 mod folders use capitals, and 1 has a space. The CSP wiki says encrypted cars need lowercase names. Tools disagree on the ACD key for non-ASCII names. |
+| V-02 | Changed | Error. Compare names ignoring case, and read `lods.ini` from the effective data | formula_k's `lods.ini` names `formula_K_LOD_D.kn5`, but the file is `formula_k_LOD_D.kn5`. All 26 readable `lods.ini` files point to existing files when case is ignored. A missing file was not tested in game. |
+| V-03 | Rejected | Drop the rule | 137 of 177 Kunos cars and 48 of 73 mods have no `<id>.kn5`. Kunos's own `lods.ini` names `porsche_911_gt3_r.kn5` for `ks_porsche_911_gt3_r_2016`. |
+| V-04 | Confirmed | Error | All 177 Kunos cars and 73 mods have `collider.kn5`. The AC log loads it. A missing file was not tested in game. |
+| V-05 | Changed | Error. Check the effective data | The tutorial car loads with these files. Kunos `data.acd` files contain them. A missing file was not tested in game. |
+| V-06 | Changed | Warning. Check the effective data | Owner confirmed the rule. |
+| V-07 | Changed | Error. Ignore case, check the effective data, and skip `engine.ini` `[COAST_CURVE] FILENAME` | The AC log loads every referenced LUT. `coast.lut` is referenced in that obsolete section but missing, and the car still loads. |
+| V-08 | Kept, not tested | Info, only when `digital_instruments.ini` exists | The tutorial car loads without the file. The crash claim was not tested. |
+| V-09 | Changed | Error. Match the bank name ignoring case. Accept GUIDs from `sfx\GUIDs.txt` or the shared `content\sfx\GUIDs.txt` | Every car's bank matches its ID when case is ignored. Kunos cars have no `GUIDs.txt` of their own. Bank plus `GUIDs.txt` gave the tutorial car sound. Severity was not tested. |
+| V-10 | Changed | Warning if `ui_car.json` won't parse leniently (raw line breaks and a BOM allowed) or the badge is missing or not a PNG. Info for a badge that isn't 128×128 | 171 of 177 Kunos `ui_car.json` files fail strict JSON. 14 Kunos badges are not 128×128. 2 mod badges are not PNG. |
+| V-11 | Confirmed | Warning | All 250 cars have at least one skin folder. |
+| V-12 | Confirmed | Warning: "`data\` is ignored while `data.acd` exists" | In-game test: with both present, the logged power came from `data.acd`. Without it, the power came from `data\`. |
+| V-13 | Confirmed | Error, read-only. "Can't read" means the container doesn't parse or the decrypted entries aren't plausible text | A key built from public notes reads the tutorial car and a Kunos `-1111` header file. |
+| V-14 | Changed | Warning, read-only. Flag `*_encrypted*.kn5`, or a KN5 whose header is valid but whose texture or material table doesn't parse. The message says "may be encrypted" | 36 KN5 files in 10 mod folders fail the table parse. Every Kunos file passes. Encryption is not proven. |
+| V-15 | Confirmed | Info for `*.blend`, `*.blend1`, `*.fbx`, `*.psd`, `*.tmp`, `*.bak`, and `texture\NULL.dds` | The tutorial car loads with `.blend`, `.fbx`, and `NULL.dds` present. Installed cars hold 26 `.psd`, 12 `.fbx`, 22 `NULL.dds`, 17 `.tmp`, and 2 `.bak` files. |
+
 ## Quality and safety requirements
 
 The tool must never lose a user's work or change a file it could not read safely.

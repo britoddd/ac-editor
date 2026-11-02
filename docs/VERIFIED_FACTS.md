@@ -293,3 +293,11 @@ Conclusion: nothing ports cleanly as-is, because the files share a tangle of hel
 - The test `data.acd` was removed at 23:28, and `data\` was confirmed unchanged against the backup.
 - Owner tuning found in the installed car (22:43–22:44): `engine.ini` `LIMITER` 6500 → 17000, and `power.lut` torque about 10× higher, extended to 12000 rpm.
   These edits are only in `content\cars`, not in `D:\ACModding`. A backup is in `scratch/v12_test/installed_data_backup/`.
+
+## Rule-check survey (BRITOD-DESK, 2026-11-02, M0 task 9)
+
+These come from the 250 non-empty folders in `content\cars`.
+- Folder names: `ks_lamborghini_huracan_performante` (a Kunos car) is 35 characters, the only one over 32. 9 mod folders use capital letters.
+  1 folder has a space (`traffic_jetbus 3_sdd`). The rest use only `[a-z0-9_.-]`.
+- Every car has at least one folder under `skins\`.
+- Working-file types found inside car folders: 26 `.psd`, 12 `.fbx`, 22 `NULL.dds` (made by ksEditor), 17 `.tmp`, 2 `.bak`, plus the tutorial car's `.blend` and `.blend1`.

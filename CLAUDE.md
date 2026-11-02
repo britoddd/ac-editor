@@ -30,7 +30,7 @@ Work through these in order:
 6. Find a way to identify model encryption without bypassing it. If no reliable method exists, record that and propose a conservative warning. **Done 2026-11-02:** there is no certain method. The proposed header and table check, and its "may be encrypted" warning, are in `docs/VERIFIED_FACTS.md`.
 7. Test whether a normal user process can write to AC's `content/cars`, using one small test folder that the owner approves. Remove it afterward. **Done 2026-11-02:** it can on BRITOD-DESK. The test folder was removed. See `docs/VERIFIED_FACTS.md`.
 8. Check which AcTools files port cleanly to .NET 10 by trying them in `scratch/`. **Done 2026-11-02:** none port cleanly or are worth keeping, so we port nothing and write fresh code. See `docs/VERIFIED_FACTS.md`.
-9. Mark every validator rule V-01 to V-15 as confirmed, changed, or rejected, with the evidence.
+9. Mark every validator rule V-01 to V-15 as confirmed, changed, or rejected, with the evidence. **Done 2026-11-02:** the verdicts are in `docs/REQUIREMENTS.md` under "M0 verdicts".
 10. Close each open question in `docs/REQUIREMENTS.md`, then propose the Milestone 1 plan and wait for approval.
 
 ## Agreed scope
