@@ -98,3 +98,24 @@ Tested with Blender 4.4 only. Each file was read with `scratch/fbx_test/fbxdump.
   This assumes a node layout I did not take from any spec, but the matrices read as clean identity rotations, which supports it.
   The file starts with `sc6969` and version 6. A full KN5 parse or the in-game test should confirm this.
 - So, in Blender with the settings above, the car's nose points to `-Y` and its left side is `+X`.
+
+## Car sound files (BRITOD-DESK, 2026-11-02)
+
+- AC has a shared `content\sfx\GUIDs.txt` with 3237 lines. Each line is `{guid} bank:/<name>` or `{guid} event:/cars/<car_id>/<event>`.
+  It contains 17 entries for `shelby_cobra_427sc`: one `bank:/` line and 16 events
+  (`backfire_ext`, `bodywork`, `door`, `engine_ext`, `engine_int`, `gear_ext`, `gear_grind`, `gear_int`, `horn`, `limiter`,
+  `skid_ext`, `skid_int`, `tractioncontrol_ext`, `tractioncontrol_int`, `wheel`, `wind`).
+- Kunos's `shelby_cobra_427sc\sfx\` holds only `shelby_cobra_427sc.bank`, with no `GUIDs.txt`.
+- The mod cars `an_nextgen_chevy` and `ac_friends_ferrari_499p_lmh` each have `sfx\<car_id>.bank` and `sfx\GUIDs.txt`.
+  Their `GUIDs.txt` is ASCII with CRLF line endings and includes a `bank:/<car_id>` line. The Ferrari also lists `bank:/showroom` and `bank:/common`.
+- `formula_k` does not appear in the shared `GUIDs.txt`. Its SDK `sfx\` folder has `formula_k.bank` and the source `.wav` files, but no `GUIDs.txt`.
+- The cobra bank contains no readable `event:/` strings, so the event names come only from `GUIDs.txt`.
+- The tutorial car uses the cobra bank, copied as `sfx\acm_tutorial_basic.bank`, plus a `GUIDs.txt` holding the cobra's 17 lines with the car ID changed.
+  Not verified until the in-game test: whether AC plays it.
+
+## ui_car.json (BRITOD-DESK, 2026-11-02)
+
+- Kunos's own `sdk\dev\content\cars\formula_k\ui\ui_car.json` is **not** strict JSON. Its `description` string contains raw line breaks.
+  Python `json.loads` fails with `Invalid control character`, but it succeeds with `strict=False`.
+  Consequence for V-10: a strict "valid JSON" check would reject a Kunos file, so the parser must allow control characters inside strings.
+- `ui\badge.png` is 128×128 RGBA. The same folder also has `old_badge.png` (86×55) and `preview_small.png` (240×120).
