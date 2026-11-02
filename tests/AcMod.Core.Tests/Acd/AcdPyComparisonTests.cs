@@ -59,6 +59,10 @@ public class AcdPyComparisonTests
     {
         var expected = File.ReadAllBytes(Path.Combine(Fixtures.RepoRoot, acdPath));
 
-        Assert.True(expected.AsSpan().SequenceEqual(AcdFile.Pack(ReadFolder(dataFolder), AcdKey.SourceName(acdPath))));
+        // PK-1 end to end: the car folder holding data\ has the same name as the folder holding acd.py's data.acd.
+        var (bytes, error) = CarData.PackFolder(Path.GetDirectoryName(Path.Combine(Fixtures.RepoRoot, dataFolder))!);
+
+        Assert.Null(error);
+        Assert.True(expected.AsSpan().SequenceEqual(bytes));
     }
 }

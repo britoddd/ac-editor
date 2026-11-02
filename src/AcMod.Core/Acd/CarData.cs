@@ -35,6 +35,13 @@ public sealed record CarData(DataSource Source, IReadOnlyList<AcdEntry> Files, s
             : new CarData(DataSource.None, [], "The car has no data.acd and no data folder.", false);
     }
 
+    /// <summary>PK-1 for a car folder: packs its data\ folder for the car ID given by the folder's name, and verifies the result in memory.</summary>
+    public static (byte[]? Bytes, string? Error) PackFolder(string carFolder)
+    {
+        var acdPath = Path.Combine(Path.GetFullPath(carFolder), "data.acd");
+        return AcdFile.PackVerified(ReadFolder(Path.Combine(carFolder, "data")), AcdKey.SourceName(acdPath));
+    }
+
     /// <summary>The top-level files of a data\ folder, in ordinal name order. No real data\ folder has subfolders (docs/VERIFIED_FACTS.md).</summary>
     public static AcdEntry[] ReadFolder(string dataFolder) =>
         Directory.GetFiles(dataFolder)

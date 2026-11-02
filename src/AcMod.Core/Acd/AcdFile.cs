@@ -114,6 +114,33 @@ public sealed class AcdFile
         return stream.ToArray();
     }
 
+    /// <summary>
+    /// PK-1: packs, reads the result back, and compares it with <paramref name="entries"/>, all in memory.
+    /// Returns the bytes only when every file came back unchanged, otherwise an error. Never throws.
+    /// Writing the bytes to disk waits for M3's guarded file service.
+    /// </summary>
+    public static (byte[]? Bytes, string? Error) PackVerified(IReadOnlyCollection<AcdEntry> entries, string carId)
+    {
+        byte[] bytes;
+        try
+        {
+            bytes = Pack(entries, carId);
+        }
+        catch (ArgumentException e)
+        {
+            return (null, e.Message);
+        }
+
+        var check = Parse(bytes, carId);
+        if (check.Error != null)
+            return (null, "The packed file doesn't read back: " + check.Error);
+
+        var expected = entries.OrderBy(e => e.Name, StringComparer.Ordinal).ToList();
+        var same = check.Entries.Select(e => e.Name).SequenceEqual(expected.Select(e => e.Name))
+            && check.Entries.Zip(expected).All(pair => pair.First.Data.AsSpan().SequenceEqual(pair.Second.Data));
+        return same ? (bytes, null) : (null, "The packed file reads back different from what was packed.");
+    }
+
     /// <summary>Printable ASCII (spaces allowed, as in real mods), no path characters, and not "." or "..".</summary>
     private static bool IsPlainFileName(string name) =>
         name.Length is >= 1 and <= 255

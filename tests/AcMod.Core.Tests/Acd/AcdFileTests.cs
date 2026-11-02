@@ -164,6 +164,33 @@ public class AcdFileTests
     }
 
     [Fact]
+    public void PackVerified_returns_the_packed_bytes_when_they_read_back_unchanged()
+    {
+        var (bytes, error) = AcdFile.PackVerified(Files, CarId);
+
+        Assert.Null(error);
+        Assert.Equal(AcdFile.Pack(Files, CarId), bytes);
+    }
+
+    [Theory]
+    [InlineData("suspensions - 副本.ini", "x", "isn't a plain ASCII file name")] // a real stray copy
+    [InlineData("car.ini", "\0binary\0", "doesn't read back")]
+    public void PackVerified_reports_instead_of_throwing(string name, string text, string error)
+    {
+        var result = AcdFile.PackVerified([Entry(name, text)], CarId);
+
+        Assert.Null(result.Bytes);
+        Assert.Contains(error, result.Error);
+    }
+
+    [Fact]
+    public void PackVerified_reports_an_empty_folder_and_a_non_ascii_car_id()
+    {
+        Assert.Contains("no files", AcdFile.PackVerified([], CarId).Error);
+        Assert.NotNull(AcdFile.PackVerified(Files, "café").Error);
+    }
+
+    [Fact]
     public void A_non_ascii_car_id_is_reported_not_thrown()
     {
         Assert.NotNull(AcdFile.Parse(AcdFile.Pack(Files, CarId), "café").Error);
