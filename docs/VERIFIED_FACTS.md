@@ -68,6 +68,12 @@ Tested with Blender 4.4 only. Each file was read with `scratch/fbx_test/fbxdump.
 - With FBX All and Apply Transform, an empty placed at Blender `(1, -2, 3)` is written at `(1, 3, 2)` with no rotation.
   So Blender `+X` becomes FBX `+X`, Blender `+Z` becomes FBX `+Y` (up), and Blender `-Y` becomes FBX `+Z`.
 - Not verified: how Apply Transform behaves on models more complex than a cube and an empty. Blender labels it experimental.
+- Kunos's own 3ds Max export settings are pictured in `sdk\editor\docsbx_max_export_settings.png`:
+  preset "Assetto corsa", Smoothing Groups on, Triangulate on, scene units converted to Meters, scale factor 1.0, Y-up, Binary, FBX 2012.
+  This matches the FBX All result above (metres, Y-up). Blender's closest options are Smoothing = Face and Triangulate Faces.
+  We have not set either one, and ksEditor imported the tutorial car without them.
+- The tutorial car (9 objects, FBX All, Apply Transform) imports into ksEditor with the expected tree:
+  `SCENE_ROOT > MODEL: acm_tutorial_basic.fbx > FBX: acm_tutorial_basic.fbx > WHEEL_LF, WHEEL_LR, WHEEL_RF, WHEEL_RR, body`.
 
 ## AC model axes (BRITOD-DESK, 2026-11-02)
 
