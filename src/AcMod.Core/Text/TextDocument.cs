@@ -62,6 +62,17 @@ public sealed class TextDocument
         }
     }
 
+    /// <summary>Returns a copy with one line's content replaced. Its line break and every other line stay as they were.</summary>
+    public TextDocument WithLineContent(int index, string content)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Lines.Count);
+
+        var lines = Lines.ToArray();
+        lines[index] = lines[index] with { Content = content };
+        return new TextDocument(lines, EncodingKind, HasBom);
+    }
+
     public byte[] ToBytes()
     {
         var text = string.Concat(Lines.Select(line => line.Content + line.Ending));

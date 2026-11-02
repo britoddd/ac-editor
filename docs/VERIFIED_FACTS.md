@@ -336,3 +336,15 @@ Method: `scratch/encoding_survey.py` (not committed) read 2,616 `.ini`, `.lut`, 
   Kunos `ks_abarth500_assetto_corse/ui/` also has `ui_car (Stefano Casillo's conflicted copy 2020-01-17).json`.
 - Consequence for M1: the text base must keep the BOM, the line ending of **each** line, and whether there is a final newline.
   It can assume UTF-8, with a byte-preserving fallback for anything that isn't valid UTF-8.
+
+## LUT and RTO line shapes (BRITOD-DESK, 2026-11-02, M1 step 4)
+
+Method: a read-only scan of 1,058 `.lut` and `.rto` files: fixtures, every installed car's `data\`, and the Kunos Porsche's `data.acd` contents.
+- 14,946 lines are `key|value`, and 225 more have spaces or tabs around `|` (for example `3.900 | 3.9`).
+  There are 12,819 blank lines and 25 `;` comment lines. No line has an inline `;` comment after a value.
+- **`.rto` keys are labels, not numbers:** 258 lines look like `10//31|3.10` (gear teeth), and others are `1ST|1.00` and `REVERSE|-5.00`.
+  The `//` in these labels is **not** a comment. Treating `//` as a comment, as AcTools does in some parsers, would corrupt them.
+- No `//` comment lines, no comma decimals, and no number in a `key|value` line that isn't invariant-culture.
+- Rare oddities in mods, all kept as they are by the parser: `0/1.00` (a `/` instead of `|`, in `gp_2023_rb19/data/tct_diff.lut`),
+  INI-style content inside a `.lut` (`[VALUES]` and `C=1.27` in `gp_2023_rb19/data/modern_F1.lut`),
+  and text after a value: `4000|-900     (engagement point)` in `cky_koenigsegg_jesko/data/kers_torque.lut`.
