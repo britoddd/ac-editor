@@ -74,6 +74,9 @@ Tested with Blender 4.4 only. Each file was read with `scratch/fbx_test/fbxdump.
   We have not set either one, and ksEditor imported the tutorial car without them.
 - The tutorial car (9 objects, FBX All, Apply Transform) imports into ksEditor with the expected tree:
   `SCENE_ROOT > MODEL: acm_tutorial_basic.fbx > FBX: acm_tutorial_basic.fbx > WHEEL_LF, WHEEL_LR, WHEEL_RF, WHEEL_RR, body`.
+  In ksEditor, `WHEEL_LF` shows Position `0.7575 0.275 1.325` and Scale `1 1 1`, the same values as the FBX in metres.
+- ksEditor camera: after import, the camera starts at `Pos: 0; 0; 0`, which is inside this car. The Pos box cannot be edited.
+  The owner moved the camera with the keyboard arrow keys.
 
 ## AC model axes (BRITOD-DESK, 2026-11-02)
 
