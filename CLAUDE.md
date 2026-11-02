@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-Start at Milestone 0 in `docs/REQUIREMENTS.md`. Do not write app code until Milestone 0 is complete. Small inspection scripts are fine in a gitignored `scratch/` folder.
+**Milestone 1 (Core formats)** is in progress. Milestone 0 passed its exit gate on 2026-11-02: the tutorial car loads in AC, and every validator rule has a verdict. Follow the approved plan in "Milestone 1 plan" below. Small inspection scripts still belong in the gitignored `scratch/` folder.
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it.
 
@@ -31,7 +31,23 @@ Work through these in order:
 7. Test whether a normal user process can write to AC's `content/cars`, using one small test folder that the owner approves. Remove it afterward. **Done 2026-11-02:** it can on BRITOD-DESK. The test folder was removed. See `docs/VERIFIED_FACTS.md`.
 8. Check which AcTools files port cleanly to .NET 10 by trying them in `scratch/`. **Done 2026-11-02:** none port cleanly or are worth keeping, so we port nothing and write fresh code. See `docs/VERIFIED_FACTS.md`.
 9. Mark every validator rule V-01 to V-15 as confirmed, changed, or rejected, with the evidence. **Done 2026-11-02:** the verdicts are in `docs/REQUIREMENTS.md` under "M0 verdicts".
-10. Close each open question in `docs/REQUIREMENTS.md`, then propose the Milestone 1 plan and wait for approval.
+10. Close each open question in `docs/REQUIREMENTS.md`, then propose the Milestone 1 plan and wait for approval. **Done 2026-11-02:** all open questions are closed (the license is MIT), and the owner approved the plan below.
+
+## Milestone 1 plan
+
+Approved 2026-11-02. There is no UI. Exit gate: QS-1 and QS-2 pass on every fixture. Make one commit per step.
+
+1. Scaffold the solution, `src/AcMod.Core` (net10.0, nullable, warnings as errors), and `tests/AcMod.Core.Tests` (xUnit). Add the commands to the "Stack" section. (QS-10, CC-1)
+2. Survey encodings: BOM, line endings, and final newline across the fixtures. Record the results in `docs/VERIFIED_FACTS.md`.
+3. Text file base: keep encoding, line endings, and final newline, and write the bytes back exactly. (QS-1)
+4. LUT and RTO: a lossless line model with invariant-culture values. Editing one value changes only that number. Include `id-ID` culture tests. (QS-1, QS-2, QS-11)
+5. INI read and round-trip: sections, keys, `;` comments, spacing, blank lines, duplicate keys, and unknown fields. (QS-1)
+6. INI value edits. (QS-2)
+7. `ui_car.json`: lenient read (raw line breaks in strings, BOM) and span-based value edits. (QS-1, QS-2, V-10)
+8. `GUIDs.txt`: lossless read and write, plus changing the car ID. (QS-1, QS-2, groundwork for WS-7)
+9. A fixture runner over `fixtures/synthetic` and, when present, `fixtures/local`. Then check the exit gate.
+
+Not in M1: `data.acd` (M2), the CLI, the MCP server, and the UI.
 
 ## Agreed scope
 
