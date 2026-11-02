@@ -218,7 +218,7 @@ The tool and code facts are confirmed from primary sources, but most AC facts ar
 | Blender places dummies and hierarchy; ksEditor sets shaders and exports KN5 | Community, widely used | [First car guide](https://assettocorsamods.net/threads/your-first-car-in-assetto-corsa-basic-guide.1019/) |
 | FBX must be 2014/2015 format or older | Community, from 2017, may be outdated | First car guide |
 | `data.acd` takes priority over unpacked data | Inferred from forum advice | [GTPlanet](https://www.gtplanet.net/forum/threads/assetto-corsa-pc-mods-general-discussion.307899/post-13288251) |
-| `data.acd` sits in the car root | Conflicting: [one host says `data/data.acd`](https://xgamingserver.com/docs/assetto-corsa/install-mods); check a real car | Unverified |
+| `data.acd` sits in the car root | Verified on BRITOD-DESK: all 177 Kunos cars and all 52 mods that have one keep it in the root; none uses `data/data.acd` | `docs/VERIFIED_FACTS.md` |
 | `power.lut` is `rpm\|torque`, with torque in Nm at the wheels | Community | [GTPlanet](https://www.gtplanet.net/forum/threads/assetto-corsa-pc-mods-general-discussion.307899/post-12788964) |
 | Rated torque is about `power.lut` torque ÷ 0.85 without a turbo | Community estimate, show as an estimate | [GTPlanet](https://www.gtplanet.net/forum/threads/assetto-corsa-pc-mods-general-discussion.307899/post-12788964) |
 | Content Manager accepts a dropped ZIP | Community tutorial | [DEV Community](https://dev.to/kazuslu/how-to-download-and-install-assetto-corsa-car-mods-1hcd) |
@@ -232,7 +232,7 @@ These questions must be answered in Milestone 0, before Milestone 1 starts.
 
 - [ ] Can the app write to AC's Steam folder under Program Files, or is a Content Manager ZIP the only reliable install route?
 - [ ] Which public format notes fully describe the `.acd` key, and does a key built from them match `acd.py`?
-- [ ] Where does `data.acd` sit in a real car?
+- [x] Where does `data.acd` sit in a real car? **Answered 2026-11-02:** in the car root (see `docs/VERIFIED_FACTS.md`, car folder survey).
 - [ ] How can model encryption be detected without trying to bypass it?
 - [ ] Is FBX 2014/2015 still the required export format with current Blender and ksEditor?
 - [ ] Which AcTools files port cleanly to .NET 10, and are they worth keeping?

@@ -146,3 +146,51 @@ So the working car keeps these files in `data\`: `aero.ini`, `brakes.ini`, `came
 - `icacls` on `...\assettocorsa\content\cars` shows `BUILTIN\Users:(I)(F)`, which gives normal users inherited full control.
   The game also created a file there. This strongly suggests a normal user process can write to `content\cars`.
   M0 task 7 still needs the agreed test folder to confirm it.
+
+## Car folder survey (BRITOD-DESK, 2026-11-02, M0 task 4)
+
+Method: `scratch/survey_cars.py` (not committed) read all 250 entries in `content\cars`, and a second scan read every unpacked `data\lods.ini`.
+A car counts as "Kunos" when `content\sfx\GUIDs.txt` has a `bank:/<car_id>` line (189 such lines).
+That test misses `ks_ferrari_sf15t` and `ks_mercedes_amg_gt3_2020`, so both are counted as mods below.
+Local copies of `acm_tutorial_basic`, `formula_k`, and `shelby_cobra_427sc` are in `fixtures/local/`, which git ignores.
+
+### Where data.acd sits
+
+- All 177 Kunos cars have `data.acd` in the car root. None has a `data\` folder or a `data\data.acd`.
+- Of the 73 mod folders that have files: 48 have only a root `data.acd`, 21 have only a `data\` folder, and 4 have both
+  (`Fardier_Cugnot`, `gp_2023_rb19`, `jw_porsche_991.2_gt2_rs_us`, `traffic_hino4`). None has `data\data.acd`.
+- Two folders are empty: `ks_ferrari_488_challenge_evo` and `ks_ferrari_488_gt3_2020`.
+- `shelby_cobra_427sc\data.acd` is 160,844 bytes. A Kunos car's `lods.ini` is inside its `data.acd`, so it cannot be read until we have ACD code (task 5 and M2).
+- Answer: `data.acd` sits in the car root. The claim that it lives in `data/data.acd` matched no car here.
+
+### KN5 and lods.ini naming
+
+- The cobra's folder is `shelby_cobra_427sc`, but its main model is `shelby_cobra.kn5`, with LODs `shelby_cobra_LOD_B.kn5`, `_LOD_C`, and `_LOD_D`.
+- 137 of 177 Kunos cars and 48 of 73 mods have no `<car_id>.kn5`, even ignoring case. A main KN5 named differently from the folder is normal.
+- Every one of the 26 unpacked `lods.ini` files (25 mods and formula_k) has `[COCKPIT_HR]` and `[LOD_0]` with `FILE=`.
+  `[LOD_1]` and later appear only on cars with several LODs. LOD files use a `_lod_b` or `_LOD_B` suffix.
+  Ten folders share one model name, `az3d_l300.kn5`.
+- In two cars, `FILE=` differs in case from the file on disk: formula_k (`formula_K_LOD_D.kn5` versus `formula_k_LOD_D.kn5`) and `indy_scarab_f1` (`Scarab.kn5`).
+  Windows ignores case in file names.
+- All 177 Kunos cars and all 73 mods with files have `collider.kn5`.
+
+### sfx
+
+- Every car folder with files has a `.bank` named after its ID when case is ignored.
+  In 11 Kunos cars and 3 mods only the case differs, for example `alfa_romeo_giulietta_qv` has `alfa_romeo_giulietta_QV.bank`.
+- Kunos cars have no `GUIDs.txt` in the car folder, because the shared `content\sfx\GUIDs.txt` lists them.
+  72 of the 73 mods have `sfx\GUIDs.txt`. The exception is `ks_ferrari_sf15t`, probably a Kunos car the "Kunos" test missed.
+
+### ui
+
+- `ui_car.json`: 171 of 177 Kunos files parse only with lenient JSON (raw control characters inside strings), and 6 parse strictly.
+  Among mods, 70 parse strictly and 3 only leniently. One file (`ks_mercedes_amg_gt3_2020`) starts with a UTF-8 BOM.
+- `badge.png` sizes for Kunos cars: 163 are 128×128, 6 are 128×117, 2 are 124×124, 5 are 256×256, and 1 is 1575×1348 (`ks_nissan_skyline_r34`).
+  Mods range from 128×128 (56 cars) up to 1705×585. Two mods (`f1_rb_2025`, `f1_redbull_2025`) have a `badge.png` that does not start with the PNG signature.
+
+### What this means for the validator rules (input for task 9)
+
+- V-02 must compare file names without regard to case.
+- V-03 would warn on most Kunos cars.
+- V-09 must ignore case and accept the shared `content\sfx\GUIDs.txt` for Kunos cars.
+- V-10 needs lenient JSON parsing, and "badge must be 128×128" would fire on 14 Kunos cars.
