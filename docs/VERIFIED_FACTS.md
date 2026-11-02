@@ -195,3 +195,15 @@ Local copies of `acm_tutorial_basic`, `formula_k`, and `shelby_cobra_427sc` are 
 - V-03 would warn on most Kunos cars.
 - V-09 must ignore case and accept the shared `content\sfx\GUIDs.txt` for Kunos cars.
 - V-10 needs lenient JSON parsing, and "badge must be 128×128" would fire on 14 Kunos cars.
+
+## data.acd format (BRITOD-DESK, 2026-11-02, M0 task 5)
+
+Details, sources, and the full key recipe are in `docs/ACD.md`.
+
+- A key built from public notes (AssettoTools README formulas, with one corrected loop bound) matches acd.py for 14 folder names.
+- A `data.acd` packed from `fixtures/local/acm_tutorial_basic/data` by our scratch script is byte-identical to acd.py's (188,756 bytes),
+  and unpacking acd.py's file gives back all 40 files byte-for-byte.
+- The container layout from AcTools (optional `-1111` header, then name, length, and data entries at 4 bytes per data byte) parses Kunos's `shelby_cobra_427sc/data.acd`.
+  File names inside are plain ASCII: 52 entries, including `lods.ini` and `proview_nodes.ini`. Nothing was decrypted.
+- 91 Kunos `ks_*` cars and 2 mods start `data.acd` with the `-1111` header. 86 Kunos cars and 50 mods do not.
+  Whether the same key works after the header is not tested.

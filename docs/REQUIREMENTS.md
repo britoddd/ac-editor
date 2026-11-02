@@ -231,7 +231,7 @@ The tool and code facts are confirmed from primary sources, but most AC facts ar
 These questions must be answered in Milestone 0, before Milestone 1 starts.
 
 - [ ] Can the app write to AC's Steam folder under Program Files, or is a Content Manager ZIP the only reliable install route?
-- [ ] Which public format notes fully describe the `.acd` key, and does a key built from them match `acd.py`?
+- [x] Which public format notes fully describe the `.acd` key, and does a key built from them match `acd.py`? **Answered 2026-11-02:** the AssettoTools README formulas, with aluigi's notes and the AcTools layout. One loop bound in the notes needed correcting. The key matches acd.py for 14 names, and our pack of the tutorial car is byte-identical. Still open: files with the `-1111` header (see `docs/ACD.md`).
 - [x] Where does `data.acd` sit in a real car? **Answered 2026-11-02:** in the car root (see `docs/VERIFIED_FACTS.md`, car folder survey).
 - [ ] How can model encryption be detected without trying to bypass it?
 - [ ] Is FBX 2014/2015 still the required export format with current Blender and ksEditor?
