@@ -1,0 +1,3 @@
+# Fixtures are byte-exact test data (QS-1). Git must never convert their line endings,
+# because this machine has core.autocrlf=true.
+fixtures/** -text
