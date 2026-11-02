@@ -382,3 +382,13 @@ Method: a read-only scan of 74 GUID files: the shared `content\sfx\GUIDs.txt`, 7
 - Car IDs appear only in `bank:/<id>` and `event:/cars/<id>/<event>`. `bus` and `vca` names are generic FMOD mixer groups such as `bus:/grp_turbo` and `bus:/grp_limiter`.
 - Some mods list **other cars'** events in their own `GUIDs.txt`. For example, `bugatti_chiron_sport/sfx/GUIDs.txt` has 19 events each for
   `bugatti_bolide`, `aston_db5_vantage_s`, and others. Renaming a car must change only its own ID's `bank` and `event` lines (`GuidsFile.WithCarId`).
+
+## data.acd read checks (BRITOD-DESK, 2026-11-03, M2 step 2)
+
+Method: `scratch/ctrl_survey.py` and `scratch/name_survey.py` (not committed). They read only unpacked files and the unencrypted entry names. Nothing was decrypted or written.
+
+- **Control characters:** none of 1,839 files in every installed car's unpacked `data\` folder and in `fixtures/local` contains a byte 0x00–0x1F other than tab, LF, and CR, or 0x7F.
+  All of them are valid UTF-8. `AcdFile` uses this as its "decrypted text looks valid" check (V-13), because a wrong key shifts bytes into that range.
+- **Entry names:** the names inside `shelby_cobra_427sc/data.acd` (52) and `ks_porsche_911_gt3_r_2016/data.acd` (70) are plain `[a-z0-9_.-]`, at most 25 characters, with no folders.
+- **Unpacked `data\` file names:** no subfolders. 19 files have unusual names, all stray copies: spaces (`tyres - Copy.ini`, `lods - Kopie.ini`, `kers_torque 1.lut`)
+  and one non-ASCII name (`bugatti_chiron_sport/data/suspensions - 副本.ini`). So `AcdFile` allows spaces but not non-ASCII or path characters in entry names.
