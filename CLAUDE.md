@@ -22,8 +22,8 @@ Milestones must be done in order. A milestone is done only when its exit gate pa
 
 Work through these in order:
 
-1. Confirm the owner finished the `LutReader` warm-up. Ask which PC will be used for modding and confirm the AC path. AC is in Steam's default folder under Program Files.
-2. Create `.gitignore`, `fixtures/synthetic/`, `fixtures/local/`, `scratch/`, and `docs/VERIFIED_FACTS.md`. Do not scaffold the app yet.
+1. Confirm the owner finished the `LutReader` warm-up. Ask which PC will be used for modding and confirm the AC path. AC is in Steam's default folder under Program Files. **Done 2026-11-02:** the modding PC is BRITOD-DESK, and AC is under `Program Files (x86)`. See `docs/VERIFIED_FACTS.md`.
+2. Create `.gitignore`, `fixtures/synthetic/`, `fixtures/local/`, `scratch/`, and `docs/VERIFIED_FACTS.md`. Do not scaffold the app yet. **Done 2026-11-02:** the repo root is `D:\personal\ac-editor`, and `LutReader/` is a subfolder.
 3. Coach the owner through building `acm_tutorial_basic` from the [first car guide](https://assettocorsamods.net/threads/your-first-car-in-assetto-corsa-basic-guide.1019/). One step at a time, tell the owner what to do in Blender and ksEditor, then wait for the result.
 4. Inspect the tutorial car, `sdk/dev/content/cars/formula_k`, and one Kunos car on the owner's PC. Record what really exists in `docs/VERIFIED_FACTS.md`, including where `data.acd` sits, how `lods.ini` names models, and how `sfx` and `ui` files are structured.
 5. Find public format notes for the `.acd` key, then confirm your understanding by comparing against `acd.py` on the owner's own car.
@@ -129,3 +129,4 @@ A task is done when:
 2. Find the current milestone.
 3. State the next small step and any question that blocks it.
 4. Do the step, test it, and report what changed and what the owner must check.
+5. Commit that step on its own before starting the next. Make one commit per mini-step, never several features at once. Put the requirement ID or M0 task in the message, for example `M0 task 4: record lods.ini naming`.
