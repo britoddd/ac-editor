@@ -14,7 +14,9 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 1 (Core formats)** is in progress. Milestone 0 passed its exit gate on 2026-11-02: the tutorial car loads in AC, and every validator rule has a verdict. Follow the approved plan in "Milestone 1 plan" below. Small inspection scripts still belong in the gitignored `scratch/` folder.
+**Milestone 2 (ACD)** is next. Propose its plan, broken into small steps like the M1 plan below, and wait for the owner's approval before writing code.
+Milestone 0 passed its exit gate on 2026-11-02. Milestone 1 passed on 2026-11-03: `FixtureRunnerTests` checks QS-1 and every single-value edit (QS-2) on all 168 fixture files.
+Small inspection scripts still belong in the gitignored `scratch/` folder.
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it.
 
@@ -35,7 +37,7 @@ Work through these in order:
 
 ## Milestone 1 plan
 
-Approved 2026-11-02. There is no UI. Exit gate: QS-1 and QS-2 pass on every fixture. Make one commit per step.
+Approved 2026-11-02. **Done 2026-11-03**: all 9 steps are committed, and the exit gate passed. There is no UI. Exit gate: QS-1 and QS-2 pass on every fixture. Make one commit per step.
 
 1. Scaffold the solution, `src/AcMod.Core` (net10.0, nullable, warnings as errors), and `tests/AcMod.Core.Tests` (xUnit). Add the commands to the "Stack" section. (QS-10, CC-1)
 2. Survey encodings: BOM, line endings, and final newline across the fixtures. Record the results in `docs/VERIFIED_FACTS.md`.
