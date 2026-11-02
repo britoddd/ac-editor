@@ -39,6 +39,50 @@ public sealed partial class IniFile
 
     public byte[] ToBytes() => Document.ToBytes();
 
+    /// <summary>
+    /// All entries with this section and key, in file order. Names match exactly (ordinal).
+    /// Several matches mean the file has duplicates. Which one AC uses is not verified, so the caller chooses.
+    /// </summary>
+    public IReadOnlyList<IniEntry> Find(string section, string key) =>
+        Entries.Where(e => e.Section == section && e.Key == key).ToList();
+
+    /// <summary>Returns a copy where only this entry's value text is replaced (QS-2).</summary>
+    public IniFile WithValue(IniEntry entry, string value)
+    {
+        if (!Entries.Contains(entry))
+        {
+            throw new ArgumentException("The entry is not from this file.", nameof(entry));
+        }
+
+        if (value.Contains('\r') || value.Contains('\n') || value.Contains(';') || value.Contains("//") || value != value.Trim())
+        {
+            throw new ArgumentException(
+                "A value cannot contain line breaks, ';', '//', or leading or trailing spaces, because it would read back differently.",
+                nameof(value));
+        }
+
+        var line = Document.Lines[entry.LineIndex].Content;
+        var match = EntryPattern().Match(line);
+        var old = match.Groups["value"];
+
+        // An empty value goes right after '=', so "LUT=\t\t; note" becomes "LUT=x\t\t; note", not "LUT=\t\tx; note".
+        var start = old.Length > 0 ? old.Index : line.IndexOf('=', match.Groups["key"].Index + match.Groups["key"].Length) + 1;
+        var edited = line[..start] + value + line[(start + old.Length)..];
+        return new IniFile(Document.WithLineContent(entry.LineIndex, edited));
+    }
+
+    /// <summary>Writes a number the way AC expects: invariant culture, so always '.' as the decimal mark (QS-11).</summary>
+    public IniFile WithValue(IniEntry entry, double value)
+    {
+        if (!double.IsFinite(value))
+        {
+            throw new ArgumentException("AC files cannot hold NaN or infinity.", nameof(value));
+        }
+
+        // ponytail: shortest round-trip format ("2.5", not "2.50"); keep the original decimals if diffs get noisy.
+        return WithValue(entry, value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    }
+
     private static (List<IniSection>, List<IniEntry>) Read(TextDocument document)
     {
         var sections = new List<IniSection>();

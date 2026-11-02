@@ -46,6 +46,103 @@ public class IniFileTests
             Describe(ini));
     }
 
+    // QS-2: editing one value changes only that value's characters.
+    [Theory]
+    [InlineData("kunos_style.ini", "WING_0", "NAME", "WING", "NAME=WING\t\t\t\t; name of the wing")]
+    [InlineData("kunos_style.ini", "WING_0", "CHORD", "1.5", "CHORD=1.5")]
+    [InlineData("kunos_style.ini", "WING_0", "LUT_GH_CL", "h.lut", "LUT_GH_CL=h.lut\t\t\t\t; empty value with a comment")]
+    [InlineData("slashes.ini", "ITEM_0", "YAW_CL_GAIN", "-0.2", "YAW_CL_GAIN=-0.2   //// -0.10")]
+    [InlineData("junk_and_globals.ini", "_EXTENSION", "AFTER", "new", "AFTER = new ; note")]
+    public void Editing_a_value_changes_only_that_value(string file, string section, string key, string value, string expectedLine)
+    {
+        var ini = Load(file);
+        var entry = ini.Find(section, key).Single();
+
+        var edited = ini.WithValue(entry, value);
+
+        Assert.Equal(expectedLine, edited.Document.Lines[entry.LineIndex].Content);
+        Assert.Equal(value, edited.Find(section, key).Single().Value);
+        Assert.Single(edited.Document.Lines.Where((line, i) => line != ini.Document.Lines[i]));
+    }
+
+    [Fact]
+    public void Edits_only_the_chosen_duplicate()
+    {
+        var ini = Load("duplicates.ini");
+        var second = ini.Find("DATA", "X")[1];
+
+        var edited = ini.WithValue(second, "20");
+
+        Assert.Equal(["DATA/X=1", "DATA/X=20", "DATA/X=3"], Describe(edited));
+    }
+
+    // QS-11: Indonesian Windows uses ',' as the decimal mark. AC files must still get '.'.
+    [Fact]
+    public void Writes_numbers_with_invariant_culture()
+    {
+        var previous = System.Globalization.CultureInfo.CurrentCulture;
+        System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("id-ID");
+        try
+        {
+            var ini = Load("kunos_style.ini");
+
+            var edited = ini.WithValue(ini.Find("WING_0", "CHORD").Single(), 2.5);
+
+            Assert.Equal("2.5", edited.Find("WING_0", "CHORD").Single().Value);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = previous;
+        }
+    }
+
+    [Theory]
+    [InlineData("1\r\nX=2")]
+    [InlineData("1 ; sneaky comment")]
+    [InlineData("1 // sneaky comment")]
+    [InlineData(" 1")]
+    public void Rejects_values_that_would_read_back_differently(string value)
+    {
+        var ini = Load("kunos_style.ini");
+
+        Assert.Throws<ArgumentException>(() => ini.WithValue(ini.Find("WING_0", "CHORD").Single(), value));
+    }
+
+    [Fact]
+    public void Rejects_an_entry_from_another_file_and_non_finite_numbers()
+    {
+        var ini = Load("kunos_style.ini");
+        var foreign = Load("duplicates.ini").Entries[0];
+
+        Assert.Throws<ArgumentException>(() => ini.WithValue(foreign, "1"));
+        Assert.Throws<ArgumentException>(() => ini.WithValue(ini.Entries[0], double.NaN));
+    }
+
+    // QS-2 on real data: in every fixture INI, changing one entry changes exactly one line, and every other entry reads back the same.
+    [Fact]
+    public void Editing_any_real_entry_changes_exactly_one_line()
+    {
+        var roots = new[] { Fixtures.Synthetic(), Fixtures.LocalRoot }.Where(Directory.Exists);
+        var checkedEntries = 0;
+        foreach (var path in roots.SelectMany(root => Directory.EnumerateFiles(root, "*.ini", SearchOption.AllDirectories)))
+        {
+            var ini = IniFile.Parse(File.ReadAllBytes(path));
+            foreach (var entry in ini.Entries)
+            {
+                var edited = IniFile.Parse(ini.WithValue(entry, "123").ToBytes());
+
+                var changedLines = edited.Document.Lines.Where((line, i) => line != ini.Document.Lines[i]).Count();
+                Assert.True(changedLines == (entry.Value == "123" ? 0 : 1), $"{path}: {entry}");
+                Assert.Equal(
+                    ini.Entries.Select(e => e == entry ? e with { Value = "123" } : e),
+                    edited.Entries);
+                checkedEntries++;
+            }
+        }
+
+        Assert.True(checkedEntries > 0);
+    }
+
     // QS-1: an unchanged file is written back byte-for-byte, including real cars in fixtures/local.
     [Fact]
     public void Every_fixture_ini_round_trips_byte_for_byte()
