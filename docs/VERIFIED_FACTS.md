@@ -194,3 +194,4 @@ Local copies of `acm_tutorial_basic`, `formula_k`, and `shelby_cobra_427sc` are 
 - V-03 would warn on most Kunos cars.
 - V-09 must ignore case and accept the shared `content\sfx\GUIDs.txt` for Kunos cars.
 - V-10 needs lenient JSON parsing, and "badge must be 128×128" would fire on 14 Kunos cars.
+- The owner copied `acm_tutorial_basic` into `content\cars` with Windows Explorer, and Windows did **not** ask for administrator permission (2026-11-02).
