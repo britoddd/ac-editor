@@ -74,6 +74,9 @@ public sealed class AcdFile
                 data[i] = (byte)(bytes[pos] - key[i % key.Length]);
             }
 
+            // ponytail: a wrong key shifts each byte by -12..+12, so it is caught mainly through line breaks and spaces turning
+            // into control bytes. A tiny one-line entry can pass, but a real data.acd fails on its first file
+            // (4,000 wrong IDs tried in AcdPyComparisonTests). Add a content check if a real false pass ever shows up.
             if (!Utf8.IsValid(data) || data.Any(b => (b < 0x20 && b is not (9 or 10 or 13)) || b == 0x7f))
                 return Fail($"\"{name}\" doesn't decrypt to text. The car folder name may not match the one it was packed for, or it isn't a standard data.acd.");
 

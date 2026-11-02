@@ -26,11 +26,7 @@ public class AcdPyComparisonTests
         return pairs;
     }
 
-    private static AcdEntry[] ReadFolder(string dataFolder) =>
-        Directory.GetFiles(Path.Combine(Fixtures.RepoRoot, dataFolder))
-            .Select(f => new AcdEntry(Path.GetFileName(f), File.ReadAllBytes(f)))
-            .OrderBy(e => e.Name, StringComparer.Ordinal)
-            .ToArray();
+    private static AcdEntry[] ReadFolder(string dataFolder) => CarData.ReadFolder(Path.Combine(Fixtures.RepoRoot, dataFolder));
 
     [Theory]
     [MemberData(nameof(Pairs))]
@@ -42,6 +38,19 @@ public class AcdPyComparisonTests
         Assert.Null(acd.Error);
         Assert.Equal(original.Select(e => e.Name), acd.Entries.Select(e => e.Name));
         Assert.Equal(original.Select(e => e.Data), acd.Entries.Select(e => e.Data));
+    }
+
+    [Theory]
+    [MemberData(nameof(Pairs))]
+    public void Every_wrong_car_id_is_reported(string dataFolder, string acdPath)
+    {
+        _ = dataFolder;
+        var bytes = File.ReadAllBytes(Path.Combine(Fixtures.RepoRoot, acdPath));
+        var carId = AcdKey.SourceName(acdPath);
+
+        var wrongIds = Enumerable.Range(0, 1000).SelectMany(i => new[] { carId + i, "car_" + i });
+
+        Assert.All(wrongIds, id => Assert.NotNull(AcdFile.Parse(bytes, id).Error));
     }
 
     [Theory]

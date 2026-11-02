@@ -392,3 +392,6 @@ Method: `scratch/ctrl_survey.py` and `scratch/name_survey.py` (not committed). T
 - **Entry names:** the names inside `shelby_cobra_427sc/data.acd` (52) and `ks_porsche_911_gt3_r_2016/data.acd` (70) are plain `[a-z0-9_.-]`, at most 25 characters, with no folders.
 - **Unpacked `data\` file names:** no subfolders. 19 files have unusual names, all stray copies: spaces (`tyres - Copy.ini`, `lods - Kopie.ini`, `kers_torque 1.lut`)
   and one non-ASCII name (`bugatti_chiron_sport/data/suspensions - 副本.ini`). So `AcdFile` allows spaces but not non-ASCII or path characters in entry names.
+- **Wrong-key detection (M2 step 5):** a wrong key shifts each byte by only -12 to +12, because key strings use only digits and `-`.
+  Letters stay printable, so the check relies on line breaks and spaces turning into control bytes. A 3-byte one-line entry (`acd`) passed with a wrong key.
+  Real files are multi-line: for acd.py's tutorial pack and the synthetic pack, all 4,000 wrong car IDs tried (2,000 each) failed on the first entry. `AcdPyComparisonTests` keeps that check.
