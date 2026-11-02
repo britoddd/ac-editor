@@ -49,7 +49,7 @@ These apply to every change:
 4. **Never lose work.** Snapshot before every write. Deletes go to `trash/`. Permanent deletion needs the user to type the car ID.
 5. **Stay inside the chosen workspace.** The only exception is the `WS-11` install into `content/cars`. Any other write outside it is a bug.
 6. **Do not commit third-party game content.** Kunos cars and other people's mods stay in the gitignored `fixtures/local/` folder. Commit only synthetic fixtures.
-7. **Respect licenses.** You may port AcTools code under Ms-PL. Keep its license in the repo and list ported files in `docs/THIRD_PARTY.md`. Do not copy code from `acd`, because it is GPL-2.0, but you may use it to compare output. Check any other project's license first and tell the owner.
+7. **Respect licenses.** You may port AcTools code under Ms-PL. Keep its license in the repo and list ported files in `docs/THIRD_PARTY.md`. Do not copy code from `acd`, because it is GPL-2.0, but you may use it to compare output. Setup, safety notes, and commands are in `docs/ACD.md`. Check any other project's license first and tell the owner.
 8. **Never use or decompile `AcManager.Internal.dll`.** AcTools gets its ACD key factory from that closed DLL, so write key code from public format notes.
 9. **Do not port code that exists to handle protected content.**
 
@@ -99,6 +99,7 @@ fixtures/
 docs/
   REQUIREMENTS.md
   VERIFIED_FACTS.md
+  ACD.md        data.acd notes, and how to set up and run the acd.py test tool
   THIRD_PARTY.md
 ```
 
