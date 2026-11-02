@@ -147,6 +147,11 @@ So the working car keeps these files in `data\`: `aero.ini`, `brakes.ini`, `came
   The game also created a file there. This strongly suggests a normal user process can write to `content\cars`.
   M0 task 7 still needs the agreed test folder to confirm it.
 - The owner copied `acm_tutorial_basic` into `content\cars` with Windows Explorer, and Windows did **not** ask for administrator permission (2026-11-02).
+- **Write test (M0 task 7, 2026-11-02, approved by the owner):** a normal process created `content\cars\zz_acmod_write_test\write_test.txt`, read it back, and removed the folder.
+  The process was not elevated (admin role False, `Medium Mandatory Level`) and was 64-bit (PowerShell 5.1).
+  The file was in the real folder, and the UAC VirtualStore copy did not exist. Deleting the folder also worked.
+  Conclusion for BRITOD-DESK: a normal user process can create, write, and delete in `content\cars`.
+  Not verified: other PCs, Steam libraries on other drives, or non-Steam installs, where folder permissions may differ.
 
 ## Car folder survey (BRITOD-DESK, 2026-11-02, M0 task 4)
 

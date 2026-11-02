@@ -28,7 +28,7 @@ Work through these in order:
 4. Inspect the tutorial car, `sdk/dev/content/cars/formula_k`, and one Kunos car on the owner's PC. Record what really exists in `docs/VERIFIED_FACTS.md`, including where `data.acd` sits, how `lods.ini` names models, and how `sfx` and `ui` files are structured. **Done 2026-11-02:** survey of all 250 car folders; the three cars are copied into `fixtures/local/`. See `docs/VERIFIED_FACTS.md`.
 5. Find public format notes for the `.acd` key, then confirm your understanding by comparing against `acd.py` on the owner's own car. **Done 2026-11-02:** the notes and verification are in `docs/ACD.md`. A Kunos `-1111` header file also decrypts with the same key.
 6. Find a way to identify model encryption without bypassing it. If no reliable method exists, record that and propose a conservative warning. **Done 2026-11-02:** there is no certain method. The proposed header and table check, and its "may be encrypted" warning, are in `docs/VERIFIED_FACTS.md`.
-7. Test whether a normal user process can write to AC's `content/cars`, using one small test folder that the owner approves. Remove it afterward.
+7. Test whether a normal user process can write to AC's `content/cars`, using one small test folder that the owner approves. Remove it afterward. **Done 2026-11-02:** it can on BRITOD-DESK. The test folder was removed. See `docs/VERIFIED_FACTS.md`.
 8. Check which AcTools files port cleanly to .NET 10 by trying them in `scratch/`.
 9. Mark every validator rule V-01 to V-15 as confirmed, changed, or rejected, with the evidence.
 10. Close each open question in `docs/REQUIREMENTS.md`, then propose the Milestone 1 plan and wait for approval.

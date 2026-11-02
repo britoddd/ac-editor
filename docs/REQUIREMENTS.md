@@ -230,7 +230,7 @@ The tool and code facts are confirmed from primary sources, but most AC facts ar
 
 These questions must be answered in Milestone 0, before Milestone 1 starts.
 
-- [ ] Can the app write to AC's Steam folder under Program Files, or is a Content Manager ZIP the only reliable install route?
+- [x] Can the app write to AC's Steam folder under Program Files, or is a Content Manager ZIP the only reliable install route? **Answered 2026-11-02 for BRITOD-DESK:** yes. Steam gives `BUILTIN\Users` full control of `content\cars`, and a non-elevated test process created, wrote, and deleted a folder there with no VirtualStore redirect. Other PCs may differ, so `WS-11` should still check write access at runtime and offer the Content Manager ZIP as the fallback.
 - [x] Which public format notes fully describe the `.acd` key, and does a key built from them match `acd.py`? **Answered 2026-11-02:** the AssettoTools README formulas, with aluigi's notes and the AcTools layout. One loop bound in the notes needed correcting. The key matches acd.py for 14 names, and our pack of the tutorial car is byte-identical. A Kunos file with the `-1111` header (`ks_porsche_911_gt3_r_2016`) also decrypts with the same key once the header is skipped (see `docs/ACD.md`).
 - [x] Where does `data.acd` sit in a real car? **Answered 2026-11-02:** in the car root (see `docs/VERIFIED_FACTS.md`, car folder survey).
 - [x] How can model encryption be detected without trying to bypass it? **Answered 2026-11-02:** not with certainty. The conservative signal flags a KN5 named `*_encrypted*`, or one whose texture or material table doesn't parse with the standard layout (36 files in 10 mod folders on BRITOD-DESK, none from Kunos). The warning says "may be encrypted". See `docs/VERIFIED_FACTS.md`.
