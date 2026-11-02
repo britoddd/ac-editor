@@ -72,6 +72,17 @@ public class TextDocumentTests
         Assert.Equal(bytes, doc.ToBytes());
     }
 
+    [Fact]
+    public void Refuses_text_a_latin1_file_cannot_hold_instead_of_writing_question_marks()
+    {
+        var latin1 = TextDocument.Parse([(byte)'C', 0xE9]);
+        var utf8 = TextDocument.Parse("Ca"u8);
+
+        Assert.Throws<ArgumentException>(() => latin1.WithLineContent(0, "€5"));
+        Assert.Throws<ArgumentException>(() => latin1.WithText("€5"));
+        Assert.Equal("€5", TextDocument.Parse(utf8.WithText("€5").ToBytes()).Text);
+    }
+
     // QS-1 on real data: every synthetic text fixture, and every text file in fixtures/local when it exists.
     [Fact]
     public void Every_fixture_text_file_round_trips_byte_for_byte()

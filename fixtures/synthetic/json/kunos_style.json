@@ -1,0 +1,18 @@
+{
+
+	"name": "Test Car",
+	"brand": "Made Up",
+	"description": "First line.</br>
+- raw line break inside the string
+- a \"quoted\" word",
+	"tags": ["#Test", "rwd"],  
+	"specs":
+	{
+		"bhp": "198 bhp",
+		"weight": "575kg"
+	},
+	 "torqueCurve": [
+		["0","56"],
+	    ["500","130"]
+       ]
+}

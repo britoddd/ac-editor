@@ -1,0 +1,5 @@
+﻿{
+  "name": "Café Racer",
+  "specs": { "bhp": 250, "pwratio": null },
+  "powerCurve": [[0, 0.0], [1000, 35.5], [2000, 98]]
+}

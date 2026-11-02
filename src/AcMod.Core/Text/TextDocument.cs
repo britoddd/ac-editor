@@ -62,22 +62,41 @@ public sealed class TextDocument
         }
     }
 
+    /// <summary>The whole file as one string, line breaks included (without the BOM).</summary>
+    public string Text => string.Concat(Lines.Select(line => line.Content + line.Ending));
+
     /// <summary>Returns a copy with one line's content replaced. Its line break and every other line stay as they were.</summary>
     public TextDocument WithLineContent(int index, string content)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(index);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, Lines.Count);
+        EnsureEncodable(content);
 
         var lines = Lines.ToArray();
         lines[index] = lines[index] with { Content = content };
         return new TextDocument(lines, EncodingKind, HasBom);
     }
 
+    /// <summary>Returns a copy holding new text, keeping the encoding and BOM. Used by formats whose values can span lines.</summary>
+    public TextDocument WithText(string text)
+    {
+        EnsureEncodable(text);
+        return new TextDocument(SplitLines(text), EncodingKind, HasBom);
+    }
+
     public byte[] ToBytes()
     {
-        var text = string.Concat(Lines.Select(line => line.Content + line.Ending));
-        var body = EncodingKind == TextEncodingKind.Utf8 ? StrictUtf8.GetBytes(text) : Encoding.Latin1.GetBytes(text);
+        var body = EncodingKind == TextEncodingKind.Utf8 ? StrictUtf8.GetBytes(Text) : Encoding.Latin1.GetBytes(Text);
         return HasBom ? [.. Utf8Bom, .. body] : body;
+    }
+
+    // Latin-1 can only hold chars up to U+00FF. Anything above would be written as '?', silently losing data.
+    private void EnsureEncodable(string text)
+    {
+        if (EncodingKind == TextEncodingKind.Latin1 && text.Any(c => c > 'ÿ'))
+        {
+            throw new ArgumentException("This file is not UTF-8, so it can only hold characters up to U+00FF.", nameof(text));
+        }
     }
 
     private static List<TextLine> SplitLines(string text)

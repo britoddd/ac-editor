@@ -363,3 +363,13 @@ Method: a read-only scan of 855 `.ini` files in `data\`: fixtures, every install
   Which duplicate AC uses is **not verified**.
 - 21 lines are neither a section nor an entry. Examples: prose pasted into `cky_koenigsegg_jesko/data/car.ini`, a lone `3` in `redbull_x1_s2/data/aero.ini`,
   and `[_EXTENSION] RAIN_DEV-1` in `faz_mercedes_g63/data/car.ini`.
+
+## ui_car.json shapes (BRITOD-DESK, 2026-11-02, M1 step 7)
+
+- All 250 installed `ui_car.json` files parse with lenient JSON (raw control characters inside strings allowed).
+  None has trailing commas or comments. The only escape sequence used is `\"` (52 times).
+- Curve values come in both styles. 6,532 pairs are strings (`["0","56"]`, Kunos style), and the rest are numbers:
+  4,823 float/float, 142 int/float, and 58 int/int. `specs` values are mostly strings (1,496), with 100 ints and 3 nulls.
+- `AcMod.Core.Formats.UiCarJson` parses all 250 with no errors, round-trips each one byte-for-byte, and reads `/name` from every file
+  (a one-off check with `scratch/check_ui`, not committed).
+- Not verified: whether AC or Content Manager decode `\n`, `\t`, or `\u` escapes in `ui_car.json`. New strings use them only for control characters.
