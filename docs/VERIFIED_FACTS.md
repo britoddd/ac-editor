@@ -42,3 +42,12 @@ These exist in the AC folder above. They are candidates for checking a folder th
 - `extension\installed.log` says the patch was installed by Content Manager from a custom ZIP file.
   It shows `version: 0` and `build: 0`, so CSP is installed but its version is unknown.
 - `extension\config\cars` exists. How CSP uses it is not verified.
+
+## FBX export format (BRITOD-DESK, 2026-11-02)
+
+- Blender 4.4 and Blender 5.2 both write binary FBX version 7400 (FBX 7.4, the "2014/2015" format).
+  Evidence: `FBX_VERSION = 7400` in `scripts\addons_core\io_scene_fbx\fbx_utils.py` for both versions,
+  and the default cube exported from each version has the header `Kaydara FBX Binary` followed by version 7400.
+  The export script is `scratch/fbx_test/export_cube.py` (not committed). The default exporter has no setting to choose another version.
+- ksEditor ships with `sdk\editor\fbxsdk-2014.1.dll`, whose file version is `2014.1 RC (212161)` and whose company is Autodesk.
+- Not verified yet: whether ksEditor imports a Blender 7400 FBX. The owner will check this with the tutorial car.
