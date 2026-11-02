@@ -305,3 +305,10 @@ These come from the 250 non-empty folders in `content\cars`.
   `engine.ini` and `power.lut` were copied back from `D:\ACModding\acm_tutorial_basic\data`. The installed `data\` now matches the workspace, apart from AC's own `proview_nodes.ini`.
   The tuned files are kept in `scratch/v12_test/installed_data_backup/` (not committed).
 - The owner uses Blender 4.4 only for this project. Blender 5.2 was not used to build the tutorial car.
+- V-08 test (2026-11-02, approved by the owner): formula_k's `digital_instruments.ini` (104 lines) was copied into the installed tutorial car's `data\`.
+  It refers to `STEER_HR`, `Geometry37_SUB2`, and `LED_0`–`LED_4`, none of which exist in the model.
+  The owner reports the car **loaded and drove normally**. The cockpit area is just the body block, so nothing could be seen there.
+  The drive's `log.txt` was overwritten by a later, short AC start (23:40), which left no crash dump, so there is no log evidence.
+  The file was removed afterwards, and the installed `data\` again matches the workspace, apart from `proview_nodes.ini`.
+  Conclusion: a `digital_instruments.ini` that refers to missing objects did not crash AC 1.16.4 with CSP 0.3.0-preview634.
+- Versions seen in the AC log: AC `1.16.4 (x64)`, Custom Shaders Patch `v0.3.0-preview634`.
