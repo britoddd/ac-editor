@@ -50,4 +50,30 @@ These exist in the AC folder above. They are candidates for checking a folder th
   and the default cube exported from each version has the header `Kaydara FBX Binary` followed by version 7400.
   The export script is `scratch/fbx_test/export_cube.py` (not committed). The default exporter has no setting to choose another version.
 - ksEditor ships with `sdk\editor\fbxsdk-2014.1.dll`, whose file version is `2014.1 RC (212161)` and whose company is Autodesk.
-- Not verified yet: whether ksEditor imports a Blender 7400 FBX. The owner will check this with the tutorial car.
+- ksEditor imports a Blender 4.4 FBX 7400 file. The owner imported test cubes, and all of them showed black because they have no texture.
+  ksEditor created `texture\NULL.dds` (136 bytes) next to the imported FBX.
+
+## Blender FBX export settings for ksEditor (BRITOD-DESK, 2026-11-02)
+
+Tested with Blender 4.4 only. Each file was read with `scratch/fbx_test/fbxdump.py`, and the owner imported it in ksEditor.
+
+| Export settings | Object scale in file | `UnitScaleFactor` | Object rotation | ksEditor import |
+| --- | --- | --- | --- | --- |
+| Default (Apply Scalings = All Local) | 100 | 1 | -90° on X | `ERROR, FOUND SCALING ON NODE : RootNode` |
+| Apply Scalings = FBX All | 1 | 100 | -90° on X | No error |
+| Apply Scalings = FBX All, Apply Transform on | 1 | 100 | none | No error |
+
+- The guide's advice to leave the button next to Scale off (Apply Unit) does not remove the x100 in Blender 4.4.
+  `export_fbx_bin.py:3453` uses 100 whether Apply Unit is on or off, unless the scene's unit scale is not 1.0.
+- With FBX All and Apply Transform, an empty placed at Blender `(1, -2, 3)` is written at `(1, 3, 2)` with no rotation.
+  So Blender `+X` becomes FBX `+X`, Blender `+Z` becomes FBX `+Y` (up), and Blender `-Y` becomes FBX `+Z`.
+- Not verified: how Apply Transform behaves on models more complex than a cube and an empty. Blender labels it experimental.
+
+## AC model axes (BRITOD-DESK, 2026-11-02)
+
+- In `sdk\dev\content\cars\formula_k\formula_K.kn5`, `SUSP_LR` is at `(0.719, 0.268, -1.512)` and `SUSP_RR` is at `(-0.719, 0.268, -1.512)`.
+  This suggests that in AC, `+Z` points forward, `+Y` points up, and `+X` points to the car's left.
+  Evidence: I searched the file for each length-prefixed node name and read the 4×4 matrix that follows it.
+  This assumes a node layout I did not take from any spec, but the matrices read as clean identity rotations, which supports it.
+  The file starts with `sc6969` and version 6. A full KN5 parse or the in-game test should confirm this.
+- So, in Blender with the settings above, the car's nose points to `-Y` and its left side is `+X`.
