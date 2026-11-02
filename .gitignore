@@ -1,0 +1,12 @@
+# .NET build output
+bin/
+obj/
+.vs/
+*.user
+
+# Never commit: real game content and throwaway scripts (CLAUDE.md hard rule 6)
+fixtures/local/
+scratch/
+
+# Claude Code background-job worktrees
+.claude/worktrees/
