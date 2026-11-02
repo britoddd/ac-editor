@@ -77,6 +77,18 @@ Tested with Blender 4.4 only. Each file was read with `scratch/fbx_test/fbxdump.
   In ksEditor, `WHEEL_LF` shows Position `0.7575 0.275 1.325` and Scale `1 1 1`, the same values as the FBX in metres.
 - ksEditor camera: after import, the camera starts at `Pos: 0; 0; 0`, which is inside this car. The Pos box cannot be edited.
   The owner moved the camera with the keyboard arrow keys.
+- ksEditor materials: an imported Blender material gets the shader `ksPerPixel` with an empty `txDiffuse` texture slot (shown as NULL).
+  Default values: ksAmbient 0.0509, ksDiffuse 0.8, ksSpecular 0.8, ksSpecularEXP 10, ksEmissive 0 0 0, ksAlphaRef 0, DepthMode eDepthNormal, BlendMode eOpaque.
+- The ksEditor File menu has Save KN5 > Car, Car (No Textures), Track, and Car (Experimental).
+
+## KN5 written by ksEditor (BRITOD-DESK, 2026-11-02)
+
+- `acm_tutorial_basic.kn5`, saved with Save KN5 > Car, starts with `sc6969` and version 6, the same as `formula_K.kn5`.
+- It embeds each assigned texture byte-for-byte, under its file name (`body.png`, `tyre.png`).
+  Evidence: each PNG file's bytes appear unchanged inside the KN5.
+  The texture section matches this layout: int32 count, then for each texture an int32 active flag, a length-prefixed name, an int32 size, and the bytes.
+  This layout comes from memory of community readers, not a spec. It is confirmed only by the sizes matching the files.
+- The file contains the node names `WHEEL_LF`, `WHEEL_LR`, `WHEEL_RF`, `WHEEL_RR`, `VISUAL_WHEEL_*`, and `body`, plus the material names, `ksPerPixel`, and `txDiffuse`.
 
 ## AC model axes (BRITOD-DESK, 2026-11-02)
 
