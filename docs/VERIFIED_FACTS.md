@@ -373,3 +373,12 @@ Method: a read-only scan of 855 `.ini` files in `data\`: fixtures, every install
 - `AcMod.Core.Formats.UiCarJson` parses all 250 with no errors, round-trips each one byte-for-byte, and reads `/name` from every file
   (a one-off check with `scratch/check_ui`, not committed).
 - Not verified: whether AC or Content Manager decode `\n`, `\t`, or `\u` escapes in `ui_car.json`. New strings use them only for control characters.
+
+## GUIDs.txt shapes (BRITOD-DESK, 2026-11-02, M1 step 8)
+
+Method: a read-only scan of 74 GUID files: the shared `content\sfx\GUIDs.txt`, 72 installed cars' `sfx\GUIDs.txt`, and the tutorial car's.
+- Every non-blank line is `{guid} kind:/path`, with a lowercase GUID. There are 66 blank lines and no other line shapes.
+- Kinds: 8,366 `event`, 1,658 `bus`, 616 `bank`, 336 `vca`, and 1 `snapshot`.
+- Car IDs appear only in `bank:/<id>` and `event:/cars/<id>/<event>`. `bus` and `vca` names are generic FMOD mixer groups such as `bus:/grp_turbo` and `bus:/grp_limiter`.
+- Some mods list **other cars'** events in their own `GUIDs.txt`. For example, `bugatti_chiron_sport/sfx/GUIDs.txt` has 19 events each for
+  `bugatti_bolide`, `aston_db5_vantage_s`, and others. Renaming a car must change only its own ID's `bank` and `event` lines (`GuidsFile.WithCarId`).
