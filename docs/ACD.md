@@ -10,7 +10,8 @@ These facts are verified unless marked otherwise. The evidence is in `docs/VERIF
 - `data.acd` is a packed and encrypted copy of a car's `data\` folder: the INI, LUT, and RTO files.
 - It sits in the **car root** (`content\cars\<car_id>\data.acd`). All 177 Kunos cars and all 52 mods on BRITOD-DESK that have one keep it there.
 - AC loads an unpacked `data\` folder when a car has no `data.acd`. The tutorial car's log says `Data path: content/cars/acm_tutorial_basic/data/`.
-- Some mods ship both `data.acd` and `data\` (4 on BRITOD-DESK). Which one AC uses then is **not verified** (rule V-12).
+- Some mods ship both `data.acd` and `data\` (4 on BRITOD-DESK). **When both exist, AC uses `data.acd` and ignores `data\`.**
+  This was verified in game on 2026-11-02 (rule V-12). Edits to `data\` have no effect while a `data.acd` is present.
 - The key depends on the file's location. acd.py's README says the key comes from the file's base name or its folder name, and AcTools uses the parent folder name for `data` files.
   So a `data.acd` only opens inside a folder named after the car ID it was packed for. If the car ID changes, the file must be repacked.
 - Format notes for the container, the key, and the cipher are below. They were checked against acd.py on 2026-11-02.
@@ -98,7 +99,8 @@ Only the first 8 bytes of each `data.acd` were read. Nothing was decrypted.
   The other 10 header values are untested, so the reader should still check that decrypted text looks valid before trusting it (V-13).
   What the second int32 means is unknown. A writer should leave the header out, as acd.py does. Whether AC accepts our files is the M2 exit gate.
 - Non-ASCII folder names: AssettoTools sums UTF-16 characters, acd.py sums UTF-8 bytes, and AC's behaviour is unknown. Keep car IDs ASCII (V-01).
-- Does AC load a `data.acd` that we packed? This is the M2 exit gate, checked in game by the owner.
+- Does AC load a `data.acd` that we packed? **Early yes:** AC loaded one packed by `scratch/acd_container.py` for `acm_tutorial_basic` (V-12 test, 2026-11-02).
+  M2 must repeat this with the C# code.
 
 ## acd.py: what it is and the rules
 

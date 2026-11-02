@@ -276,6 +276,20 @@ Conclusion: nothing ports cleanly as-is, because the files share a tangle of hel
 - V-06 (behaviour files `brakes.ini`, `colliders.ini`, `drivetrain.ini`, `setup.ini`; Warning): the owner reported "confirmed". The evidence they used is not recorded.
 - V-12 (`data.acd` and `data\` both present): test set up at 23:21. `content\cars\acm_tutorial_basic\data.acd` was added and `data\` was left untouched.
   The `data.acd` holds the installed `data\` with `SCREEN_NAME=ACM Tutorial ACD` and every `power.lut` torque value halved.
-  If AC uses `data.acd`, the log's `POWER CLASS INDEX` power should be about half of the `data\` value. Result pending.
+  If AC uses `data.acd`, the log's `POWER CLASS INDEX` power should be about half of the `data\` value.
+  **Result: when both are present, AC uses `data.acd` and ignores `data\`.** The owner drove three times:
+
+  | Car folder | Log `PW` | Prediction |
+  | --- | --- | --- |
+  | `data.acd` (halved) + `data\`, 23:24 | 2,245,815 W | 2,246,238 W from the halved torque |
+  | `data.acd` (halved) + `data\`, 23:27 | 2,245,815 W | same |
+  | `data\` only (test `data.acd` removed), 23:29 | 4,491,630 W | 4,492,477 W from the full torque |
+
+  How the prediction works: power = peak (torque × rpm) × 2π/60 × 3, where `MAX_BOOST=2.0` triples the torque, as `engine.ini`'s own comment says.
+  The same formula gives 188,496 W for the original curve, and the 22:21 log said 188,460 W.
+  The log line `Data path: content/cars/acm_tutorial_basic/data/` was identical in every run, so it does not show which source was used.
+  The owner could not tell the difference by feel (about 3,000 HP versus about 6,000 HP), so check the log.
+- AC loaded a `data.acd` packed by `scratch/acd_container.py` (no header, key from public notes) without errors. That is early evidence for the M2 exit gate.
+- The test `data.acd` was removed at 23:28, and `data\` was confirmed unchanged against the backup.
 - Owner tuning found in the installed car (22:43–22:44): `engine.ini` `LIMITER` 6500 → 17000, and `power.lut` torque about 10× higher, extended to 12000 rpm.
   These edits are only in `content\cars`, not in `D:\ACModding`. A backup is in `scratch/v12_test/installed_data_backup/`.

@@ -217,7 +217,7 @@ The tool and code facts are confirmed from primary sources, but most AC facts ar
 | For `data` files, AcTools takes the ACD key ID from the parent folder name | Verified in source; the key derivation is not there | [AcdEncryption.cs](https://github.com/gro-ove/actools/blob/master/AcTools/AcdFile/AcdEncryption.cs) |
 | Blender places dummies and hierarchy; ksEditor sets shaders and exports KN5 | Community, widely used | [First car guide](https://assettocorsamods.net/threads/your-first-car-in-assetto-corsa-basic-guide.1019/) |
 | FBX must be 2014/2015 format or older | Community, from 2017, may be outdated | First car guide |
-| `data.acd` takes priority over unpacked data | Inferred from forum advice | [GTPlanet](https://www.gtplanet.net/forum/threads/assetto-corsa-pc-mods-general-discussion.307899/post-13288251) |
+| `data.acd` takes priority over unpacked data | Verified in game on BRITOD-DESK (V-12 test, 2026-11-02; see `docs/VERIFIED_FACTS.md`) | [GTPlanet](https://www.gtplanet.net/forum/threads/assetto-corsa-pc-mods-general-discussion.307899/post-13288251) |
 | `data.acd` sits in the car root | Verified on BRITOD-DESK: all 177 Kunos cars and all 52 mods that have one keep it in the root; none uses `data/data.acd` | `docs/VERIFIED_FACTS.md` |
 | `power.lut` is `rpm\|torque`, with torque in Nm at the wheels | Community | [GTPlanet](https://www.gtplanet.net/forum/threads/assetto-corsa-pc-mods-general-discussion.307899/post-12788964) |
 | Rated torque is about `power.lut` torque ÷ 0.85 without a turbo | Community estimate, show as an estimate | [GTPlanet](https://www.gtplanet.net/forum/threads/assetto-corsa-pc-mods-general-discussion.307899/post-12788964) |
