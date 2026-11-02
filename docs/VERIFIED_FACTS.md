@@ -348,3 +348,18 @@ Method: a read-only scan of 1,058 `.lut` and `.rto` files: fixtures, every insta
 - Rare oddities in mods, all kept as they are by the parser: `0/1.00` (a `/` instead of `|`, in `gp_2023_rb19/data/tct_diff.lut`),
   INI-style content inside a `.lut` (`[VALUES]` and `C=1.27` in `gp_2023_rb19/data/modern_F1.lut`),
   and text after a value: `4000|-900     (engagement point)` in `cky_koenigsegg_jesko/data/kers_torque.lut`.
+
+## INI line shapes (BRITOD-DESK, 2026-11-02, M1 step 5)
+
+Method: a read-only scan of 855 `.ini` files in `data\`: fixtures, every installed car, and the Kunos Porsche's `data.acd` contents.
+- 30,422 lines are `KEY=VALUE`, and 9,587 are `KEY=VALUE` followed by a tab-aligned `; comment`.
+  5,392 lines are `[SECTION]`, and 49 more have a trailing `; comment` after the `]`. There are 11,311 blank lines and 333 `;` comment lines.
+- 315 `//` comment lines exist (for example `/////////` separators), and 17 lines have a `//` comment after a value, such as
+  `POSITION=-0.012, -0.01, -0.001  /// (x,y,z) x-/rightt;  z+/forward` (`az3d_traffic_*` `digital_instruments.ini`). These cars are installed and in use.
+  How AC itself treats `//` is not verified. The parser ends a value at `;` or `//`, which matches the authors' intent.
+- No `#` comments.
+- Keys can contain `.` and `:`, for example `Plane.003=0` and `Plate_A:Plate_LODA=0` in `proview_nodes.ini`.
+- There are 21 duplicate sections and 229 duplicate keys within one section, for example in the `az3d_traffic_*` `analog_instruments.ini` files.
+  Which duplicate AC uses is **not verified**.
+- 21 lines are neither a section nor an entry. Examples: prose pasted into `cky_koenigsegg_jesko/data/car.ini`, a lone `3` in `redbull_x1_s2/data/aero.ini`,
+  and `[_EXTENSION] RAIN_DEV-1` in `faz_mercedes_g63/data/car.ini`.
