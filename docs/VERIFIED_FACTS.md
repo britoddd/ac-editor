@@ -211,3 +211,33 @@ Details, sources, and the full key recipe are in `docs/ACD.md`.
   After the 8 header bytes are skipped, the same key and cipher give 70 entries of clean text.
   Its `lods.ini` has `[COCKPIT_HR]` and `[LOD_0]` to `[LOD_3]`, naming `porsche_911_gt3_r.kn5` and the `_lod_B`, `_lod_C`, `_lod_D` versions.
   None of them matches the folder name, and all exist in the car folder.
+
+## Model encryption detection (BRITOD-DESK, 2026-11-02, M0 task 6)
+
+Sources:
+- The [CSP wiki on KN5 encryption](https://github.com/ac-custom-shaders-patch/acc-extension-config/wiki/Misc-%E2%80%93-KN5-Encryption) says encrypted models work only with CSP.
+  It says the encrypter writes `<name>_encrypted.kn5` next to the original, and that an optional mode makes the model stop working if `data.acd` changes
+  ("This mode protects data from changes, but doesn't encrypt it"). It gives no file signature for encrypted KN5s.
+- Searches found no public statement that any specific mod on this PC is encrypted.
+  One report says [VRC Formula Alpha 2026](https://traxion.gg/vrc-releases-2026-f1-car-inspired-mod-for-assetto-corsa/) needs CSP.
+
+Survey: `scratch/kn5_survey.py` (not committed) read only the KN5 header, the texture table (names and sizes, seeking past the data),
+and the first material's name and shader in every `.kn5` in `content\cars`. Nothing was decrypted or decoded beyond that.
+
+- 1,109 KN5 files. All start with `sc6969`. 86 are version 5 and 1,023 are version 6.
+- Version 6 files have one extra int32 after the version: 455 non-zero and 568 zero. The meaning is unknown.
+- 1,073 files parse cleanly with the standard layout (AcTools `Kn5Reader`), including every Kunos file.
+- 36 files in 10 car folders do **not**. Each has a valid `sc6969` header, version 6, extra value 0, and a texture table that does not make sense
+  (the first texture's size runs past the end of the file).
+  The folders are: `toyota_fortuner_2021_legender`, `toyota_hilux_revo_2021_mt`, and `vrc_formula_alpha_2023`, `_2024`, `_2025`, and `_2026`, each also in a `_csp` version.
+  All 10 have an `extension\` folder. Their `collider.kn5` parses, except in the two 2026 folders.
+- No KN5 file name contains `encrypt`.
+- Not verified: whether those 36 files are encrypted or are a KN5 variant we don't know.
+  An optional owner check: drive `vrc_formula_alpha_2023` with CSP turned off. The CSP wiki says an encrypted model then looks broken.
+
+Proposed V-14 detection, which reads only the header and tables and never decodes model data:
+1. Any KN5 whose name contains `_encrypted` gets the flag.
+2. Any KN5 with a valid `sc6969` header whose texture or material table doesn't parse with the standard layout gets the flag.
+Message: "Model can't be read with the standard layout. It may be encrypted." Never say it *is* encrypted.
+Effects: the KN5 is never opened beyond this check. Physics edits need an extra confirmation saying CSP's data-protection mode may stop the model working after `data.acd` changes.
+MCP tools return only the status (CC-9).

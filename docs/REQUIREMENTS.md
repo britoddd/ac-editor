@@ -233,7 +233,7 @@ These questions must be answered in Milestone 0, before Milestone 1 starts.
 - [ ] Can the app write to AC's Steam folder under Program Files, or is a Content Manager ZIP the only reliable install route?
 - [x] Which public format notes fully describe the `.acd` key, and does a key built from them match `acd.py`? **Answered 2026-11-02:** the AssettoTools README formulas, with aluigi's notes and the AcTools layout. One loop bound in the notes needed correcting. The key matches acd.py for 14 names, and our pack of the tutorial car is byte-identical. A Kunos file with the `-1111` header (`ks_porsche_911_gt3_r_2016`) also decrypts with the same key once the header is skipped (see `docs/ACD.md`).
 - [x] Where does `data.acd` sit in a real car? **Answered 2026-11-02:** in the car root (see `docs/VERIFIED_FACTS.md`, car folder survey).
-- [ ] How can model encryption be detected without trying to bypass it?
+- [x] How can model encryption be detected without trying to bypass it? **Answered 2026-11-02:** not with certainty. The conservative signal flags a KN5 named `*_encrypted*`, or one whose texture or material table doesn't parse with the standard layout (36 files in 10 mod folders on BRITOD-DESK, none from Kunos). The warning says "may be encrypted". See `docs/VERIFIED_FACTS.md`.
 - [ ] Is FBX 2014/2015 still the required export format with current Blender and ksEditor?
 - [ ] Which AcTools files port cleanly to .NET 10, and are they worth keeping?
 - [ ] If the project is open-sourced, which license should it use? Ported AcTools code keeps its Ms-PL terms. Keep [`acd`, which is GPL-2.0](https://github.com/philippkosarev/acd), as a test tool only. This is not legal advice.
