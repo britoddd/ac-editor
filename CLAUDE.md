@@ -31,8 +31,10 @@ M3 adds the guarded file service that every write goes through, including a pack
 
 ### Notes for the next agent
 
+- **Branches:** work happens on `main`. The owner switched to it during M2 and pushes it themselves, so never push. The local `milestone-0` branch is stale.
 - **Backslashes:** the Bash tool collapses `\\` into `\`, so Windows paths inside Python string literals get mangled (`\f` and `\a` become control characters).
   Write doc text with the Edit tool or a `cat <<'EOF'` heredoc, build a backslash with `chr(92)` in Python, and afterwards scan edited docs for bytes `0x00`–`0x1F` other than tab, CR, and LF.
+  The same thing breaks C# escapes such as `"\r\n"` when a Python script edits C# source: they turn into real line breaks. Edit `.cs` files with the Edit tool.
 - **Line endings:** git has `core.autocrlf=true` system-wide. `.gitattributes` marks `fixtures/** -text`, so keep every byte-exact test file under `fixtures/`.
 - **Running acd.py:** auto mode blocks Claude from running downloaded code. Give the owner the one-line `python -c` command from `docs/ACD.md` ("Commands") to run with `!`.
   Never open `scratch/acd.py/` (GPL-2.0 source) or the old `scratch/acd_key_from_notes.py` and `scratch/acd_container.py`, which were written after reading it.
@@ -43,8 +45,16 @@ M3 adds the guarded file service that every write goes through, including a pack
   Write there only with the owner's approval, and remove test files afterwards. Ask for approval explicitly and wait for a clear yes before copying.
   `scratch/m2_game_check` is a Core-only console program that builds a test `data.acd` (see the M2 entry in `docs/VERIFIED_FACTS.md`).
 - **`fixtures/local` (gitignored):** `acm_tutorial_basic`, `formula_k`, `shelby_cobra_427sc`, `ks_porsche_911_gt3_r_2016/data.acd` (the `data.acd` only, with a `-1111` header), and `acdpy_reference/acm_tutorial_basic/data.acd` (acd.py's pack of the tutorial car).
+- **Synthetic ACD fixture:** `fixtures/synthetic/acd/acm_acd_synthetic/data.acd` is acd.py's pack of the `data` folder next to it.
+  If any file in that folder changes, `AcdPyComparisonTests` fails until the owner repacks it with the command in `docs/ACD.md`. `FixtureRunnerTests` also scans those files.
 - **Core conventions:** each format has `Parse(bytes)` (never throws) and `ToBytes()`, and `With...()` edits return a new object.
   Add every new format to `FixtureRunnerTests`. Mark a known shortcut with a `ponytail:` comment that names its limit.
+- **ACD API for M3:** `AcdEntry(Name, Data)` is the file type for both `data.acd` entries and `data\` files.
+  `CarData.Load` never falls back to `data\` when `data.acd` is unreadable, because AC doesn't. Show its `Error` and open the car read-only (V-13).
+  `CarData.PackFolder` and `AcdFile.PackVerified` return `(Bytes, Error)` and write nothing.
+  They refuse non-ASCII or path-character file names. One real mod has `data\suspensions - 副本.ini`, so the UI must tell the user to rename or remove such a file.
+- **Scratch tools** (gitignored, all read-only): `ctrl_survey.py` and `name_survey.py` survey every installed car's `data\`. `acd_names.py` lists an `.acd`'s unencrypted entry names and decrypts nothing.
+  Run Python on game or mod files with `python -I`.
 
 ## Agreed scope
 
