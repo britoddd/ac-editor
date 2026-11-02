@@ -301,3 +301,7 @@ These come from the 250 non-empty folders in `content\cars`.
   1 folder has a space (`traffic_jetbus 3_sdd`). The rest use only `[a-z0-9_.-]`.
 - Every car has at least one folder under `skins\`.
 - Working-file types found inside car folders: 26 `.psd`, 12 `.fbx`, 22 `NULL.dds` (made by ksEditor), 17 `.tmp`, 2 `.bak`, plus the tutorial car's `.blend` and `.blend1`.
+- 2026-11-02, at the owner's request: the experimental tune was removed from the installed `acm_tutorial_basic`.
+  `engine.ini` and `power.lut` were copied back from `D:\ACModding\acm_tutorial_basic\data`. The installed `data\` now matches the workspace, apart from AC's own `proview_nodes.ini`.
+  The tuned files are kept in `scratch/v12_test/installed_data_backup/` (not committed).
+- The owner uses Blender 4.4 only for this project. Blender 5.2 was not used to build the tutorial car.
