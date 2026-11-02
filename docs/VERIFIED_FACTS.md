@@ -246,3 +246,24 @@ Proposed V-14 detection, which reads only the header and tables and never decode
 Message: "Model can't be read with the standard layout. It may be encrypted." Never say it *is* encrypted.
 Effects: the KN5 is never opened beyond this check. Physics edits need an extra confirmation saying CSP's data-protection mode may stop the model working after `data.acd` changes.
 MCP tools return only the status (CC-9).
+
+## AcTools port trial on .NET 10 (BRITOD-DESK, 2026-11-02, M0 task 8)
+
+Source: [gro-ove/actools](https://github.com/gro-ove/actools), Ms-PL, commit `e5e5c94b8dee7511def0b670bfd5dbb233831c11`. Only the needed folders were sparse-cloned into `scratch/actools`.
+Each group was compiled as a `net10.0` class library in `scratch/actools_port/` (SDK 10.0.403), with the JetBrains.Annotations NuGet package added only for the trial.
+The builds were compile-only. No AcTools code was run, and nothing from AcTools is committed.
+
+| Files | Result on .NET 10 | Verdict |
+| --- | --- | --- |
+| `AcdFile/AcdReader.cs`, `AcdWriter.cs`, `AcdEntry.cs`, `AcdEncryption.cs` | They do not compile alone. They need `ReadAheadBinaryReader.cs`, which needs `Numerics/*` and a growing set of `Utils/Helpers` files (`StringExtension` pulls in `AlphanumComparatorFast`, `Utf8Checker`, `ArrayExtension` with a `msvcrt.dll` call, and `ObjectExtension`). | Do not port. Write the ~100 lines from `docs/ACD.md` on top of `BinaryReader`. Note that AcTools' `ReadString` is an int32 length plus ASCII, unlike `BinaryReader.ReadString`. |
+| `ReadAheadBinaryReader.cs` | A real .NET 5+ conflict: AcTools' `SystemHalf.Half` clashes with the built-in `System.Half`. A two-line fix works (drop the using, call `BitConverter.UInt16BitsToHalf`). It is built for KN5 reading. | Not needed for v1. |
+| `AcdFile/Acd.cs` | Uses `FileUtils` (Recycle Bin, `shell32.dll`, its own delete and rename logic). | Do not port. It conflicts with the single guarded file service. |
+| `DataFile/IniFile.cs`, `IniFileSection.cs`, `LutDataFile.cs`, `RtoDataFile.cs`, `DataFileBase.cs` | Need `Utils/Helpers`, `AcTools.Windows`, and the `IDataReadWrapper` types. `IniFile.OptionKeepComments` is `false` by default, and its comment mode stores comments per key, not the exact text. `LutDataFile.Stringify()` rewrites every line as `x|y` plus LF and drops comments. | Do not port. They fail QS-1 and QS-2. Use them only as a reference for parsing quirks: AcTools treats `//` as a comment as well as `;` (not verified against AC). |
+| `Utils/AcRootFinder.cs` | One error (`AcToolsLogging`). It finds AC from `SourceModInstallPath`'s parent and `config\config.vdf` `BaseInstallFolder_N` entries. This PC has **0** such entries, so it would miss AC in a secondary library. | Do not port. Use the verified `libraryfolders.vdf` method above. |
+| `Utils/AcPaths.cs` | Needs the `DataFile` group. | Do not port. |
+| `Kn5File/Kn5Basic.cs` | Not compiled. It starts an external FBX converter process, and KN5 and FBX work are out of scope for v1. | Do not port. |
+| `Utils/AesUtils.cs`, `Utils/AssemblyResolver.cs` | Not compiled. They are unrelated: Content Manager's string encryption and runtime DLL loading. | Do not port. |
+
+No downloaded file references `AcManager.Internal` or handles KN5 encryption. `Acd.cs` and `AcdEncryption.cs` only expose an empty factory hook for the key.
+Conclusion: nothing ports cleanly as-is, because the files share a tangle of helpers. Everything v1 needs is small enough to write fresh from our own notes, so port nothing.
+`docs/THIRD_PARTY.md` is therefore not needed yet. Create it the first time any AcTools code is copied.

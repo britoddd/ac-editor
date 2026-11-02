@@ -212,7 +212,7 @@ The tool and code facts are confirmed from primary sources, but most AC facts ar
 | WPF runs on modern .NET, on Windows only | Verified in official documentation | [Microsoft WPF overview](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/overview/) |
 | The official C# MCP SDK provides a stdio server transport | Verified in SDK documentation | [MCP C# SDK](https://csharp.sdk.modelcontextprotocol.io/v1/concepts/getting-started.html) |
 | Claude Code supports local stdio MCP servers and project `.mcp.json` files | Verified in official documentation | [Claude Code MCP docs](https://code.claude.com/docs/en/mcp) |
-| AcTools has open ACD container and KN5 code, targets .NET Framework 4.5.2, and uses Ms-PL | Verified in its files; not built or tested yet | [AcTools](https://github.com/gro-ove/actools) |
+| AcTools has open ACD container and KN5 code, targets .NET Framework 4.5.2, and uses Ms-PL | Verified in its files. A compile trial on .NET 10 (M0 task 8) found nothing that ports cleanly; see `docs/VERIFIED_FACTS.md` | [AcTools](https://github.com/gro-ove/actools) |
 | The AcTools ACD key factory comes from a closed `AcManager.Internal` DLL | Verified by searching the public source | [App.xaml.cs](https://github.com/gro-ove/actools/blob/master/AcManager/App.xaml.cs) |
 | For `data` files, AcTools takes the ACD key ID from the parent folder name | Verified in source; the key derivation is not there | [AcdEncryption.cs](https://github.com/gro-ove/actools/blob/master/AcTools/AcdFile/AcdEncryption.cs) |
 | Blender places dummies and hierarchy; ksEditor sets shaders and exports KN5 | Community, widely used | [First car guide](https://assettocorsamods.net/threads/your-first-car-in-assetto-corsa-basic-guide.1019/) |
@@ -235,7 +235,7 @@ These questions must be answered in Milestone 0, before Milestone 1 starts.
 - [x] Where does `data.acd` sit in a real car? **Answered 2026-11-02:** in the car root (see `docs/VERIFIED_FACTS.md`, car folder survey).
 - [x] How can model encryption be detected without trying to bypass it? **Answered 2026-11-02:** not with certainty. The conservative signal flags a KN5 named `*_encrypted*`, or one whose texture or material table doesn't parse with the standard layout (36 files in 10 mod folders on BRITOD-DESK, none from Kunos). The warning says "may be encrypted". See `docs/VERIFIED_FACTS.md`.
 - [ ] Is FBX 2014/2015 still the required export format with current Blender and ksEditor?
-- [ ] Which AcTools files port cleanly to .NET 10, and are they worth keeping?
+- [x] Which AcTools files port cleanly to .NET 10, and are they worth keeping? **Answered 2026-11-02:** none port cleanly as-is, because the ACD, data-file, and path files all pull in a tangle of `Utils/Helpers` code. They aren't worth keeping either: the data-file writers drop comments (failing QS-1 and QS-2), `Acd.cs` bypasses our guarded file service, and `AcRootFinder` misses secondary Steam libraries. Write these parts fresh from `docs/ACD.md` and the verified facts. See `docs/VERIFIED_FACTS.md`.
 - [ ] If the project is open-sourced, which license should it use? Ported AcTools code keeps its Ms-PL terms. Keep [`acd`, which is GPL-2.0](https://github.com/philippkosarev/acd), as a test tool only. This is not legal advice.
 
 ## Sources
