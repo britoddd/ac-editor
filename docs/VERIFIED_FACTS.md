@@ -267,3 +267,15 @@ The builds were compile-only. No AcTools code was run, and nothing from AcTools 
 No downloaded file references `AcManager.Internal` or handles KN5 encryption. `Acd.cs` and `AcdEncryption.cs` only expose an empty factory hook for the key.
 Conclusion: nothing ports cleanly as-is, because the files share a tangle of helpers. Everything v1 needs is small enough to write fresh from our own notes, so port nothing.
 `docs/THIRD_PARTY.md` is therefore not needed yet. Create it the first time any AcTools code is copied.
+
+## Validator rule checks by the owner (2026-11-02, M0 task 9)
+
+- V-01 (folder name of 32 characters or fewer, lowercase, Latin; Warning): the owner reported "confirmed". The evidence they used is not recorded.
+  Related: the survey found mod folders with capital letters, for example `F1_mclaren_2024`, `Smarty_Red_Bull_RB16`, and `Fardier_Cugnot`.
+  The CSP wiki says encrypted cars need lowercase folder names.
+- V-06 (behaviour files `brakes.ini`, `colliders.ini`, `drivetrain.ini`, `setup.ini`; Warning): the owner reported "confirmed". The evidence they used is not recorded.
+- V-12 (`data.acd` and `data\` both present): test set up at 23:21. `content\cars\acm_tutorial_basic\data.acd` was added and `data\` was left untouched.
+  The `data.acd` holds the installed `data\` with `SCREEN_NAME=ACM Tutorial ACD` and every `power.lut` torque value halved.
+  If AC uses `data.acd`, the log's `POWER CLASS INDEX` power should be about half of the `data\` value. Result pending.
+- Owner tuning found in the installed car (22:43–22:44): `engine.ini` `LIMITER` 6500 → 17000, and `power.lut` torque about 10× higher, extended to 12000 rpm.
+  These edits are only in `content\cars`, not in `D:\ACModding`. A backup is in `scratch/v12_test/installed_data_backup/`.
