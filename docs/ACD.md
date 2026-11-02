@@ -60,7 +60,8 @@ git clone https://github.com/philippkosarev/acd.py.git acd.py
 git -C acd.py checkout a575c54fbd51b984fb690081f60903546f93a01e
 ```
 
-Self-test, which runs the repo's own tests. **Not run yet:** Claude Code's auto-mode check blocked running downloaded code, so the owner must approve or run it.
+Self-test, which runs the repo's own tests. The owner ran it on BRITOD-DESK on 2026-11-02 and it printed `acd.py self-test passed`.
+Claude Code's auto-mode check blocks Claude from running downloaded code, so the owner runs it with the `!` prefix or adds a permission rule.
 
 ```powershell
 cd D:\personal\ac-editor\scratch\acd.py
