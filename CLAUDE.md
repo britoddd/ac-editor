@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 2 (ACD) is in progress.** The plan below was approved on 2026-11-03. Steps 1–2 are done (`src/AcMod.Core/Acd/`: `AcdKey` written clean-room from `docs/ACD.md`, and the `AcdFile` reader). **Next: step 3.**
+**Milestone 2 (ACD) is in progress.** The plan below was approved on 2026-11-03. Steps 1–3 are done (`src/AcMod.Core/Acd/`: `AcdKey` written clean-room from `docs/ACD.md`, and `AcdFile.Parse` and `AcdFile.Pack`). **Next: step 4.**
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 

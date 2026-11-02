@@ -54,10 +54,10 @@ public sealed class AcdFile
             if (!TryReadInt32(bytes, ref pos, out var nameLength) || nameLength is < 1 or > 255 || nameLength > bytes.Length - pos)
                 return Fail($"{where} has a bad name length.");
 
-            var nameBytes = bytes.Slice(pos, nameLength);
+            // Latin-1 maps each byte to one char, so a non-ASCII byte stays visible to IsPlainFileName.
+            var name = Encoding.Latin1.GetString(bytes.Slice(pos, nameLength));
             pos += nameLength;
-            var name = Encoding.ASCII.GetString(nameBytes);
-            if (!Ascii.IsValid(nameBytes) || name.Any(c => c < ' ' || c == '\x7f' || PathChars.Contains(c)) || name is "." or "..")
+            if (!IsPlainFileName(name))
                 return Fail($"{where} has a name that isn't a plain ASCII file name.");
             if (!names.Add(name))
                 return Fail($"\"{name}\" appears twice.");
@@ -82,6 +82,39 @@ public sealed class AcdFile
 
         return entries.Count == 0 ? Fail("It contains no files.") : new AcdFile(entries, null);
     }
+
+    /// <summary>
+    /// Packs entries into data.acd bytes for <paramref name="carId"/>, the name of the car folder it will sit in.
+    /// No header and zero padding, as acd.py writes (docs/ACD.md). Throws on a non-ASCII car ID or entry name.
+    /// </summary>
+    public static byte[] Pack(IEnumerable<AcdEntry> entries, string carId)
+    {
+        var key = Encoding.ASCII.GetBytes(AcdKey.FromName(carId));
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream); // always little-endian
+        foreach (var entry in entries)
+        {
+            if (!IsPlainFileName(entry.Name))
+                throw new ArgumentException($"\"{entry.Name}\" isn't a plain ASCII file name.", nameof(entries));
+
+            writer.Write(entry.Name.Length);
+            writer.Write(Encoding.ASCII.GetBytes(entry.Name));
+            writer.Write(entry.Data.Length);
+            for (var i = 0; i < entry.Data.Length; i++)
+            {
+                // An int holding 0-255 is written as that byte followed by three zero padding bytes.
+                writer.Write((int)(byte)(entry.Data[i] + key[i % key.Length]));
+            }
+        }
+
+        return stream.ToArray();
+    }
+
+    /// <summary>Printable ASCII (spaces allowed, as in real mods), no path characters, and not "." or "..".</summary>
+    private static bool IsPlainFileName(string name) =>
+        name.Length is >= 1 and <= 255
+        && name.All(c => c is >= ' ' and < '\x7f' && !PathChars.Contains(c))
+        && name is not ("." or "..");
 
     private static AcdFile Fail(string error) => new([], error);
 
