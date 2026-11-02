@@ -312,3 +312,27 @@ These come from the 250 non-empty folders in `content\cars`.
   The file was removed afterwards, and the installed `data\` again matches the workspace, apart from `proview_nodes.ini`.
   Conclusion: a `digital_instruments.ini` that refers to missing objects did not crash AC 1.16.4 with CSP 0.3.0-preview634.
 - Versions seen in the AC log: AC `1.16.4 (x64)`, Custom Shaders Patch `v0.3.0-preview634`.
+
+## Text file conventions (BRITOD-DESK, 2026-11-02, M1 step 2)
+
+Method: `scratch/encoding_survey.py` (not committed) read 2,616 `.ini`, `.lut`, `.rto`, `.json`, and `.txt` files. Nothing was written. The sources were:
+- `fixtures/local`: the tutorial car, formula_k, and the cobra's `ui` folder.
+- Every installed car's unpacked `data\`, `ui\`, and `sfx\` (`.bak` files skipped).
+- The 70 files inside `ks_porsche_911_gt3_r_2016/data.acd`, decrypted in memory.
+- The shared `content\sfx\GUIDs.txt`.
+
+- **Encoding:** every file is ASCII or valid UTF-8. No UTF-16 and no invalid UTF-8 (legacy code page) files were found.
+  Non-ASCII UTF-8 appears in 85 Kunos and 25 mod JSON files, and in 3 mod `.ini` files (for example `Fardier_Cugnot/data/ai.ini`).
+- **BOM:** a UTF-8 BOM appears in 10 Kunos `dlc_ui_car.json` files, 1 mod `ui_car.json` (`ks_mercedes_amg_gt3_2020`), and 2 mod `.ini` files
+  (`top_fuel_dragster/data/aero.ini`, `toyota_fortuner_2021_legender/data/aero.ini`). No `.lut`, `.rto`, or `GUIDs.txt` has one.
+- **Line endings:** all of CRLF, LF, mixed, and none (no line break at all) occur.
+  - The formula_k SDK files are CRLF, except `escmode.ini`, which is mixed.
+  - The Kunos Porsche's files inside `data.acd` are **LF**.
+  - Mods use both. Mixed endings appear in 27 mod `.ini`, 4 mod `.lut`, and 13 mod `GUIDs.txt` files.
+  - 39 mod `.ini`, 12 `.lut`, and 2 `.rto` files have no line break, and some are empty (for example formula_k `drs.ini` is 0 bytes).
+- **Final newline:** files with and without one are both common, even within one car.
+- **Tabs** are common in `.ini` (aligned `;` comments) and `ui_car.json`, and occur in 7 mod `.lut` files.
+- Extra files seen in `ui\` folders: `dlc_ui_car.json`, `cm_paintshop.json`, `camera_trajectory.json`, and `cm_lods_generation.json`.
+  Kunos `ks_abarth500_assetto_corse/ui/` also has `ui_car (Stefano Casillo's conflicted copy 2020-01-17).json`.
+- Consequence for M1: the text base must keep the BOM, the line ending of **each** line, and whether there is a final newline.
+  It can assume UTF-8, with a byte-preserving fallback for anything that isn't valid UTF-8.
