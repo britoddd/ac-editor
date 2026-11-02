@@ -119,3 +119,30 @@ Tested with Blender 4.4 only. Each file was read with `scratch/fbx_test/fbxdump.
   Python `json.loads` fails with `Invalid control character`, but it succeeds with `strict=False`.
   Consequence for V-10: a strict "valid JSON" check would reject a Kunos file, so the parser must allow control characters inside strings.
 - `ui\badge.png` is 128×128 RGBA. The same folder also has `old_badge.png` (86×55) and `preview_small.png` (240×120).
+
+## Tutorial car in game (BRITOD-DESK, 2026-11-02)
+
+The owner copied `D:\ACModding\acm_tutorial_basic` into `content\cars` and drove it on `algarve_portimao_2023`.
+They reported that all checks passed: the car loads, the model and textures are right, the front wheels steer, the car drives forward,
+the engine sound plays, the gears and brakes work, and the car stays visible from a far camera.
+These lines from `Documents\Assetto Corsa\logs\log.txt` (22:21) support that:
+
+- `Data path: content/cars/acm_tutorial_basic/data/`: AC loads an unpacked `data\` folder when the car has no `data.acd`.
+- `USING PHYSICS DRIVEN SUSPENSIONS`, with `USE_ANIMATED_SUSPENSIONS=0` in `car.ini`.
+- `INIT LOD:0`, then `LOADING COLLIDER MESH FILE: content/cars/acm_tutorial_basic/collider.kn5`.
+- `CREATING proview_nodes.ini`: AC wrote `data\proview_nodes.ini` into the car folder in `content\cars` (201 bytes).
+  It went to the real folder, not the UAC VirtualStore.
+- `WARNING: flames.ini not found` is only a warning. The car still loads when `flames.ini`, `digital_instruments.ini`, `lights.ini`, `mirrors.ini`,
+  `sounds.ini`, `ai.ini`, `damage.ini`, `electronics.ini`, and the other files in `acm_tutorial_basic_FOR_LATER_USE` are missing.
+- `FOUND 0 BRAKE DISCS MESHES FOR TYRE:0..3` and `RADIUS FRONT, P:0.275000 , G:0.000000` (graphics radius 0) are expected for a model with no disc or tyre meshes.
+- `ERROR: Variable type cannot be found` appears 4 times before the car's animations load. The cause is unknown.
+- Leftover working files in the car folder (`.blend`, `.blend1`, `.fbx`, `texture\NULL.dds`) did not stop the car loading.
+
+So the working car keeps these files in `data\`: `aero.ini`, `brakes.ini`, `cameras.ini`, `car.ini`, `colliders.ini`, `driver3d.ini`, `drivetrain.ini`,
+`engine.ini`, `lods.ini`, `setup.ini`, `suspensions.ini`, `tyres.ini`, and every `.lut` and `.rto` file these refer to.
+
+## Write access to content\cars (BRITOD-DESK, 2026-11-02)
+
+- `icacls` on `...\assettocorsa\content\cars` shows `BUILTIN\Users:(I)(F)`, which gives normal users inherited full control.
+  The game also created a file there. This strongly suggests a normal user process can write to `content\cars`.
+  M0 task 7 still needs the agreed test folder to confirm it.
