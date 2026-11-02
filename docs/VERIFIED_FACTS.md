@@ -146,6 +146,7 @@ So the working car keeps these files in `data\`: `aero.ini`, `brakes.ini`, `came
 - `icacls` on `...\assettocorsa\content\cars` shows `BUILTIN\Users:(I)(F)`, which gives normal users inherited full control.
   The game also created a file there. This strongly suggests a normal user process can write to `content\cars`.
   M0 task 7 still needs the agreed test folder to confirm it.
+- The owner copied `acm_tutorial_basic` into `content\cars` with Windows Explorer, and Windows did **not** ask for administrator permission (2026-11-02).
 
 ## Car folder survey (BRITOD-DESK, 2026-11-02, M0 task 4)
 
@@ -194,4 +195,3 @@ Local copies of `acm_tutorial_basic`, `formula_k`, and `shelby_cobra_427sc` are 
 - V-03 would warn on most Kunos cars.
 - V-09 must ignore case and accept the shared `content\sfx\GUIDs.txt` for Kunos cars.
 - V-10 needs lenient JSON parsing, and "badge must be 128×128" would fire on 14 Kunos cars.
-- The owner copied `acm_tutorial_basic` into `content\cars` with Windows Explorer, and Windows did **not** ask for administrator permission (2026-11-02).
