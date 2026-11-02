@@ -79,6 +79,10 @@ Both are in `scratch/` and not committed. Re-create them from this section if th
 - **Pack:** packing `fixtures/local/acm_tutorial_basic/data` (40 files) gives a `data.acd` byte-identical to acd.py's (188,756 bytes).
 - **Unpack:** unpacking acd.py's file gives back all 40 original files byte-for-byte.
 - **Kunos container:** `shelby_cobra_427sc/data.acd` parses with this layout: no header, 52 entries, all padding zero. It was not decrypted.
+- **Header file (decrypted with the owner's approval):** `ks_porsche_911_gt3_r_2016/data.acd` starts with `-1111` and then `591346`.
+  After those 8 bytes are skipped, the same key (`145-191-144-93-26-0-15-55`) and cipher turn all 70 entries into clean UTF-8 text.
+  Its `lods.ini` names `porsche_911_gt3_r.kn5` and `_lod_B`, `_lod_C`, `_lod_D` versions, all present in the car folder.
+  The copy is in `fixtures/local/ks_porsche_911_gt3_r_2016/data.acd`. It was decrypted in memory only, and nothing was written.
 
 ### Header survey (content\cars, 2026-11-02)
 
@@ -90,8 +94,9 @@ Only the first 8 bytes of each `data.acd` were read. Nothing was decrypted.
 
 ### Open
 
-- Do the same key and cipher apply after a `-1111` header? Testing it means decrypting a file that is not the owner's, so ask the owner first.
-  Until then, treat header files as "cannot read with the standard method" (V-13, read-only).
+- Header files: the same key and cipher work after the header for one car, with header value 591346.
+  The other 10 header values are untested, so the reader should still check that decrypted text looks valid before trusting it (V-13).
+  What the second int32 means is unknown. A writer should leave the header out, as acd.py does. Whether AC accepts our files is the M2 exit gate.
 - Non-ASCII folder names: AssettoTools sums UTF-16 characters, acd.py sums UTF-8 bytes, and AC's behaviour is unknown. Keep car IDs ASCII (V-01).
 - Does AC load a `data.acd` that we packed? This is the M2 exit gate, checked in game by the owner.
 

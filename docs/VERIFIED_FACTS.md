@@ -207,3 +207,7 @@ Details, sources, and the full key recipe are in `docs/ACD.md`.
   File names inside are plain ASCII: 52 entries, including `lods.ini` and `proview_nodes.ini`. Nothing was decrypted.
 - 91 Kunos `ks_*` cars and 2 mods start `data.acd` with the `-1111` header. 86 Kunos cars and 50 mods do not.
   Whether the same key works after the header is not tested.
+- With the owner's approval, `ks_porsche_911_gt3_r_2016/data.acd` (header `-1111`, then `591346`) was decrypted in memory.
+  After the 8 header bytes are skipped, the same key and cipher give 70 entries of clean text.
+  Its `lods.ini` has `[COCKPIT_HR]` and `[LOD_0]` to `[LOD_3]`, naming `porsche_911_gt3_r.kn5` and the `_lod_B`, `_lod_C`, `_lod_D` versions.
+  None of them matches the folder name, and all exist in the car folder.
