@@ -322,7 +322,7 @@ Method: `scratch/encoding_survey.py` (not committed) read 2,616 `.ini`, `.lut`, 
 - The shared `content\sfx\GUIDs.txt`.
 
 - **Encoding:** every file is ASCII or valid UTF-8. No UTF-16 and no invalid UTF-8 (legacy code page) files were found.
-  Non-ASCII UTF-8 appears in 85 Kunos and 25 mod JSON files, and in 3 mod `.ini` files (for example `Fardier_Cugnot/data/ai.ini`).
+  Non-ASCII UTF-8 appears in 90 Kunos and 25 mod JSON files, and in 5 mod `.ini` files (for example `Fardier_Cugnot/data/ai.ini`).
 - **BOM:** a UTF-8 BOM appears in 10 Kunos `dlc_ui_car.json` files, 1 mod `ui_car.json` (`ks_mercedes_amg_gt3_2020`), and 2 mod `.ini` files
   (`top_fuel_dragster/data/aero.ini`, `toyota_fortuner_2021_legender/data/aero.ini`). No `.lut`, `.rto`, or `GUIDs.txt` has one.
 - **Line endings:** all of CRLF, LF, mixed, and none (no line break at all) occur.
