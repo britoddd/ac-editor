@@ -38,6 +38,8 @@ All integers are 32-bit little-endian.
    - an int32 name length, then the name in ASCII. Names are **not encrypted**, so the file list can be read without the key.
    - an int32 data length `N`.
    - `N × 4` bytes: each data byte is followed by 3 bytes of padding. The padding is zero in every file checked.
+3. acd.py writes entries in ordinal (case-sensitive) name order, so `F3hard_front.lut` comes before `aero.ini`, and `B_power.lut` before `_extra.ini` before `aero.ini`.
+   Seen in its output for the tutorial car and the synthetic fixture (2026-11-03). Windows lists folders in a different order. Whether AC cares about the order is unknown.
 
 ### Key
 
@@ -120,6 +122,14 @@ Only the first 8 bytes of each `data.acd` were read. Nothing was decrypted.
 - No header: 86 Kunos cars and 50 mods. All 59 Kunos cars without the `ks_` prefix are here, plus 27 that have it.
 - `-1111` header: 91 Kunos cars, all with the `ks_` prefix, and 2 mods. The second int32 takes 11 values:
   243591, 313233, 517311, 591346, 673425, 743221, 781233, 835647, 912125, 912346, and 919969. Its meaning is unknown.
+
+### C# check (M2 step 4, 2026-11-03)
+
+`AcdPyComparisonTests` checks `AcMod.Core` against acd.py in both directions, on two pairs of a `data` folder and acd.py's pack of it:
+- `fixtures/synthetic/acd/acm_acd_synthetic` (committed): 7 synthetic files, packed by the owner with acd.py (928 bytes).
+- `fixtures/local/acdpy_reference/acm_tutorial_basic/data.acd` (local only): acd.py's pack of `fixtures/local/acm_tutorial_basic/data` (188,756 bytes).
+
+Core unpacks each to the original files byte-for-byte, and Core's pack of each folder is byte-identical to acd.py's.
 
 ### Open
 

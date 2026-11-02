@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 2 (ACD) is in progress.** The plan below was approved on 2026-11-03. Steps 1–3 are done (`src/AcMod.Core/Acd/`: `AcdKey` written clean-room from `docs/ACD.md`, and `AcdFile.Parse` and `AcdFile.Pack`). **Next: step 4.**
+**Milestone 2 (ACD) is in progress.** The plan below was approved on 2026-11-03. Steps 1–4 are done (`src/AcMod.Core/Acd/`: `AcdKey` written clean-room from `docs/ACD.md`, `AcdFile.Parse` and `AcdFile.Pack`, and `AcdPyComparisonTests`). **Next: step 5.**
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -54,7 +54,7 @@ The owner chose a fresh session so the key code is written only from public note
   The `POWER CLASS INDEX ... PW:` line shows which data loaded (formula in the V-12 entry of `docs/VERIFIED_FACTS.md`). Versions: AC 1.16.4, CSP 0.3.0-preview634.
 - **Installed tutorial car:** `content\cars\acm_tutorial_basic` matches `D:\ACModding\acm_tutorial_basic`, plus AC's own `data\proview_nodes.ini`.
   Write there only with the owner's approval, and remove test files afterwards.
-- **`fixtures/local` (gitignored):** `acm_tutorial_basic`, `formula_k`, `shelby_cobra_427sc`, and `ks_porsche_911_gt3_r_2016/data.acd` (the `data.acd` only, with a `-1111` header).
+- **`fixtures/local` (gitignored):** `acm_tutorial_basic`, `formula_k`, `shelby_cobra_427sc`, `ks_porsche_911_gt3_r_2016/data.acd` (the `data.acd` only, with a `-1111` header), and `acdpy_reference/acm_tutorial_basic/data.acd` (acd.py's pack of the tutorial car).
 - **Core conventions:** each format has `Parse(bytes)` (never throws) and `ToBytes()`, and `With...()` edits return a new object.
   Add every new format to `FixtureRunnerTests`. Mark a known shortcut with a `ponytail:` comment that names its limit.
 

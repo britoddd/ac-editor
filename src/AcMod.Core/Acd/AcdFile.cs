@@ -85,14 +85,15 @@ public sealed class AcdFile
 
     /// <summary>
     /// Packs entries into data.acd bytes for <paramref name="carId"/>, the name of the car folder it will sit in.
-    /// No header and zero padding, as acd.py writes (docs/ACD.md). Throws on a non-ASCII car ID or entry name.
+    /// No header, zero padding, and entries in ordinal (case-sensitive) name order, as acd.py writes (docs/ACD.md).
+    /// Throws on a non-ASCII car ID or entry name.
     /// </summary>
     public static byte[] Pack(IEnumerable<AcdEntry> entries, string carId)
     {
         var key = Encoding.ASCII.GetBytes(AcdKey.FromName(carId));
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream); // always little-endian
-        foreach (var entry in entries)
+        foreach (var entry in entries.OrderBy(e => e.Name, StringComparer.Ordinal))
         {
             if (!IsPlainFileName(entry.Name))
                 throw new ArgumentException($"\"{entry.Name}\" isn't a plain ASCII file name.", nameof(entries));

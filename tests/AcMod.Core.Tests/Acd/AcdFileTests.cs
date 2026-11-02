@@ -8,13 +8,17 @@ public class AcdFileTests
     private const string CarId = "acm_tutorial_basic";
 
     // Real-looking text: CRLF and LF lines, a tab, a UTF-8 BOM, non-ASCII UTF-8, and an empty file (docs/VERIFIED_FACTS.md).
+    // Listed in the ordinal name order Pack writes.
     private static readonly AcdEntry[] Files =
     [
-        Entry("car.ini", "[HEADER]\r\nVERSION=2\r\n\r\n[INFO]\r\nSCREEN_NAME=Tutorial\t; café\r\n"),
-        Entry("power.lut", "0|100\n1000|150\n7000|90"),
         Entry("aero.ini", "﻿[HEADER]\nVERSION=1\n"),
+        Entry("car.ini", "[HEADER]\r\nVERSION=2\r\n\r\n[INFO]\r\nSCREEN_NAME=Tutorial\t; café\r\n"),
         Entry("drs.ini", ""),
+        Entry("power.lut", "0|100\n1000|150\n7000|90"),
     ];
+
+    // Offset of the first entry's data: name length, name, data length.
+    private static readonly int FirstDataOffset = 4 + Files[0].Name.Length + 4;
 
     private static AcdEntry Entry(string name, string text) => new(name, Encoding.UTF8.GetBytes(text));
 
@@ -51,10 +55,18 @@ public class AcdFileTests
     {
         var bytes = AcdFile.Pack(Files, CarId);
 
-        Assert.Equal("car.ini".Length, BitConverter.ToInt32(bytes)); // the first entry starts at byte 0
+        Assert.Equal(Files[0].Name.Length, BitConverter.ToInt32(bytes)); // the first entry starts at byte 0
         Assert.Equal(Files.Sum(f => 4 + f.Name.Length + 4 + 4 * f.Data.Length), bytes.Length);
-        var data = bytes.AsSpan(4 + "car.ini".Length + 4, 4 * Files[0].Data.Length).ToArray();
+        var data = bytes.AsSpan(FirstDataOffset, 4 * Files[0].Data.Length).ToArray();
         Assert.All(data.Where((_, i) => i % 4 != 0), b => Assert.Equal(0, b));
+    }
+
+    [Fact]
+    public void Pack_writes_entries_in_ordinal_name_order_like_acd_py()
+    {
+        var bytes = AcdFile.Pack([Entry("c.ini", "x"), Entry("a.ini", "x"), Entry("_x.ini", "x"), Entry("B.ini", "x")], CarId);
+
+        Assert.Equal(["B.ini", "_x.ini", "a.ini", "c.ini"], AcdFile.Parse(bytes, CarId).Entries.Select(e => e.Name));
     }
 
     [Fact]
@@ -107,7 +119,7 @@ public class AcdFileTests
     public void Non_zero_padding_is_reported()
     {
         var bytes = AcdFile.Pack(Files, CarId);
-        bytes[4 + "car.ini".Length + 4 + 1] = 1; // first padding byte of car.ini's data
+        bytes[FirstDataOffset + 1] = 1; // first padding byte of the first entry's data
 
         Assert.Contains("non-zero padding", AcdFile.Parse(bytes, CarId).Error);
     }
