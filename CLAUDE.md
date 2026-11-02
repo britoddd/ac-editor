@@ -14,46 +14,34 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 2 (ACD) is in progress.** The plan below was approved on 2026-11-03. Steps 1–5 are done (`src/AcMod.Core/Acd/`: `AcdKey` written clean-room from `docs/ACD.md`, `AcdFile.Parse` and `AcdFile.Pack`, `AcdPyComparisonTests`, `CarData.Load` for effective data, and `AcdFile.PackVerified` / `CarData.PackFolder` for PK-1). **Next: step 7, the game check.**
+**Milestone 2 is done (2026-11-03). Next: plan Milestone 3** (see "Next: Milestone 3" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
-Done so far. Git history has the details: one commit per step, prefixed `M0` or `M1`.
+Done so far. Git history has the details: one commit per step, prefixed `M0`, `M1`, or `M2`.
 - **M0 (2026-11-02):** the tutorial car `acm_tutorial_basic` was built and drives in AC. Facts about real AC data are in `docs/VERIFIED_FACTS.md`, the ACD format is in `docs/ACD.md`, and the V-01 to V-15 verdicts are in `docs/REQUIREMENTS.md` ("M0 verdicts"). The license is MIT, and no AcTools code is ported.
 - **M1 (2026-11-03):** `src/AcMod.Core` has `Text/TextDocument` (the lossless base) and `Formats/` with `LutFile` (.lut and .rto), `IniFile`, `UiCarJson`, and `GuidsFile`. `FixtureRunnerTests` checks QS-1 and every single-value edit (QS-2) on all 168 fixture files. 223 tests pass, with 0 warnings.
+- **M2 (2026-11-03):** `src/AcMod.Core/Acd/` has `AcdKey` (written clean-room from `docs/ACD.md`), `AcdFile` (`Parse` reports unreadable files per V-13, `Pack`, and `PackVerified` for PK-1), and `CarData` (effective data per TU-1 and V-12, and `PackFolder`). Core matches acd.py in both directions, and AC loaded a Core-packed `data.acd` (the log's `PW` matched the prediction exactly). 294 tests pass, with 0 warnings.
 
-## Milestone 2 plan
+## Next: Milestone 3 (Workspace)
 
-Exit gate: files unpacked by Core match acd.py's output, and a car repacked by Core loads in AC (checked by the owner). Make one commit per step.
-
-1. **Key** (`AcdKey`): car ID to key string, following the "Key" table in `docs/ACD.md`. Include the "data*" rule: a file whose name starts with `data` (ignoring case) uses its parent folder's name. Test with the known keys in `docs/ACD.md`.
-2. **Read:** parse the container (with or without the `-1111` header) and decrypt it. Check that the result is plausible text, and report an unreadable file instead of throwing (V-13). Container layout: `docs/ACD.md`.
-3. **Write:** no header, zero padding, and the key from the target car ID.
-4. **Compare with acd.py:** move `scratch/acd_test/acm_tutorial_basic/data.acd` (acd.py's packing of `fixtures/local/acm_tutorial_basic/data`, 188,756 bytes) into `fixtures/local/`.
-   Check that Core unpacks it to the original 40 files, and that Core's pack of that `data` folder is byte-identical. The owner also runs one acd.py command to make a synthetic reference file.
-5. **Effective data** (TU-1, V-12): read `data.acd` when it exists, otherwise `data\`, and flag a car that has both. AC ignores `data\` while `data.acd` exists.
-6. **Pack and verify** (PK-1): pack, unpack again, and compare, all in memory. Writing files waits for M3's guarded file service.
-7. **Game check:** repack the tutorial car with one visible change. The owner drives it, and Claude reads the log, as in the V-12 test in `docs/VERIFIED_FACTS.md`.
-
-### Clean-room rules for step 1
-
-The owner chose a fresh session so the key code is written only from public notes.
-- Write `AcdKey` from `docs/ACD.md` alone: the "Key" table, the "data*" rule, and the "Known keys" list.
-- **Do not open** `scratch/acd.py/` (GPL-2.0 source), `scratch/acd_key_from_notes.py`, or `scratch/acd_container.py`.
-  An earlier session that had read acd.py wrote the last two.
-- acd.py may only be run as a black box, by the owner, with the `!` prefix (see `docs/ACD.md`).
+No plan yet. Read the M3 row and the `WS-*` requirements in `docs/REQUIREMENTS.md`, propose small steps with requirement IDs, and get the owner's approval before coding.
+Exit gate: install to AC refuses unsafe targets, and delete and restore work end to end.
+M3 adds the guarded file service that every write goes through, including a packed `data.acd` (`CarData.PackFolder` returns bytes and writes nothing).
 
 ### Notes for the next agent
 
 - **Backslashes:** the Bash tool collapses `\\` into `\`, so Windows paths inside Python string literals get mangled (`\f` and `\a` become control characters).
   Write doc text with the Edit tool or a `cat <<'EOF'` heredoc, build a backslash with `chr(92)` in Python, and afterwards scan edited docs for bytes `0x00`–`0x1F` other than tab, CR, and LF.
 - **Line endings:** git has `core.autocrlf=true` system-wide. `.gitattributes` marks `fixtures/** -text`, so keep every byte-exact test file under `fixtures/`.
-- **Running acd.py:** auto mode blocks Claude from running downloaded code. Give the owner a one-line `python -c` command to run with `!`.
+- **Running acd.py:** auto mode blocks Claude from running downloaded code. Give the owner the one-line `python -c` command from `docs/ACD.md` ("Commands") to run with `!`.
+  Never open `scratch/acd.py/` (GPL-2.0 source) or the old `scratch/acd_key_from_notes.py` and `scratch/acd_container.py`, which were written after reading it.
 - **Screenshots:** the owner saves them in `scratch/` with default Windows names. Read the newest file.
 - **Game checks:** read `%USERPROFILE%\Documents\Assetto Corsa\logs\log.txt` right after the owner quits, because the next AC start overwrites it.
   The `POWER CLASS INDEX ... PW:` line shows which data loaded (formula in the V-12 entry of `docs/VERIFIED_FACTS.md`). Versions: AC 1.16.4, CSP 0.3.0-preview634.
 - **Installed tutorial car:** `content\cars\acm_tutorial_basic` matches `D:\ACModding\acm_tutorial_basic`, plus AC's own `data\proview_nodes.ini`.
-  Write there only with the owner's approval, and remove test files afterwards.
+  Write there only with the owner's approval, and remove test files afterwards. Ask for approval explicitly and wait for a clear yes before copying.
+  `scratch/m2_game_check` is a Core-only console program that builds a test `data.acd` (see the M2 entry in `docs/VERIFIED_FACTS.md`).
 - **`fixtures/local` (gitignored):** `acm_tutorial_basic`, `formula_k`, `shelby_cobra_427sc`, `ks_porsche_911_gt3_r_2016/data.acd` (the `data.acd` only, with a `-1111` header), and `acdpy_reference/acm_tutorial_basic/data.acd` (acd.py's pack of the tutorial car).
 - **Core conventions:** each format has `Parse(bytes)` (never throws) and `ToBytes()`, and `With...()` edits return a new object.
   Add every new format to `FixtureRunnerTests`. Mark a known shortcut with a `ponytail:` comment that names its limit.

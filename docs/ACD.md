@@ -135,10 +135,9 @@ Core unpacks each to the original files byte-for-byte, and Core's pack of each f
 
 - Header files: the same key and cipher work after the header for one car, with header value 591346.
   The other 10 header values are untested, so the reader should still check that decrypted text looks valid before trusting it (V-13).
-  What the second int32 means is unknown. A writer should leave the header out, as acd.py does. Whether AC accepts our files is the M2 exit gate.
+  What the second int32 means is unknown. A writer should leave the header out, as acd.py does. AC accepts our header-less files (M2 exit gate, 2026-11-03).
 - Non-ASCII folder names: AssettoTools sums UTF-16 characters, acd.py sums UTF-8 bytes, and AC's behaviour is unknown. Keep car IDs ASCII (V-01).
-- Does AC load a `data.acd` that we packed? **Early yes:** AC loaded one packed by `scratch/acd_container.py` for `acm_tutorial_basic` (V-12 test, 2026-11-02).
-  M2 must repeat this with the C# code.
+- Does AC load a `data.acd` that we packed? **Answered 2026-11-03: yes.** AC loaded one packed by `AcMod.Core` for `acm_tutorial_basic`, and the log's power matched the prediction exactly (M2 step 7, `docs/VERIFIED_FACTS.md`).
 
 ## acd.py: what it is and the rules
 
@@ -205,6 +204,12 @@ python -m acd unpack <car_id>\data.acd <new empty folder>
 ```
 
 The same in Git Bash: `PYTHONPATH=/d/personal/ac-editor/scratch/acd.py python -m acd ...`
+
+For the owner's `!` prefix, this one line works in both PowerShell and Git Bash. Forward slashes avoid backslash escapes. It was used for the synthetic fixture on 2026-11-03.
+
+```
+python -c "import sys, runpy; sys.path.insert(0, 'D:/personal/ac-editor/scratch/acd.py'); sys.argv = ['acd', 'pack', '<data folder>', '<car_id folder>/data.acd']; runpy.run_module('acd', run_name='__main__', alter_sys=True)"
+```
 
 Because the key comes from the folder name, the `data.acd` path must sit inside a folder named exactly after the car ID, for example `scratch\acd_test\acm_tutorial_basic\data.acd`.
 

@@ -395,3 +395,19 @@ Method: `scratch/ctrl_survey.py` and `scratch/name_survey.py` (not committed). T
 - **Wrong-key detection (M2 step 5):** a wrong key shifts each byte by only -12 to +12, because key strings use only digits and `-`.
   Letters stay printable, so the check relies on line breaks and spaces turning into control bytes. A 3-byte one-line entry (`acd`) passed with a wrong key.
   Real files are multi-line: for acd.py's tutorial pack and the synthetic pack, all 4,000 wrong car IDs tried (2,000 each) failed on the first entry. `AcdPyComparisonTests` keeps that check.
+
+## Core-packed data.acd in game (BRITOD-DESK, 2026-11-03, M2 step 7)
+
+This is the M2 exit gate. `scratch/m2_game_check` is a throwaway console program that uses only `AcMod.Core`. It read the installed car's `data\` (41 files, including AC's `proview_nodes.ini`),
+set `SCREEN_NAME=ACM Tutorial M2` with `IniFile`, scaled every `power.lut` torque by 0.75 with `LutFile`, and packed the result with `AcdFile.PackVerified` (189,665 bytes).
+With the owner's approval it was copied to `content\cars\acm_tutorial_basic\data.acd` at 00:52, next to the untouched `data\`.
+
+| Run | Log `PW` | Prediction |
+| --- | --- | --- |
+| `data\` only, 00:50 (baseline) | 188,460 W | 188,496 W from the original curve |
+| Core's `data.acd` + `data\`, 00:53 | 141,345 W | 141,372 W from the formula, or 141,345 W after M0's 0.02% offset |
+
+- **Result: AC loads a `data.acd` packed by `AcMod.Core`** (no header, key from public notes, entries in ordinal order). The owner said the car felt weaker than usual.
+- The log has no new car-data errors, only the 4 known `ERROR: Variable type cannot be found` lines. `Data path: content/cars/acm_tutorial_basic/data/` appeared even though `data.acd` was used, as in M0.
+- The owner did not see "ACM Tutorial M2" anywhere in game. Where `car.ini` `SCREEN_NAME` appears is not verified, so it is not a usable visible check.
+- The test `data.acd` was removed afterwards, and a copy is in `scratch/m2_game_check/out/`. The installed `data\` still matches `D:\ACModding\acm_tutorial_basic\data`, plus `proview_nodes.ini`.
