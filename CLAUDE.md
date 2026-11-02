@@ -14,42 +14,49 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 2 (ACD)** is next. Propose its plan, broken into small steps like the M1 plan below, and wait for the owner's approval before writing code.
-Milestone 0 passed its exit gate on 2026-11-02. Milestone 1 passed on 2026-11-03: `FixtureRunnerTests` checks QS-1 and every single-value edit (QS-2) on all 168 fixture files.
-Small inspection scripts still belong in the gitignored `scratch/` folder.
+**Milestone 2 (ACD) is in progress.** The plan below was approved on 2026-11-03. **Start at step 1, in a fresh session, under the clean-room rules.**
 
-Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it.
+Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
-## Milestone 0 tasks
+Done so far. Git history has the details: one commit per step, prefixed `M0` or `M1`.
+- **M0 (2026-11-02):** the tutorial car `acm_tutorial_basic` was built and drives in AC. Facts about real AC data are in `docs/VERIFIED_FACTS.md`, the ACD format is in `docs/ACD.md`, and the V-01 to V-15 verdicts are in `docs/REQUIREMENTS.md` ("M0 verdicts"). The license is MIT, and no AcTools code is ported.
+- **M1 (2026-11-03):** `src/AcMod.Core` has `Text/TextDocument` (the lossless base) and `Formats/` with `LutFile` (.lut and .rto), `IniFile`, `UiCarJson`, and `GuidsFile`. `FixtureRunnerTests` checks QS-1 and every single-value edit (QS-2) on all 168 fixture files. 223 tests pass, with 0 warnings.
 
-Work through these in order:
+## Milestone 2 plan
 
-1. Confirm the owner finished the `LutReader` warm-up. Ask which PC will be used for modding and confirm the AC path. AC is in Steam's default folder under Program Files. **Done 2026-11-02:** the modding PC is BRITOD-DESK, and AC is under `Program Files (x86)`. See `docs/VERIFIED_FACTS.md`.
-2. Create `.gitignore`, `fixtures/synthetic/`, `fixtures/local/`, `scratch/`, and `docs/VERIFIED_FACTS.md`. Do not scaffold the app yet. **Done 2026-11-02:** the repo root is `D:\personal\ac-editor`, and `LutReader/` is a subfolder.
-3. Coach the owner through building `acm_tutorial_basic` from the [first car guide](https://assettocorsamods.net/threads/your-first-car-in-assetto-corsa-basic-guide.1019/). One step at a time, tell the owner what to do in Blender and ksEditor, then wait for the result. **Done 2026-11-02:** the car loads and drives in AC; the working folder is `D:\ACModding\acm_tutorial_basic`. See `docs/VERIFIED_FACTS.md`.
-4. Inspect the tutorial car, `sdk/dev/content/cars/formula_k`, and one Kunos car on the owner's PC. Record what really exists in `docs/VERIFIED_FACTS.md`, including where `data.acd` sits, how `lods.ini` names models, and how `sfx` and `ui` files are structured. **Done 2026-11-02:** survey of all 250 car folders; the three cars are copied into `fixtures/local/`. See `docs/VERIFIED_FACTS.md`.
-5. Find public format notes for the `.acd` key, then confirm your understanding by comparing against `acd.py` on the owner's own car. **Done 2026-11-02:** the notes and verification are in `docs/ACD.md`. A Kunos `-1111` header file also decrypts with the same key.
-6. Find a way to identify model encryption without bypassing it. If no reliable method exists, record that and propose a conservative warning. **Done 2026-11-02:** there is no certain method. The proposed header and table check, and its "may be encrypted" warning, are in `docs/VERIFIED_FACTS.md`.
-7. Test whether a normal user process can write to AC's `content/cars`, using one small test folder that the owner approves. Remove it afterward. **Done 2026-11-02:** it can on BRITOD-DESK. The test folder was removed. See `docs/VERIFIED_FACTS.md`.
-8. Check which AcTools files port cleanly to .NET 10 by trying them in `scratch/`. **Done 2026-11-02:** none port cleanly or are worth keeping, so we port nothing and write fresh code. See `docs/VERIFIED_FACTS.md`.
-9. Mark every validator rule V-01 to V-15 as confirmed, changed, or rejected, with the evidence. **Done 2026-11-02:** the verdicts are in `docs/REQUIREMENTS.md` under "M0 verdicts".
-10. Close each open question in `docs/REQUIREMENTS.md`, then propose the Milestone 1 plan and wait for approval. **Done 2026-11-02:** all open questions are closed (the license is MIT), and the owner approved the plan below.
+Exit gate: files unpacked by Core match acd.py's output, and a car repacked by Core loads in AC (checked by the owner). Make one commit per step.
 
-## Milestone 1 plan
+1. **Key** (`AcdKey`): car ID to key string, following the "Key" table in `docs/ACD.md`. Include the "data*" rule: a file whose name starts with `data` (ignoring case) uses its parent folder's name. Test with the known keys in `docs/ACD.md`.
+2. **Read:** parse the container (with or without the `-1111` header) and decrypt it. Check that the result is plausible text, and report an unreadable file instead of throwing (V-13). Container layout: `docs/ACD.md`.
+3. **Write:** no header, zero padding, and the key from the target car ID.
+4. **Compare with acd.py:** move `scratch/acd_test/acm_tutorial_basic/data.acd` (acd.py's packing of `fixtures/local/acm_tutorial_basic/data`, 188,756 bytes) into `fixtures/local/`.
+   Check that Core unpacks it to the original 40 files, and that Core's pack of that `data` folder is byte-identical. The owner also runs one acd.py command to make a synthetic reference file.
+5. **Effective data** (TU-1, V-12): read `data.acd` when it exists, otherwise `data\`, and flag a car that has both. AC ignores `data\` while `data.acd` exists.
+6. **Pack and verify** (PK-1): pack, unpack again, and compare, all in memory. Writing files waits for M3's guarded file service.
+7. **Game check:** repack the tutorial car with one visible change. The owner drives it, and Claude reads the log, as in the V-12 test in `docs/VERIFIED_FACTS.md`.
 
-Approved 2026-11-02. **Done 2026-11-03**: all 9 steps are committed, and the exit gate passed. There is no UI. Exit gate: QS-1 and QS-2 pass on every fixture. Make one commit per step.
+### Clean-room rules for step 1
 
-1. Scaffold the solution, `src/AcMod.Core` (net10.0, nullable, warnings as errors), and `tests/AcMod.Core.Tests` (xUnit). Add the commands to the "Stack" section. (QS-10, CC-1)
-2. Survey encodings: BOM, line endings, and final newline across the fixtures. Record the results in `docs/VERIFIED_FACTS.md`.
-3. Text file base: keep encoding, line endings, and final newline, and write the bytes back exactly. (QS-1)
-4. LUT and RTO: a lossless line model with invariant-culture values. Editing one value changes only that number. Include `id-ID` culture tests. (QS-1, QS-2, QS-11)
-5. INI read and round-trip: sections, keys, `;` comments, spacing, blank lines, duplicate keys, and unknown fields. (QS-1)
-6. INI value edits. (QS-2)
-7. `ui_car.json`: lenient read (raw line breaks in strings, BOM) and span-based value edits. (QS-1, QS-2, V-10)
-8. `GUIDs.txt`: lossless read and write, plus changing the car ID. (QS-1, QS-2, groundwork for WS-7)
-9. A fixture runner over `fixtures/synthetic` and, when present, `fixtures/local`. Then check the exit gate.
+The owner chose a fresh session so the key code is written only from public notes.
+- Write `AcdKey` from `docs/ACD.md` alone: the "Key" table, the "data*" rule, and the "Known keys" list.
+- **Do not open** `scratch/acd.py/` (GPL-2.0 source), `scratch/acd_key_from_notes.py`, or `scratch/acd_container.py`.
+  An earlier session that had read acd.py wrote the last two.
+- acd.py may only be run as a black box, by the owner, with the `!` prefix (see `docs/ACD.md`).
 
-Not in M1: `data.acd` (M2), the CLI, the MCP server, and the UI.
+### Notes for the next agent
+
+- **Backslashes:** the Bash tool collapses `\\` into `\`, so Windows paths inside Python string literals get mangled (`\f` and `\a` become control characters).
+  Write doc text with the Edit tool or a `cat <<'EOF'` heredoc, build a backslash with `chr(92)` in Python, and afterwards scan edited docs for bytes `0x00`–`0x1F` other than tab, CR, and LF.
+- **Line endings:** git has `core.autocrlf=true` system-wide. `.gitattributes` marks `fixtures/** -text`, so keep every byte-exact test file under `fixtures/`.
+- **Running acd.py:** auto mode blocks Claude from running downloaded code. Give the owner a one-line `python -c` command to run with `!`.
+- **Screenshots:** the owner saves them in `scratch/` with default Windows names. Read the newest file.
+- **Game checks:** read `%USERPROFILE%\Documents\Assetto Corsa\logs\log.txt` right after the owner quits, because the next AC start overwrites it.
+  The `POWER CLASS INDEX ... PW:` line shows which data loaded (formula in the V-12 entry of `docs/VERIFIED_FACTS.md`). Versions: AC 1.16.4, CSP 0.3.0-preview634.
+- **Installed tutorial car:** `content\cars\acm_tutorial_basic` matches `D:\ACModding\acm_tutorial_basic`, plus AC's own `data\proview_nodes.ini`.
+  Write there only with the owner's approval, and remove test files afterwards.
+- **`fixtures/local` (gitignored):** `acm_tutorial_basic`, `formula_k`, `shelby_cobra_427sc`, and `ks_porsche_911_gt3_r_2016/data.acd` (the `data.acd` only, with a `-1111` header).
+- **Core conventions:** each format has `Parse(bytes)` (never throws) and `ToBytes()`, and `With...()` edits return a new object.
+  Add every new format to `FixtureRunnerTests`. Mark a known shortcut with a `ponytail:` comment that names its limit.
 
 ## Agreed scope
 
@@ -103,7 +110,7 @@ There is nothing to run yet: M1 has no app, CLI, or MCP server. `LutReader/` is 
 
 ## Windows constraints
 
-- AC is under Program Files, and write access there is unverified. Never assume it works.
+- AC is under Program Files. Writing to `content\cars` works on BRITOD-DESK (M0 task 7), but other PCs may differ, so check at runtime.
 - Keep work in a separate Mod Workspace such as `D:\ACModding`.
 - Send every write through one guarded file service.
 - Treat the AC install as read-only, except for `WS-11`.

@@ -62,6 +62,34 @@ The key is that ASCII string, for example `acm_tutorial_basic` gives `101-99-107
 - **Implementing it:** values 2 and 5 can overflow 32-bit integers on long names.
   Wrap-around does not change the result mod 256, because 2³² is a multiple of 256. But C# must run this `unchecked` (the default) or use `long`, and `%` must be made non-negative.
 
+### Known keys (test data for M2 step 1)
+
+These are outputs only, so they are safe to use in tests. Six come from acd.py's own test file, and eight were printed by the owner running acd.py on 2026-11-02.
+
+| Key source name | Key |
+| --- | --- |
+| `testing` | `254-7-113-249-206-21-55-104` |
+| `test` | `192-45-0-55-66-241-55-117` |
+| `t` | `116-0-0-131-66-101-171-171` |
+| `klmno` | `33-150-122-205-66-141-64-112` |
+| `pqrstu` | `175-71-117-68-22-131-59-118` |
+| `vwxyz` | `88-191-111-161-66-119-53-123` |
+| `acm_tutorial_basic` | `101-99-107-127-42-28-74-100` |
+| `zz1x` | `157-46-0-96-66-235-49-121` |
+| `bmw_m3_e30` | `108-96-216-121-166-192-73-49` |
+| `abarth500` | `7-248-6-221-246-250-21-49` |
+| `ks_audi_sport_quattro` | `230-190-101-8-154-33-64-112` |
+| `ks_porsche_911_gt3_r_2016` | `145-191-144-93-26-0-15-55` |
+| `a1b2c3d4e5` | `238-123-22-246-174-219-74-54` |
+| `shelby_cobra_427sc` | `191-230-129-55-250-90-6-100` |
+
+`zz1x` and `bmw_m3_e30` are the only names where value 7's loop bound matters. `testing`, `test`, and `pqrstu` catch value 3's bound.
+
+Which name the key comes from, from acd.py's test paths:
+- `a/testing` uses `testing`, the file's own name, because it doesn't start with `data`.
+- `klmno/data` uses `klmno`, and `pqrstu/data.acd` uses `pqrstu`.
+- `vwxyz/DAtAbaNAnA$` uses `vwxyz`, because the `data` prefix is checked ignoring case.
+
 ### Cipher
 
 Stored byte = `(data[i] + key[i mod keyLength]) mod 256`, where `key[]` is the ASCII codes of the key string.
