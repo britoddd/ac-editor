@@ -118,47 +118,4 @@ public class IniFileTests
         Assert.Throws<ArgumentException>(() => ini.WithValue(ini.Entries[0], double.NaN));
     }
 
-    // QS-2 on real data: in every fixture INI, changing one entry changes exactly one line, and every other entry reads back the same.
-    [Fact]
-    public void Editing_any_real_entry_changes_exactly_one_line()
-    {
-        var roots = new[] { Fixtures.Synthetic(), Fixtures.LocalRoot }.Where(Directory.Exists);
-        var checkedEntries = 0;
-        foreach (var path in roots.SelectMany(root => Directory.EnumerateFiles(root, "*.ini", SearchOption.AllDirectories)))
-        {
-            var ini = IniFile.Parse(File.ReadAllBytes(path));
-            foreach (var entry in ini.Entries)
-            {
-                var edited = IniFile.Parse(ini.WithValue(entry, "123").ToBytes());
-
-                var changedLines = edited.Document.Lines.Where((line, i) => line != ini.Document.Lines[i]).Count();
-                Assert.True(changedLines == (entry.Value == "123" ? 0 : 1), $"{path}: {entry}");
-                Assert.Equal(
-                    ini.Entries.Select(e => e == entry ? e with { Value = "123" } : e),
-                    edited.Entries);
-                checkedEntries++;
-            }
-        }
-
-        Assert.True(checkedEntries > 0);
-    }
-
-    // QS-1: an unchanged file is written back byte-for-byte, including real cars in fixtures/local.
-    [Fact]
-    public void Every_fixture_ini_round_trips_byte_for_byte()
-    {
-        var roots = new[] { Fixtures.Synthetic(), Fixtures.LocalRoot }.Where(Directory.Exists);
-        var files = roots
-            .SelectMany(root => Directory.EnumerateFiles(root, "*.ini", SearchOption.AllDirectories))
-            .ToList();
-
-        var failures = files.Where(f =>
-        {
-            var bytes = File.ReadAllBytes(f);
-            return !bytes.AsSpan().SequenceEqual(IniFile.Parse(bytes).ToBytes());
-        }).ToList();
-
-        Assert.NotEmpty(files);
-        Assert.Empty(failures);
-    }
 }

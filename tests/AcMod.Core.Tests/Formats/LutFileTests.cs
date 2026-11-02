@@ -38,27 +38,7 @@ public class LutFileTests
         Assert.Equal(8, lut.Document.Lines.Count);
     }
 
-    // QS-1: an unchanged file is written back byte-for-byte, including real cars in fixtures/local.
-    [Fact]
-    public void Every_fixture_lut_and_rto_round_trips_byte_for_byte()
-    {
-        var roots = new[] { Fixtures.Synthetic(), Fixtures.LocalRoot }.Where(Directory.Exists);
-        var files = roots
-            .SelectMany(root => Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
-            .Where(f => Path.GetExtension(f).ToLowerInvariant() is ".lut" or ".rto")
-            .ToList();
-
-        var failures = files.Where(f =>
-        {
-            var bytes = File.ReadAllBytes(f);
-            return !bytes.AsSpan().SequenceEqual(LutFile.Parse(bytes).ToBytes());
-        }).ToList();
-
-        Assert.NotEmpty(files);
-        Assert.Empty(failures);
-    }
-
-    // QS-2: editing one value changes only that number's characters.
+    // QS-2: editing one value changes only that number's characters. FixtureRunnerTests repeats this for every fixture row.
     [Theory]
     [InlineData("spaces_around_pipe.rto", 1, 4.5, "3.900 | 3.9\r\n4.312\t|\t4.5\r\n")]
     [InlineData("labels.rto", 0, 2.85, "10//31|2.85\r\n1ST|1.00\nREVERSE|-5.00")]

@@ -82,25 +82,4 @@ public class TextDocumentTests
         Assert.Throws<ArgumentException>(() => latin1.WithText("€5"));
         Assert.Equal("€5", TextDocument.Parse(utf8.WithText("€5").ToBytes()).Text);
     }
-
-    // QS-1 on real data: every synthetic text fixture, and every text file in fixtures/local when it exists.
-    [Fact]
-    public void Every_fixture_text_file_round_trips_byte_for_byte()
-    {
-        string[] extensions = [".ini", ".lut", ".rto", ".json", ".txt"];
-        var roots = new[] { Fixtures.Synthetic("text"), Fixtures.LocalRoot }.Where(Directory.Exists);
-        var files = roots
-            .SelectMany(root => Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
-            .Where(f => extensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-            .ToList();
-
-        var failures = files.Where(f =>
-        {
-            var bytes = File.ReadAllBytes(f);
-            return !bytes.AsSpan().SequenceEqual(TextDocument.Parse(bytes).ToBytes());
-        }).ToList();
-
-        Assert.NotEmpty(files);
-        Assert.Empty(failures);
-    }
 }

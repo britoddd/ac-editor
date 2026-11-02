@@ -46,23 +46,7 @@ public class UiCarJsonTests
         Assert.Throws<InvalidOperationException>(() => json.WithString("/name", "x"));
     }
 
-    // QS-1: every ui_car.json fixture, including real cars in fixtures/local, is written back byte-for-byte.
-    [Fact]
-    public void Every_fixture_ui_car_json_round_trips_byte_for_byte()
-    {
-        var files = UiJsonFixtures().ToList();
-
-        var failures = files.Where(f =>
-        {
-            var bytes = File.ReadAllBytes(f);
-            return !bytes.AsSpan().SequenceEqual(UiCarJson.Parse(bytes).ToBytes());
-        }).ToList();
-
-        Assert.NotEmpty(files);
-        Assert.Empty(failures);
-    }
-
-    // QS-2: an edit replaces only that value's characters.
+    // QS-2: an edit replaces only that value's characters. FixtureRunnerTests repeats this for every fixture value.
     [Fact]
     public void Editing_a_string_changes_only_that_value()
     {
@@ -114,54 +98,5 @@ public class UiCarJsonTests
         Assert.Throws<ArgumentException>(() => json.WithNumber("/name", 1));               // a string, not a number
         Assert.Throws<ArgumentException>(() => json.WithString("/missing", "x"));
         Assert.Throws<ArgumentException>(() => json.WithNumber("/specs/bhp", double.NaN));
-    }
-
-    // QS-2 on real data: in every fixture ui_car.json, changing any one string leaves every other string the same.
-    [Fact]
-    public void Editing_any_real_string_leaves_the_others_unchanged()
-    {
-        var checkedValues = 0;
-        foreach (var path in UiJsonFixtures())
-        {
-            var json = UiCarJson.Parse(File.ReadAllBytes(path));
-            if (json.Error != null)
-            {
-                continue;
-            }
-
-            foreach (var pointer in StringPointers(json))
-            {
-                var edited = UiCarJson.Parse(json.WithString(pointer, "x").ToBytes());
-
-                Assert.Null(edited.Error);
-                Assert.All(StringPointers(json), other =>
-                    Assert.Equal(other == pointer ? "x" : json.GetString(other), edited.GetString(other)));
-                checkedValues++;
-            }
-        }
-
-        Assert.True(checkedValues > 0);
-    }
-
-    private static IEnumerable<string> UiJsonFixtures()
-    {
-        var synthetic = Directory.EnumerateFiles(Fixtures.Synthetic("json"), "*.json");
-        var local = Directory.Exists(Fixtures.LocalRoot)
-            ? Directory.EnumerateFiles(Fixtures.LocalRoot, "ui_car.json", SearchOption.AllDirectories)
-            : [];
-        return synthetic.Concat(local);
-    }
-
-    // Probes the common ui_car.json paths. The reader has no public list of pointers, which version 1 doesn't need yet.
-    private static IEnumerable<string> StringPointers(UiCarJson json)
-    {
-        string[] fixedPaths = ["/name", "/brand", "/description", "/class", "/country", "/author", "/version", "/url", "/year"];
-        var specs = new[] { "bhp", "torque", "weight", "topspeed", "acceleration", "pwratio", "range" }.Select(s => "/specs/" + s);
-        var curves = from curve in new[] { "/torqueCurve", "/powerCurve" }
-                     from i in Enumerable.Range(0, 40)
-                     from j in new[] { 0, 1 }
-                     select $"{curve}/{i}/{j}";
-        var tags = Enumerable.Range(0, 20).Select(i => $"/tags/{i}");
-        return fixedPaths.Concat(specs).Concat(curves).Concat(tags).Where(p => json.GetString(p) != null);
     }
 }

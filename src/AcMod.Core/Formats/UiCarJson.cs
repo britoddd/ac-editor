@@ -43,6 +43,9 @@ public sealed partial class UiCarJson
 
     public byte[] ToBytes() => Document.ToBytes();
 
+    /// <summary>Every value's pointer, objects and arrays included ("" is the whole document). Empty when <see cref="Error"/> is set.</summary>
+    public IReadOnlyCollection<string> Pointers => _values.Keys;
+
     /// <summary>The string at <paramref name="pointer"/>, or null when it is missing or not a string.</summary>
     public string? GetString(string pointer) => _values.GetValueOrDefault(pointer)?.String;
 
