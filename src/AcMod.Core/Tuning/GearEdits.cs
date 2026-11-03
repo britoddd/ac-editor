@@ -83,11 +83,52 @@ public static class GearEdits
     /// [GEAR_n] or [FINAL_GEAR_RATIO] RATIOS, or null when the car offers none (TU-9 survey: 55 of 230 cars list gears, 78 the final drive).
     /// Seen in game (2026-11-03): AC's garage replaces a ratio that isn't in the list with the list's first option, so offer only these.
     /// </summary>
-    public static IReadOnlyList<double>? RatioOptions(IReadOnlyList<Acd.AcdEntry> files, string key)
+    public static IReadOnlyList<double>? RatioOptions(IReadOnlyList<Acd.AcdEntry> files, string key) =>
+        RatioFile(files, key) is { } name && DataFiles.Find(files, name) is { } rto ? [.. LutFile.Parse(rto.Data).Rows.Select(r => r.Value)] : null;
+
+    /// <summary>The .rto file (the car's own spelling) that setup.ini names for a [GEARS] key, GEAR_n or FINAL, or null when there is none.</summary>
+    public static string? RatioFile(IReadOnlyList<Acd.AcdEntry> files, string key)
     {
         var section = key == "FINAL" ? "FINAL_GEAR_RATIO" : key;
         if (DataFiles.Ini(files, "setup.ini") is not { } setup || DataFiles.Value(setup, section, "RATIOS") is not { } name) return null;
-        return DataFiles.Find(files, name) is { } rto ? [.. LutFile.Parse(rto.Data).Rows.Select(r => r.Value)] : null;
+        return DataFiles.Find(files, name)?.Name;
+    }
+
+    /// <summary>
+    /// The garage label for a ratio: "driver//driven" tooth counts whose driven ÷ driver rounds to the ratio at its own decimals (at least 2),
+    /// which every label in the tutorial car's lists does (14//33 = 2.357, listed 2.36). Real lists pick their tooth counts by hand, with no rule
+    /// that reproduces them, so this is our own convention: the smallest driver gear from 10 to 40 teeth that rounds right, or else the closest pair.
+    /// </summary>
+    public static string TeethLabel(double ratio)
+    {
+        var decimals = Math.Max(2, Number(ratio).SkipWhile(c => c != '.').Skip(1).Count());
+        var pairs = Enumerable.Range(10, 31).Select(driver => (Driver: driver, Driven: (int)Math.Round(driver * ratio))).Where(p => p.Driven > 0).ToList();
+        var exact = pairs.FirstOrDefault(p => Math.Round((double)p.Driven / p.Driver, decimals) == Math.Round(ratio, decimals));
+        var (a, b) = exact != default ? exact : pairs.MinBy(p => Math.Abs((double)p.Driven / p.Driver - ratio));
+        return $"{a}//{b}";
+    }
+
+    /// <summary>
+    /// An .rto list with a new "label|ratio" row, placed so the list stays largest ratio first, as AC's lists are written. Refuses a ratio already listed.
+    /// </summary>
+    public static (byte[]? Bytes, string? Error) AddRatio(byte[] rto, double ratio)
+    {
+        if (!double.IsFinite(ratio) || ratio <= 0) return (null, "A ratio must be a number above 0.");
+        var lut = LutFile.Parse(rto);
+        if (lut.Rows.Any(r => Math.Abs(r.Value - ratio) < 0.0005)) return (null, $"{Number(ratio)} is already in the list.");
+
+        var before = lut.Rows.FirstOrDefault(r => r.Value < ratio);
+        var index = before?.LineIndex ?? (lut.Rows.Count > 0 ? lut.Rows[^1].LineIndex + 1 : lut.Document.Lines.Count);
+        return (lut.Document.WithLinesInserted(index, [$"{TeethLabel(ratio)}|{Number(ratio)}"]).ToBytes(), null);
+    }
+
+    /// <summary>An .rto list without row <paramref name="rowIndex"/>. At least one ratio stays.</summary>
+    public static (byte[]? Bytes, string? Error) RemoveRatio(byte[] rto, int rowIndex)
+    {
+        var lut = LutFile.Parse(rto);
+        if (rowIndex < 0 || rowIndex >= lut.Rows.Count) return (null, "That ratio isn't in the list.");
+        if (lut.Rows.Count < 2) return (null, "The list needs at least one ratio.");
+        return (lut.Document.WithLinesRemoved(lut.Rows[rowIndex].LineIndex, 1).ToBytes(), null);
     }
 
     private static (IniFile? Ini, int Count, string? Error) Gears(byte[] drivetrain)

@@ -17,6 +17,9 @@ public sealed class GearEditsTests
 
     private static string Text(byte[]? bytes) => Encoding.UTF8.GetString(bytes!);
 
+    private static IReadOnlyList<AcMod.Core.Formats.LutRow> LutFileRows(IReadOnlyList<AcdEntry> files, string name) =>
+        AcMod.Core.Formats.LutFile.Parse(files.Single(f => f.Name == name).Data).Rows;
+
     [Fact]
     public void Inserted_lines_copy_the_line_break_above_and_appending_keeps_a_missing_final_break_missing()
     {
@@ -80,6 +83,30 @@ public sealed class GearEditsTests
         Assert.Equal(curve, Text(GearEdits.RemoveLastCurveRow(GearEdits.AddCurveRow(Bytes(curve), 9000, 140.5).Bytes!).Bytes));
     }
 
+    [Theory]
+    [InlineData(2.26, "19//43")] // 43 ÷ 19 = 2.263
+    [InlineData(2.36, "11//26")] // 2.364; the tutorial list writes 14//33, chosen by hand
+    [InlineData(1.0, "10//10")]
+    [InlineData(3.1, "10//31")] // the final drive's own label
+    [InlineData(0.77, "13//10")] // 10 ÷ 13 = 0.769
+    public void A_ratio_gets_the_smallest_tooth_pair_that_rounds_to_it(double ratio, string label)
+    {
+        Assert.Equal(label, GearEdits.TeethLabel(ratio));
+    }
+
+    [Fact]
+    public void An_added_ratio_keeps_the_list_largest_first_and_the_rest_of_the_file_unchanged()
+    {
+        const string rto = "14//37|2.64\r\n14//33|2.36\r\n18//35|1.94\r\n";
+
+        Assert.Equal("14//37|2.64\r\n14//33|2.36\r\n19//43|2.26\r\n18//35|1.94\r\n", Text(GearEdits.AddRatio(Bytes(rto), 2.26).Bytes));
+        Assert.Equal("10//30|3\r\n" + rto, Text(GearEdits.AddRatio(Bytes(rto), 3).Bytes)); // largest goes first
+        Assert.Equal(rto + "10//13|1.3\r\n", Text(GearEdits.AddRatio(Bytes(rto), 1.3).Bytes)); // smallest goes last
+        Assert.Contains("already in the list", GearEdits.AddRatio(Bytes(rto), 2.36).Error);
+        Assert.Equal(rto, Text(GearEdits.RemoveRatio(GearEdits.AddRatio(Bytes(rto), 2.26).Bytes!, 2).Bytes));
+        Assert.Contains("at least one", GearEdits.RemoveRatio(Bytes("10//31|3.10\r\n"), 0).Error);
+    }
+
     [Fact]
     public void Adding_then_removing_a_gear_leaves_the_tutorial_cars_files_byte_identical()
     {
@@ -97,6 +124,13 @@ public sealed class GearEditsTests
         Assert.Contains(2.36, GearEdits.RatioOptions(files, "GEAR_1")!); // GEAR_1=2.36 is the ratios.rto option 14//33
         Assert.Equal([3.10, 4.10, 5.10], GearEdits.RatioOptions(files, "FINAL")!); // [FINAL_GEAR_RATIO] RATIOS=final.rto
         Assert.Null(GearEdits.RatioOptions(files, "GEAR_9"));
+        Assert.Equal(("ratios.rto", "final.rto"), (GearEdits.RatioFile(files, "GEAR_3"), GearEdits.RatioFile(files, "FINAL")));
+        // Every real label is driver//driven with driven ÷ driver rounding to the listed ratio, the reading TeethLabel follows.
+        Assert.All(LutFileRows(files, "ratios.rto").Concat(LutFileRows(files, "final.rto")), r =>
+        {
+            var teeth = r.Key.Split("//").Select(int.Parse).ToArray();
+            Assert.Equal(r.Value, Math.Round((double)teeth[1] / teeth[0], 2, MidpointRounding.AwayFromZero));
+        });
         Assert.NotNull(setupAdded);
         Assert.Contains("GEAR_7=0.78", Text(added));
         Assert.Equal(drivetrain, GearEdits.RemoveLastGear(added!).Bytes);

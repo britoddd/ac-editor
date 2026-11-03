@@ -33,7 +33,7 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 1. **Core:** add a ratio to a `.rto` list (label `driver//driven`: the smallest driver gear, 10 to 40 teeth, whose ratio rounds to the typed one; the list stays largest ratio first; a duplicate is refused) and remove one (at least one stays). Find which `.rto` file a `[GEARS]` key uses.
 2. **Gears tab:** a "Garage ratio list" panel with Add ratio and Remove; the drop-downs follow it.
 3. **Game check:** add 2.26 (`19//43`), pick it for 1st, and check that the garage shows 19/43 with the matching top speed.
-Checked in the tutorial car's files: labels are tooth pairs and the ratio is driven ÷ driver (`14//33` = 2.357, listed 2.36). Unverified: that AC uses only the number after `|`.
+Checked in the tutorial car's files: labels are tooth pairs and the ratio is driven ÷ driver (`14//33` = 2.357, listed 2.36), but the tooth counts are chosen by hand with no rule that reproduces them, so the app's labels are its own convention. Unverified: that AC uses only the number after `|`.
 
 Read the M5 row and V-01 to V-15 ("M0 verdicts") in `docs/REQUIREMENTS.md`, propose small steps, and get the owner's approval before coding. Exit gate: each rule has a passing and failing fixture.
 Also pending from TU-9: how AC treats `LIMITER` above the last `power.lut` row (not tested).
