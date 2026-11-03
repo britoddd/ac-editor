@@ -425,3 +425,17 @@ The installed folder held the workspace car's 90 files, byte-identical, plus the
 - AC wrote `CREATING proview_nodes.ini` and created `data\proview_nodes.ini` in the installed car again, as in M0. That file exists only in the installed copy, not in the workspace.
 - Before the install, the app refused to replace the hand copy because it had no marker, and nothing in `content\cars` changed.
 - Not checked: whether Content Manager shows or treats the marker file in any way.
+
+## Gear, limiter, turbo and tyre fields (BRITOD-DESK, 2026-11-03, M4 step 5)
+
+Method: `scratch/m4_field_survey` (not committed) loaded each of the 252 folders in `content\cars` with `CarData.Load` and read only these fields.
+230 cars had readable data (209 from `data.acd`, 21 from `data\`), and 22 had unreadable data. Nothing was written.
+
+- `drivetrain.ini`: all 230 have a numeric `[GEARS] COUNT`, every `GEAR_1` to `GEAR_<COUNT>`, and `FINAL`. `TYPE` is always in `[TRACTION]`.
+  Values: `RWD` 193, `AWD2` 16, `FWD` 11, `AWD` 10. What `AWD2` changes compared with `AWD` is not verified.
+- `engine.ini`: all 230 have `[ENGINE_DATA] LIMITER` above 0. `[HEADER] POWER_CURVE` is `power.lut` in 226 cars and names another file in 4, so read the name.
+- Turbo sections (`[TURBO_n]`) per car: 0 in 120, 1 in 44, 2 in 53, 6 in 1, 8 in 11, and 10 in 1. Every turbo section has `MAX_BOOST`.
+  The power formula (V-12 entry) is verified in game for one turbo only. Adding several turbos' boosts is unverified.
+- `tyres.ini` `[COMPOUND_DEFAULT] INDEX`: 0 in 109, 1 in 78, 2 in 39, 3 in 4. Reading index 0 as `[FRONT]`/`[REAR]` and n as `[FRONT_n]`/`[REAR_n]` finds a `RADIUS` in 229 of 230 cars.
+  That this is the compound AC uses is not verified in game. The radius differs between compounds in 13 cars, and front differs from rear in 133.
+- AC's log converts power with 745.7 W per HP: `PW:188460.000000 (252.728622 HP)` (M3 install entry).
