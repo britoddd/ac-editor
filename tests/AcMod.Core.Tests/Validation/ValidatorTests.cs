@@ -185,6 +185,50 @@ public sealed class ValidatorTests : IDisposable
         Assert.Contains("256×128", finding.Message);
     }
 
+    /// <summary>A KN5 start in the standard layout: header, one texture, one material with the given shader name.</summary>
+    private static byte[] Kn5(string shader = "ksPerPixel", int textureCount = 1)
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+        void Name(string s) { writer.Write(System.Text.Encoding.UTF8.GetByteCount(s)); writer.Write(System.Text.Encoding.UTF8.GetBytes(s)); }
+        writer.Write("sc6969"u8.ToArray());
+        writer.Write(6);
+        writer.Write(0); // version 6's extra field
+        writer.Write(textureCount);
+        for (var i = 0; i < Math.Min(textureCount, 1); i++) { writer.Write(0); Name("body.dds"); writer.Write(4); writer.Write(new byte[4]); }
+        writer.Write(1);
+        Name("body_mat");
+        Name(shader);
+        writer.Write(new byte[16]); // the rest of the model, which the probe never reads
+        return stream.ToArray();
+    }
+
+    [Fact]
+    public void V14_a_standard_KN5_passes_and_one_whose_tables_dont_parse_may_be_encrypted()
+    {
+        var car = GoodCar();
+        File.WriteAllBytes(Path.Combine(car, "car_main.kn5"), Kn5());
+        Assert.Empty(Validator.Run(car));
+
+        File.WriteAllBytes(Path.Combine(car, "car_main.kn5"), Kn5(shader: "\u0001\u0002garbage"));
+        var finding = Assert.Single(Validator.Run(car));
+        Assert.Equal(("V-14", Severity.Warning, "car_main.kn5", Evidence.Unverified), (finding.Rule, finding.Severity, finding.File, finding.Evidence));
+        Assert.Contains("may be encrypted", finding.Message);
+        Assert.Contains("never decrypts", finding.Fix);
+
+        File.WriteAllBytes(Path.Combine(car, "car_main.kn5"), Kn5(textureCount: 5)); // says 5 textures, holds 1
+        Assert.Equal(["V-14 Warning car_main.kn5"], Rules(car));
+    }
+
+    [Fact]
+    public void V14_a_KN5_named_encrypted_is_flagged_whatever_its_layout()
+    {
+        var car = GoodCar();
+        File.WriteAllBytes(Path.Combine(car, "car_main_encrypted.kn5"), Kn5());
+
+        Assert.Equal(["V-14 Warning car_main_encrypted.kn5"], Rules(car));
+    }
+
     [Fact]
     public void V11_a_car_without_a_skin_folder_is_a_warning()
     {

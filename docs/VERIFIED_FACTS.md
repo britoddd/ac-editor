@@ -508,3 +508,8 @@ Method: `scratch/m5_ref_survey` (not committed) read every `.ini` in the effecti
   `engine.ini` `[THROTTLE_RESPONSE] LUT`; `electronics.ini` `[ABS] CURVE`; `setup.ini` `[GEAR_n] RATIOS`.
   Whether those cars load or behave normally is not verified. V-07 reports them as errors, per its M0 verdict.
 - `engine.ini` `[COAST_CURVE] FILENAME = coast.lut` is missing in many cars, including Kunos cars, and the car still loads (M0), so V-07 skips it.
+
+## KN5 probe in C# (BRITOD-DESK, 2026-11-03, M5 step 4)
+
+- `Kn5Probe.Check` (header, texture table, first material only) over every top-level `.kn5` in `content\cars` gives 1,109 files: 1,073 standard in 248 folders and 36 with unknown tables in 10 folders.
+  That is exactly M0's Python survey (`scratch/kn5_survey.py`), so V-14 flags the same files. Run with `scratch/m5_kn5_check` (not committed).

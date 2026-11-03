@@ -91,6 +91,17 @@ public static class Validator
         CheckSound(carFolder, carId, acFolder, Add);
         CheckUi(carFolder, Add);
 
+        // V-14: 36 KN5 files in 10 mod folders on BRITOD-DESK fail the standard table parse, and no Kunos file does. Encryption isn't proven.
+        foreach (var kn5 in Directory.EnumerateFiles(carFolder, "*.kn5").Order(StringComparer.OrdinalIgnoreCase))
+        {
+            var name = Path.GetFileName(kn5);
+            var flagged = name.Contains("_encrypted", StringComparison.OrdinalIgnoreCase) || Kn5Probe.Check(kn5) == Kn5Shape.UnknownTables;
+            if (!flagged) continue;
+            Add("V-14", Severity.Warning, name, $"{name} may be encrypted: its name or layout doesn't match a standard KN5. The car opens read-only.",
+                "This tool never decrypts or bypasses protection. If it's your own model, export it again from ksEditor without encryption.",
+                Evidence.Unverified);
+        }
+
         // V-12: in game, AC used data.acd and ignored data\ while both existed.
         if (data.FolderIgnored)
         {
