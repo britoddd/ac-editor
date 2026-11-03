@@ -117,7 +117,7 @@ dotnet build AcMod.slnx      # must finish with 0 warnings; warnings are errors 
 dotnet test AcMod.slnx
 ```
 
-There is nothing to run yet: M1 has no app, CLI, or MCP server. `LutReader/` is the warm-up and is not part of the solution.
+The CLI (M3) runs as `src\AcMod.Cli\bin\Debug\net10.0\acmod.exe` after a build; with no arguments it lists its commands. It reads and writes the owner's real settings in `%LOCALAPPDATA%\AcMod\settings.json`, so run it only when the owner asks. There is no app or MCP server yet. `LutReader/` is the warm-up and is not part of the solution.
 
 ## Windows constraints
 
