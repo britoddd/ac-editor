@@ -154,6 +154,18 @@ public sealed class CarEditTests : IDisposable
     }
 
     [Fact]
+    public void SetLutValue_changes_only_that_rows_number()
+    {
+        File.WriteAllText(Path.Combine(Car, "data", "power.lut"), "; rpm|torque\r\n0|100\r\n4000|200   ; peak\r\n");
+        var edit = Open();
+
+        edit.SetLutValue("power.lut", 1, 212.5);
+
+        Assert.Equal("; rpm|torque\r\n0|100\r\n4000|212.5   ; peak\r\n", Text(edit.Current("power.lut")));
+        Assert.Equal([new FieldChange("power.lut", "4000", "200", "212.5")], edit.Changes);
+    }
+
+    [Fact]
     public void Discard_drops_unsaved_changes()
     {
         var edit = Open();

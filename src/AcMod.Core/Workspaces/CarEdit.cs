@@ -71,6 +71,9 @@ public sealed class CarEdit
         else _changes[name] = bytes;
     }
 
+    /// <summary>Changes one row's value in a .lut or .rto file and nothing else in it (TU-4, QS-2). The value is written in invariant culture.</summary>
+    public void SetLutValue(string name, int rowIndex, double value) => Set(name, LutFile.Parse(Current(name)).WithValue(rowIndex, value).ToBytes());
+
     /// <summary>A data file as text, with any unsaved change (TU-3).</summary>
     public string Text(string name) => TextDocument.Parse(Current(name)).Text;
 

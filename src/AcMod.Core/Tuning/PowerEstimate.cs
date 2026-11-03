@@ -20,13 +20,20 @@ public sealed record PowerEstimate(double PeakPowerW, double PeakPowerRpm, doubl
     /// </summary>
     public double? RatedTorqueEstimateNm => TurboCount == 0 ? PeakTorqueNm / 0.85 : null;
 
+    /// <summary>The power curve file named by engine.ini's [HEADER] POWER_CURVE (usually power.lut, but not in 4 of 230 installed cars), or null.</summary>
+    public static string? CurveFile(IReadOnlyList<AcdEntry> files) =>
+        DataFiles.Ini(files, "engine.ini") is { } engine ? DataFiles.Value(engine, "HEADER", "POWER_CURVE") : null;
+
+    /// <summary>Power in watts at one point of the curve: torque × boost factor × rpm × 2π/60.</summary>
+    public static double PowerW(double rpm, double torque, double boostFactor) => torque * boostFactor * rpm * 2 * Math.PI / 60;
+
     /// <summary>Reads engine.ini's [HEADER] POWER_CURVE file and its [TURBO_n] MAX_BOOST values from a car's data files.</summary>
     public static (PowerEstimate? Estimate, string? Error) FromData(IReadOnlyList<AcdEntry> files)
     {
         var engine = DataFiles.Ini(files, "engine.ini");
         if (engine == null) return (null, "The car has no engine.ini.");
 
-        var curveName = DataFiles.Value(engine, "HEADER", "POWER_CURVE");
+        var curveName = CurveFile(files);
         if (curveName == null) return (null, "engine.ini has no [HEADER] POWER_CURVE.");
         var curve = DataFiles.Find(files, curveName);
         if (curve == null) return (null, $"engine.ini names the power curve {curveName}, but the car has no such file.");
@@ -45,7 +52,7 @@ public sealed record PowerEstimate(double PeakPowerW, double PeakPowerRpm, doubl
         var factor = 1 + maxBoosts.Sum();
         var power = curve.MaxBy(p => p.Torque * p.Rpm);
         var torque = curve.MaxBy(p => p.Torque);
-        return new PowerEstimate(power.Torque * factor * power.Rpm * 2 * Math.PI / 60, power.Rpm, torque.Torque * factor, torque.Rpm, factor, maxBoosts.Count);
+        return new PowerEstimate(PowerW(power.Rpm, power.Torque, factor), power.Rpm, torque.Torque * factor, torque.Rpm, factor, maxBoosts.Count);
     }
 }
 

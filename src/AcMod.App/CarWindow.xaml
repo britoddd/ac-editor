@@ -11,13 +11,37 @@
             <TextBlock x:Name="Status" VerticalAlignment="Center" Margin="12,0,0,0" />
         </StackPanel>
 
-        <!-- DisplayMemberPath shows each FileRow's Label; a * marks a file with unsaved changes (TU-7). -->
-        <ListBox x:Name="FileList" DockPanel.Dock="Left" Width="260" DisplayMemberPath="Label"
-                 FontFamily="Consolas" SelectionChanged="FileList_SelectionChanged" />
+        <!-- All tabs share one edit session, so a change on any tab gets the same * and the same Save preview. -->
+        <TabControl x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged">
+            <TabItem Header="Raw files">
+                <DockPanel Margin="0,8,0,0">
+                    <!-- DisplayMemberPath shows each FileRow's Label; a * marks a file with unsaved changes (TU-7). -->
+                    <ListBox x:Name="FileList" DockPanel.Dock="Left" Width="260" DisplayMemberPath="Label"
+                             FontFamily="Consolas" SelectionChanged="FileList_SelectionChanged" />
+                    <TextBox x:Name="Editor" Margin="8,0,0,0" FontFamily="Consolas" FontSize="13"
+                             AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap"
+                             HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                             TextChanged="Editor_TextChanged" />
+                </DockPanel>
+            </TabItem>
 
-        <TextBox x:Name="Editor" Margin="8,0,0,0" FontFamily="Consolas" FontSize="13"
-                 AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap"
-                 HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-                 TextChanged="Editor_TextChanged" />
+            <TabItem Header="Power curve">
+                <DockPanel Margin="0,8,0,0">
+                    <TextBlock x:Name="PowerSummary" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,8" />
+                    <!-- Only the Torque column is editable. Adding or removing rows is done on the Raw files tab. -->
+                    <DataGrid x:Name="PowerGrid" DockPanel.Dock="Left" Width="360" AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" FontFamily="Consolas">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="rpm" Binding="{Binding Rpm}" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Torque (power.lut)" Binding="{Binding Torque}" />
+                            <DataGridTextColumn Header="Power (hp)" Binding="{Binding Power}" IsReadOnly="True" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Border BorderBrush="Gray" BorderThickness="1" Margin="8,0,0,0">
+                        <Canvas x:Name="Chart" ClipToBounds="True" Background="White" SizeChanged="Chart_SizeChanged" />
+                    </Border>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
     </DockPanel>
 </Window>

@@ -60,6 +60,18 @@ public partial class CarWindow : Window
 
     private FileRow? Selected => FileList.SelectedItem as FileRow;
 
+    private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.Source == Tabs) ShowCurrentTab(); // SelectionChanged also bubbles up from the file list and the power table
+    }
+
+    /// <summary>Redraws the visible tab from the edit session, so a change made on another tab shows.</summary>
+    private void ShowCurrentTab()
+    {
+        if (Tabs.SelectedIndex == 1) ShowPower();
+        else ShowSelected();
+    }
+
     private void FileList_SelectionChanged(object sender, SelectionChangedEventArgs e) => ShowSelected();
 
     private void ShowSelected()
@@ -100,14 +112,14 @@ public partial class CarWindow : Window
         }
 
         MarkChanged();
-        ShowSelected();
+        ShowCurrentTab();
     }
 
     private void Discard_Click(object sender, RoutedEventArgs e)
     {
         _edit.Discard();
         MarkChanged();
-        ShowSelected();
+        ShowCurrentTab();
         Status.Text = "Changes discarded.";
     }
 

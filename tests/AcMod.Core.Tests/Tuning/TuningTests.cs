@@ -102,7 +102,9 @@ public sealed class TuningTests
         var (estimate, error) = PowerEstimate.FromData(files);
 
         Assert.Null(error);
+        Assert.Equal("custom.lut", PowerEstimate.CurveFile(files));
         Assert.Equal((1.75, 2), (estimate!.BoostFactor, estimate.TurboCount));
+        Assert.Equal(PowerEstimate.PowerW(5000, 200, 1.75), estimate.PeakPowerW);
         Assert.Equal(350, estimate.PeakTorqueNm);
         Assert.Contains("no such file", PowerEstimate.FromData([files[0]]).Error);
     }
