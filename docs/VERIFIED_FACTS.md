@@ -496,3 +496,15 @@ Method: `scratch/tu9_setup_survey` (not committed) read `setup.ini` in the 230 i
 - The app added `19//43|2.26` to the tutorial car's `ratios.rto` and set `GEAR_1=2.26`. The owner reported the garage gear page showed it as expected (gear 1 at 19/43, top speed about 130 km/h at the 8500 rpm limiter).
   So a ratio added to the list is offered and used, and a label of our own (`driver//driven`) is accepted. That AC reads only the number after `|` is consistent with this but not proven separately.
 - `GEAR_7=0.77` was still installed, which is not in the list, so the garage keeps replacing it with the first option (TU-9 entry).
+
+## File references in data files (BRITOD-DESK, 2026-11-03, M5 step 2)
+
+Method: `scratch/m5_ref_survey` (not committed) read every `.ini` in the effective data of the 230 installed cars with readable data, and checked whether each value ending in `.lut`, `.rto`, or `.kn5` names a file the car has (ignoring case).
+
+- `lods.ini` names models only in `[LOD_n] FILE`. All 781 such references exist.
+- Most missing references are in places AC doesn't read: Content Manager's backup sections (`[__CM_FRONT_ORIGINAL]` and similar), and stray copies such as `tyres - copy.ini`, `tyres1.ini`, and `tyres (… conflicted copy …).ini`.
+  The validator skips both.
+- In files AC does read, a few dozen references in about 20 cars name missing files, against 7,751 that exist. Examples: `tyres.ini` `WEAR_CURVE`, `DCAMBER_LUT`, and `PERFORMANCE_CURVE`; `aero.ini` `LUT_GH_CL = 1.lut` (2025–26 F1 mods);
+  `engine.ini` `[THROTTLE_RESPONSE] LUT`; `electronics.ini` `[ABS] CURVE`; `setup.ini` `[GEAR_n] RATIOS`.
+  Whether those cars load or behave normally is not verified. V-07 reports them as errors, per its M0 verdict.
+- `engine.ini` `[COAST_CURVE] FILENAME = coast.lut` is missing in many cars, including Kunos cars, and the car still loads (M0), so V-07 skips it.

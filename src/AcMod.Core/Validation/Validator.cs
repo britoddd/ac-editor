@@ -1,4 +1,5 @@
 using AcMod.Core.Acd;
+using AcMod.Core.Formats;
 
 namespace AcMod.Core.Validation;
 
@@ -75,6 +76,8 @@ public static class Validator
             {
                 Add("V-06", Severity.Warning, file, $"{file} is missing from {where}.", $"Add {file}, so the car's {Path.GetFileNameWithoutExtension(file)} behaves as intended.", Evidence.Community);
             }
+
+            CheckReferences(carFolder, data, names, Add);
         }
 
         // V-12: in game, AC used data.acd and ignored data\ while both existed.
@@ -101,5 +104,35 @@ public static class Validator
         }
 
         return findings;
+    }
+
+    /// <summary>
+    /// V-02: every .kn5 that lods.ini names exists in the car folder (all 781 such references on BRITOD-DESK exist when case is ignored).
+    /// V-07: every .lut or .rto that a standard data file names exists in the effective data, ignoring case. Skipped: [COAST_CURVE] FILENAME, which AC
+    /// ignores (M0), Content Manager's [__CM_*] backup sections, and files AC doesn't read, such as "tyres - copy.ini" (M5 step 2 survey).
+    /// </summary>
+    private static void CheckReferences(string carFolder, CarData data, HashSet<string> names, Action<string, Severity, string?, string, string, Evidence> add)
+    {
+        foreach (var file in data.Files.Where(f => Mandatory.Concat(Behaviour).Contains(f.Name, StringComparer.OrdinalIgnoreCase) && f.Name.EndsWith(".ini", StringComparison.OrdinalIgnoreCase)))
+        {
+            var isLods = file.Name.Equals("lods.ini", StringComparison.OrdinalIgnoreCase);
+            var isEngine = file.Name.Equals("engine.ini", StringComparison.OrdinalIgnoreCase);
+            foreach (var entry in IniFile.Parse(file.Data).Entries.Where(e => !e.Section.StartsWith("__CM_", StringComparison.Ordinal)))
+            {
+                var value = entry.Value;
+                var extension = Path.GetExtension(value).ToLowerInvariant();
+                if (isLods && extension == ".kn5" && !File.Exists(Path.Combine(carFolder, value)))
+                {
+                    add("V-02", Severity.Error, "lods.ini", $"lods.ini [{entry.Section}] {entry.Key} names {value}, which isn't in the car folder.",
+                        $"Export {value} from ksEditor into the car folder, or fix the name in lods.ini.", Evidence.Verified);
+                }
+                else if (extension is ".lut" or ".rto" && !(isEngine && entry.Section == "COAST_CURVE" && entry.Key == "FILENAME") && !names.Contains(value)
+                         && !Mandatory.Contains(value, StringComparer.OrdinalIgnoreCase)) // a missing power.lut is already V-05
+                {
+                    add("V-07", Severity.Error, file.Name, $"{file.Name} [{entry.Section}] {entry.Key} names {value}, which isn't in the data.",
+                        $"Add {value} to the data, or point {entry.Key} at a table the car has.", Evidence.Verified);
+                }
+            }
+        }
     }
 }

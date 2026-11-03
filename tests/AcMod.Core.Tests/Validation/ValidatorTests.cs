@@ -24,8 +24,11 @@ public sealed class ValidatorTests : IDisposable
     {
         var car = Path.Combine(_temp, carId);
         Put(car, "collider.kn5", "kn5");
+        Put(car, "car_main.kn5", "kn5");
         Put(car, @"skins\default\preview.jpg", "jpg");
         foreach (var file in DataFiles) Put(car, Path.Combine("data", file), file.EndsWith(".lut") ? "0|100\r\n8000|200\r\n" : "[HEADER]\r\nVERSION=1\r\n");
+        Put(car, @"data\lods.ini", "[LOD_0]\r\nFILE=Car_Main.kn5\r\nOUT=600\r\n"); // case differs from the file, as in formula_k
+        Put(car, @"data\engine.ini", "[HEADER]\r\nPOWER_CURVE=POWER.lut\r\nCOAST_CURVE=FROM_COAST_REF\r\n[COAST_CURVE]\r\nFILENAME=coast.lut\r\n"); // AC ignores this one
         return car;
     }
 
@@ -89,6 +92,30 @@ public sealed class ValidatorTests : IDisposable
         Directory.Delete(Path.Combine(car, "data"), recursive: true);
 
         Assert.Equal(["V-06 Warning brakes.ini"], Rules(car)); // read from data.acd, the effective data
+    }
+
+    [Fact]
+    public void V02_a_model_lods_ini_names_but_the_folder_lacks_is_an_error()
+    {
+        var car = GoodCar();
+        File.Delete(Path.Combine(car, "car_main.kn5"));
+
+        Assert.Equal(["V-02 Error lods.ini"], Rules(car));
+    }
+
+    [Fact]
+    public void V07_a_table_a_data_file_names_but_the_data_lacks_is_an_error()
+    {
+        var car = GoodCar();
+        Put(car, @"data\tyres.ini", "[FRONT]\r\nWEAR_CURVE=front.lut\r\n[__CM_FRONT_ORIGINAL]\r\nWEAR_CURVE=old.lut\r\n"); // the backup section is skipped
+        Put(car, @"data\tyres - copy.ini", "[FRONT]\r\nWEAR_CURVE=gone.lut\r\n"); // AC doesn't read stray copies
+
+        var finding = Assert.Single(Validator.Run(car));
+
+        Assert.Equal(("V-07", Severity.Error, "tyres.ini"), (finding.Rule, finding.Severity, finding.File));
+        Assert.Contains("[FRONT] WEAR_CURVE names front.lut", finding.Message);
+        Put(car, @"data\front.lut", "0|1\r\n");
+        Assert.Empty(Validator.Run(car));
     }
 
     [Fact]
