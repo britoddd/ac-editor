@@ -45,7 +45,17 @@
         </Menu>
 
         <TextBlock x:Name="Header" DockPanel.Dock="Top" Margin="8,6,8,6" />
-        <TextBlock x:Name="Status" DockPanel.Dock="Bottom" Margin="8,4,8,6" TextWrapping="Wrap" />
+        <!-- The basic actions stay one click away; everything else is in the menu. -->
+        <DockPanel DockPanel.Dock="Bottom" Margin="8,6,8,8">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                <Button Content="New car..." Click="New_Click" Padding="12,4" />
+                <Button Content="Open" Click="Open_Click" Padding="12,4" Margin="8,0,0,0" />
+                <Button Content="Rename..." Click="Rename_Click" Padding="12,4" Margin="8,0,0,0" />
+                <Button Content="Delete" Click="Delete_Click" Padding="12,4" Margin="8,0,0,0" />
+                <Button Content="Refresh" Click="Refresh_Click" Padding="12,4" Margin="8,0,0,0" />
+            </StackPanel>
+            <TextBlock x:Name="Status" VerticalAlignment="Center" Margin="12,0,0,0" TextWrapping="Wrap" />
+        </DockPanel>
 
         <!-- Each column shows one property of a CarRow; {Binding Id} reads CarRow.Id. -->
         <DataGrid x:Name="CarGrid" Margin="8,0,8,0" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" MouseDoubleClick="Open_Click">
