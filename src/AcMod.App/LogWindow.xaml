@@ -1,0 +1,23 @@
+<Window x:Class="AcMod.App.LogWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AC log" Width="1000" Height="600">
+    <DockPanel Margin="8">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="Read again" Click="Refresh_Click" Padding="8,2" />
+            <TextBlock Text="Read the log right after quitting AC: the next start overwrites it." VerticalAlignment="Center" Margin="12,0,0,0" />
+        </StackPanel>
+        <TextBlock x:Name="Summary" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,8" />
+        <!-- LE-4: likely problems first, then the car's own lines, then lines known to be harmless with the reason. -->
+        <DataGrid x:Name="LineGrid" AutoGenerateColumns="False" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Kind" Binding="{Binding Kind}" />
+                <DataGridTextColumn Header="Line" Binding="{Binding Number}" />
+                <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="2*" FontFamily="Consolas" />
+                <DataGridTextColumn Header="Why it's there" Binding="{Binding Note}" Width="*">
+                    <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap" /></Style></DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

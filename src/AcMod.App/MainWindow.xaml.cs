@@ -156,6 +156,11 @@ public partial class MainWindow : Window
         Refresh();
     }
 
+    private void Log_Click(object sender, RoutedEventArgs e)
+    {
+        if (_workspace != null) new LogWindow(_workspace) { Owner = this }.Show(); // non-modal: it can stay open beside the car list
+    }
+
     private void Install_Click(object sender, RoutedEventArgs e)
     {
         if (_workspace == null || CarGrid.SelectedItem is not CarRow row)

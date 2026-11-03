@@ -33,6 +33,7 @@ static int Run(string[] args)
         ["usage", var days] when int.TryParse(days, out var d) => Usage(ws, d),
         ["import", var source] => Report(ws.ImportCar(source), id => $"Imported {id} into {Path.Combine(ws.Root, "cars", id)}\n{Summary(ws, id)}"),
         ["validate", var car] => Validate(ws, car),
+        ["log"] => ShowLog(ws),
         ["snapshot", var car] => Report(ws.Snapshot(car), id => $"Snapshot {id} of {car}"),
         ["snapshots", var car] => Print(ws.Snapshots(car)),
         ["restore-snapshot", var car, var id] => Report(ws.RestoreSnapshot(car, id), before => $"Restored {car} to {id}. To undo, restore {before}."),
@@ -101,6 +102,31 @@ static int Validate(Workspace ws, string car)
 
     Console.WriteLine(Summary(ws, car));
     return findings.Any(f => f.Severity == AcMod.Core.Validation.Severity.Error) ? 1 : 0;
+}
+
+// LE-4: the latest AC log, with likely problems first. Read it right after quitting AC; the next start overwrites it.
+static int ShowLog(Workspace ws)
+{
+    var path = AcMod.Core.Learning.AcLog.DefaultPath;
+    if (!File.Exists(path)) return Fail($"No AC log at {path}. Drive once, quit AC, then run this.");
+    var report = AcMod.Core.Learning.AcLog.Read(path);
+    Console.WriteLine($"{path}, written {Local(report.WrittenUtc)}");
+    Console.WriteLine(report.CleanExit ? "AC exited cleanly (CLEAN EXIT)." : "No CLEAN EXIT line: AC may have crashed or is still running.");
+    Console.WriteLine($"Car: {report.CarId ?? "(none)"}" + (report.PowerW is { } pw ? $", logged power {pw:0} W" : ""));
+    if (report.CarId != null && report.PowerW is { } logged && ws.OpenCar(report.CarId).Edit is { ReadOnly: false } edit &&
+        AcMod.Core.Tuning.PowerEstimate.FromData(edit.Data.Files).Estimate is { } estimate)
+    {
+        Console.WriteLine($"The workspace car's estimate is {estimate.PeakPowerW:0} W ({(estimate.PeakPowerW - logged) / logged * 100:+0.00;-0.00}%). A big gap means AC loaded different data.");
+    }
+
+    foreach (var kind in new[] { AcMod.Core.Learning.LogKind.Problem, AcMod.Core.Learning.LogKind.KnownHarmless })
+    {
+        var lines = report.Lines.Where(l => l.Kind == kind).ToList();
+        Console.WriteLine(kind == AcMod.Core.Learning.LogKind.Problem ? $"\nLikely problems: {lines.Count}" : $"\nKnown and harmless: {lines.Count}");
+        foreach (var l in lines) Console.WriteLine($"  {l.Number,5}: {l.Text}" + (l.Note == null ? "" : $"\n         {l.Note}"));
+    }
+
+    return 0;
 }
 
 static string Summary(Workspace ws, string car)
@@ -176,6 +202,7 @@ static int Help()
         acmod purge <trash ID>                         show what a permanent delete would remove
         acmod purge <trash ID> <car ID>                delete it permanently, with its snapshots; can't be undone
         acmod validate <car ID>                        run the validator: every finding with its fix (VA-1, VA-2)
+        acmod log                                      read the latest AC log: likely problems first (LE-4)
         acmod install <car ID> [--force]               copy a car into AC's content\cars (WS-11); --force despite validation errors
         acmod export <car ID> [--pack] [--force]       write a ZIP for Content Manager to the exports folder (PK-2, PK-4); --pack ships data.acd (PK-1)
         acmod save-as <car ID> <new ID> [--name "Display name"] [--replace]
