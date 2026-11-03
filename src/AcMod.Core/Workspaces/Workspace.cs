@@ -124,6 +124,13 @@ public sealed partial class Workspace
             : [];
     }
 
+    /// <summary>When a snapshot was taken, read from its ID (UTC, such as 20261103-142233-123, maybe with a -1 suffix), or null for another name.</summary>
+    public static DateTime? SnapshotTimeUtc(string snapshotId) =>
+        snapshotId.Length >= 19 && DateTime.TryParseExact(snapshotId[..19], "yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var utc)
+            ? utc
+            : null;
+
     /// <summary>The effective data held in a snapshot (TU-6). Its folder is named by time, so the data.acd key comes from the car ID.</summary>
     public (CarData? Data, string? Error) SnapshotData(string carId, string snapshotId) =>
         CheckName(snapshotId) == null && Snapshots(carId).Contains(snapshotId)

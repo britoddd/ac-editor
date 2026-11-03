@@ -188,6 +188,28 @@ public sealed class SnapshotTests : IDisposable
         Assert.False(CarData.Load(_car).FolderIgnored); // no V-12 warning left behind
     }
 
+    [Theory]
+    [InlineData("20261103-044419-603", "2026-11-03T04:44:19.603Z")]
+    [InlineData("20261103-044419-603-2", "2026-11-03T04:44:19.603Z")] // a clash suffix
+    [InlineData("notatime", null)]
+    [InlineData("20261303-044419-603", null)] // month 13
+    public void A_snapshot_ID_gives_its_UTC_time(string snapshotId, string? expected)
+    {
+        var time = Workspace.SnapshotTimeUtc(snapshotId);
+
+        Assert.Equal(expected, time?.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture));
+        Assert.True(time == null || time.Value.Kind == DateTimeKind.Utc);
+    }
+
+    [Fact]
+    public void Snapshot_IDs_carry_the_time_they_were_taken()
+    {
+        var before = DateTime.UtcNow.AddSeconds(-1);
+        var time = Workspace.SnapshotTimeUtc(_workspace.Snapshot(CarId).SnapshotId!);
+
+        Assert.InRange(time!.Value, before, DateTime.UtcNow.AddSeconds(1));
+    }
+
     [Fact]
     public void A_snapshots_data_acd_is_read_with_the_car_IDs_key()
     {

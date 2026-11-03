@@ -73,6 +73,12 @@ public partial class MainWindow : Window
         Refresh(); // size and last change may have moved
     }
 
+    private void Compare_Click(object sender, RoutedEventArgs e)
+    {
+        if (_workspace == null) return;
+        new CompareWindow(_workspace, (CarGrid.SelectedItem as CarRow)?.Id) { Owner = this }.ShowDialog();
+    }
+
     private void Install_Click(object sender, RoutedEventArgs e)
     {
         if (_workspace == null || CarGrid.SelectedItem is not CarRow row)
