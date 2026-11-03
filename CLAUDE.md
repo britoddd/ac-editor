@@ -36,7 +36,7 @@ Plan approved by the owner (2026-11-03). All logic lives in Core; one commit per
 4. **Trash** (WS-6): delete moves to `trash/<id>_<time>`, restore from trash, empty trash only after the typed car ID matches.
 5. **Import** (WS-4, QS-7, QS-8): from a folder or ZIP (`System.IO.Compression`). A car root holds `data.acd` or `data\`. Stream files, refuse zip-slip entries and existing IDs, extract to a temp folder, rename when complete.
 6. **Find AC and remember settings** (WS-1): the verified Steam route in `docs/VERIFIED_FACTS.md`. A hand-picked folder needs `acs.exe` and `content\cars`. Settings live in `%LOCALAPPDATA%\AcMod\settings.json` (owner decision).
-7. **Install to AC** (WS-11): copy to a temp folder in `content\cars`, rename, write an `acmod_install.json` marker. Replace only folders with that marker, and move a replaced install to workspace `trash/`. Refuse bad IDs, path escapes, unreadable data (V-13), and no write access. The validator gate comes in M5. The marker is still pending the owner's OK.
+7. **Install to AC** (WS-11): copy to a temp folder in `content\cars`, rename, write an `acmod_install.json` marker. Replace only folders with that marker, and move a replaced install to workspace `trash/`. Refuse bad IDs, path escapes, unreadable data (V-13), and no write access. The validator gate comes in M5. The owner approved the marker file (2026-11-03).
 8. **Exit gate**: a thin `AcMod.Cli` (one `Program.cs`, no packages; owner decision, WPF starts in M4). The owner runs delete and restore, snapshot restore, install refusals, and one approved real install, then drives the car.
 
 ### Notes for the next agent
