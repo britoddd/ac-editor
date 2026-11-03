@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using AcMod.Core.Acd;
 using AcMod.Core.Formats;
 
 namespace AcMod.Core.Workspaces;
@@ -122,6 +123,12 @@ public sealed partial class Workspace
             ? [.. Directory.GetDirectories(folder).Select(Path.GetFileName).OfType<string>().Where(n => !n.EndsWith(".tmp")).Order(StringComparer.Ordinal)]
             : [];
     }
+
+    /// <summary>The effective data held in a snapshot (TU-6). Its folder is named by time, so the data.acd key comes from the car ID.</summary>
+    public (CarData? Data, string? Error) SnapshotData(string carId, string snapshotId) =>
+        CheckName(snapshotId) == null && Snapshots(carId).Contains(snapshotId)
+            ? (CarData.Load(Path.Combine(Root, "snapshots", carId, snapshotId), carId), null)
+            : (null, $"Car {carId} has no snapshot {snapshotId}.");
 
     /// <summary>Copies the car's snapshot scope (WS-10) to snapshots\&lt;car ID&gt;\&lt;snapshot ID&gt;. It appears only once complete.</summary>
     public (string? SnapshotId, string? Error) Snapshot(string carId)

@@ -188,6 +188,23 @@ public sealed class SnapshotTests : IDisposable
         Assert.False(CarData.Load(_car).FolderIgnored); // no V-12 warning left behind
     }
 
+    [Fact]
+    public void A_snapshots_data_acd_is_read_with_the_car_IDs_key()
+    {
+        Assert.Null(_workspace.WriteCarFiles(CarId, new Dictionary<string, byte[]> { ["data.acd"] = CarData.PackFolder(_car).Bytes! }).Error);
+        var snapshotId = _workspace.Snapshot(CarId).SnapshotId!;
+
+        var (data, error) = _workspace.SnapshotData(CarId, snapshotId);
+
+        Assert.Null(error);
+        Assert.Equal(DataSource.Acd, data!.Source);
+        Assert.Null(data.Error);
+        Assert.Contains(data.Files, f => f.Name == "car.ini");
+        // The folder name is the snapshot ID, so a key built from it can't read the file.
+        Assert.NotNull(CarData.Load(Path.Combine(_workspace.Root, "snapshots", CarId, snapshotId)).Error);
+        Assert.NotNull(_workspace.SnapshotData(CarId, "20990101-000000-000").Error);
+    }
+
     [Theory]
     [InlineData("20990101-000000-000")]
     [InlineData(@"..\..\cars")]

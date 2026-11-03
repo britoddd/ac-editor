@@ -17,7 +17,10 @@ public enum DataSource
 public sealed record CarData(DataSource Source, IReadOnlyList<AcdEntry> Files, string? Error, bool FolderIgnored)
 {
     /// <summary>Reads a car folder. The folder's name is the car ID, which gives the data.acd key.</summary>
-    public static CarData Load(string carFolder)
+    public static CarData Load(string carFolder) => Load(carFolder, AcdKey.SourceName(Path.Combine(Path.GetFullPath(carFolder), "data.acd")));
+
+    /// <summary>Reads a folder whose name isn't the car ID, such as a snapshot (TU-6). <paramref name="carId"/> gives the data.acd key.</summary>
+    public static CarData Load(string carFolder, string carId)
     {
         carFolder = Path.GetFullPath(carFolder);
         var acdPath = Path.Combine(carFolder, "data.acd");
@@ -26,7 +29,7 @@ public sealed record CarData(DataSource Source, IReadOnlyList<AcdEntry> Files, s
 
         if (File.Exists(acdPath))
         {
-            var acd = AcdFile.Parse(File.ReadAllBytes(acdPath), AcdKey.SourceName(acdPath));
+            var acd = AcdFile.Parse(File.ReadAllBytes(acdPath), carId);
             return new CarData(DataSource.Acd, acd.Entries, acd.Error, hasFolder);
         }
 

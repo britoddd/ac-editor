@@ -1,5 +1,6 @@
 using System.Text;
 using AcMod.Core.Acd;
+using AcMod.Core.Formats;
 using AcMod.Core.Workspaces;
 
 namespace AcMod.Core.Tests.Workspaces;
@@ -91,6 +92,15 @@ public sealed class CarEditTests : IDisposable
 
         Assert.Equal(EngineIni, File.ReadAllText(Path.Combine(Car, "data", "engine.ini"))); // data\ untouched
         Assert.Contains("LIMITER=5500", Text(CarData.Load(Car).Files.Single(f => f.Name == "engine.ini").Data));
+    }
+
+    [Fact]
+    public void Changes_lists_the_unsaved_fields()
+    {
+        var edit = Open();
+        edit.Set("engine.ini", Bytes("[ENGINE_DATA]\r\nLIMITER=5500\r\n"));
+
+        Assert.Equal([new FieldChange("engine.ini", "[ENGINE_DATA] LIMITER", "6500", "5500")], edit.Changes);
     }
 
     [Fact]
