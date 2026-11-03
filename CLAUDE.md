@@ -27,7 +27,14 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 ## Next: TU-8, then Milestone 5 (Validator)
 
-TU-8 (P2, owner request): plan approved 2026-11-03. One commit per step, prefixed `TU-8 step N`.
+**TU-9 (P2, owner request, in progress):** plan approved 2026-11-03. One commit per step, prefixed `TU-9 step N`.
+1. **Core:** `TextDocument` can insert and remove whole lines (new lines copy the neighbouring line break). Gear edits: add a gear (`COUNT`, a new `GEAR_n` line, and a `setup.ini` `[GEAR_n]` section copied from the previous gear's), remove the last gear (the reverse). Power curve: add a row above the highest rpm, or remove the last row.
+2. **Gears tab editing:** editable ratio cells and `FINAL`, with live speeds and a warning when a ratio isn't a `ratios.rto` option.
+3. **Buttons:** Add gear (default ratio = last × 0.88) and Remove last gear on Gears; Add row and Remove last row on Power curve.
+4. **Game check:** a 7th gear and an off-list ratio. Unverified until then: whether AC needs the `setup.ini` `[GEAR_n]` section, whether it snaps a ratio to `ratios.rto`, and how it treats `LIMITER` above the last `power.lut` row.
+Owner decisions: "maximum rpm" means extending `power.lut` (option b); a new gear also gets a `setup.ini` section.
+
+**TU-8 (P2, owner request): done 2026-11-03.** Commits prefixed `TU-8`. Later owner additions: a shared torque/power scale with a labelled grid, and clicking empty chart space clears the selection.
 Owner decisions: a drag moves every selected point by the same Nm; dragged values are rounded to 0.1 Nm (typed values never); no Ctrl+Z (Discard and the save snapshot cover mistakes).
 1. **Core:** `CarEdit.SetLutValues(file, {row → value})` as one change, plus scale-by-% and add-Nm helpers, with QS-2 tests.
 2. **Table multi-select:** Ctrl/Shift selection on the Power curve table, with Scale % and Add Nm buttons.
