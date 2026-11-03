@@ -205,7 +205,11 @@ public sealed partial class Workspace
         var isZip = File.Exists(source);
         if (!isZip && !Directory.Exists(source)) return (null, $"{source} doesn't exist.");
         if (isZip && !source.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) return (null, "Only folders and .zip files can be imported. Extract other archives first.");
-        if (!isZip && (IsSameOrInside(source, Root) || IsSameOrInside(Root, source))) return (null, "Choose a folder outside the workspace.");
+        // A loose car folder in the workspace root is fine to import; the workspace itself, or a folder the app manages, isn't.
+        if (!isZip && (IsSameOrInside(Root, source) || Folders.Append("import.tmp").Any(f => IsSameOrInside(source, Path.Combine(Root, f)))))
+        {
+            return (null, "Choose a folder that isn't the workspace itself or inside its cars, snapshots, trash, or exports folders.");
+        }
 
         try
         {

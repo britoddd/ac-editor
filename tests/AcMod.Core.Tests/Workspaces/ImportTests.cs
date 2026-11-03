@@ -150,12 +150,31 @@ public sealed class ImportTests : IDisposable
         AssertNothingImported();
     }
 
-    [Fact]
-    public void Import_refuses_a_folder_inside_the_workspace_or_holding_it()
+    [Theory]
+    [InlineData("")] // the workspace itself
+    [InlineData("..")] // a folder holding the workspace
+    [InlineData("trash")]
+    [InlineData(@"cars\acm_x")]
+    [InlineData(@"snapshots\acm_x")]
+    public void Import_refuses_the_workspace_and_the_folders_it_manages(string folder)
     {
-        Assert.Contains("outside the workspace", _workspace.ImportCar(Path.Combine(_workspace.Root, "trash")).Error);
-        Assert.Contains("outside the workspace", _workspace.ImportCar(_temp).Error);
-        AssertNothingImported();
+        Directory.CreateDirectory(Path.Combine(_workspace.Root, folder, "data"));
+        File.WriteAllText(Path.Combine(_workspace.Root, folder, "data", "car.ini"), "x");
+
+        Assert.Contains("isn't the workspace itself", _workspace.ImportCar(Path.Combine(_workspace.Root, folder)).Error);
+        Assert.False(Directory.Exists(Path.Combine(_workspace.Root, "import.tmp")));
+    }
+
+    [Fact]
+    public void A_loose_car_folder_in_the_workspace_root_can_be_imported()
+    {
+        Directory.CreateDirectory(Path.Combine(_workspace.Root, "acm_loose", "data"));
+        File.WriteAllText(Path.Combine(_workspace.Root, "acm_loose", "data", "car.ini"), "loose");
+
+        Assert.Equal(("acm_loose", null), _workspace.ImportCar(Path.Combine(_workspace.Root, "acm_loose")));
+
+        Assert.Equal("loose", Imported("acm_loose", @"data\car.ini"));
+        Assert.True(Directory.Exists(Path.Combine(_workspace.Root, "acm_loose"))); // a copy; the original stays
     }
 
     [Fact]
