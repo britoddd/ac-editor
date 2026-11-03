@@ -14,11 +14,11 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 5 is in progress** (plan in "Next" below).
+**Milestone 5 is done (2026-11-03). Next: plan Milestone 6** (see "Next" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
-Done so far. Git history has the details: one commit per step, prefixed `M0` to `M4`.
+Done so far. Git history has the details: one commit per step, prefixed `M0` to `M5`.
 - **M0 (2026-11-02):** the tutorial car `acm_tutorial_basic` was built and drives in AC. Facts about real AC data are in `docs/VERIFIED_FACTS.md`, the ACD format is in `docs/ACD.md`, and the V-01 to V-15 verdicts are in `docs/REQUIREMENTS.md` ("M0 verdicts"). The license is MIT, and no AcTools code is ported.
 - **M1 (2026-11-03):** `src/AcMod.Core` has `Text/TextDocument` (the lossless base) and `Formats/` with `LutFile` (.lut and .rto), `IniFile`, `UiCarJson`, and `GuidsFile`. `FixtureRunnerTests` checks QS-1 and every single-value edit (QS-2) on all 168 fixture files. 223 tests pass, with 0 warnings.
 - **M2 (2026-11-03):** `src/AcMod.Core/Acd/` has `AcdKey` (written clean-room from `docs/ACD.md`), `AcdFile` (`Parse` reports unreadable files per V-13, `Pack`, and `PackVerified` for PK-1), and `CarData` (effective data per TU-1 and V-12, and `PackFolder`). Core matches acd.py in both directions, and AC loaded a Core-packed `data.acd` (the log's `PW` matched the prediction exactly). 294 tests pass, with 0 warnings.
@@ -27,19 +27,13 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 - **After M4 (2026-11-03), owner requests:** TU-8 (power curve drag and multi-select, a shared torque/power scale with a grid) and TU-9 (edit gear ratios and FINAL, add or remove gears with their `setup.ini` sections, extend `power.lut`). Also PK-2 ZIP export, built early. AC's garage replaces a ratio that isn't in its `ratios.rto` list with the list's first option, so a gear with a list offers only those ratios (owner decision). 477 tests pass, with 0 warnings.
 
-## Next: Milestone 5 (Validator)
+- **M5 (2026-11-03):** `src/AcMod.Core/Validation/Validator` runs V-01, V-02, V-04 to V-15 (V-03 dropped) with severity, file, message, fix (VA-2) and an evidence label (VA-3). `Formats/Kn5Probe` reads only the KN5 header, texture table and first material for V-14. It runs on the Validate tab, in the car list, via `acmod validate`, and after `acmod import`. Errors block install and export unless the user continues anyway (PK-4, owner decision). A V-14 car asks before Save. Exit gate: each rule has a passing and a failing test fixture; a run over 252 installed cars matched M0 (V-14 exactly 36 files in 10 folders); the owner saw the tutorial car at 0 errors, 0 warnings, 5 info in the app. V-05 now uses `engine.ini` `POWER_CURVE`. 509 tests pass, with 0 warnings.
 
-**TU-10 (P2, owner request): done 2026-11-03.** The Gears tab has a Garage ratio list panel to add and remove `.rto` ratios. New labels are `driver//driven` tooth pairs by our own convention (real lists pick tooth counts by hand). The owner installed 2.26 as `19//43` and reported the garage showed it as expected.
+## Next: Milestone 6 (Packaging)
 
-Exit gate: each rule has a passing and failing fixture. Rules and severities come from "M0 verdicts" in `docs/REQUIREMENTS.md` (V-03 dropped).
-Plan approved by the owner (2026-11-03). Logic in Core (`src/AcMod.Core/Validation/`) with tests; one commit per step, prefixed `M5 step N`.
-Owner decisions: fixtures are built inside the tests (temp folders), not committed; errors block both export and install unless the user ticks an override (warnings and infos never block); a V-14 car asks for an extra confirmation before Save.
-1. **Frame and simple rules:** a finding has rule, severity, file, message, fix (VA-2), and evidence label (VA-3). V-01, V-04, V-05, V-06, V-11, V-12, V-13, V-15.
-2. **Reference rules:** V-02 (`lods.ini` models exist, ignoring case) and V-07 (named `.lut`/`.rto` files exist, skipping `[COAST_CURVE] FILENAME`), after a read-only survey of which keys hold file names.
-3. **Sound and UI:** V-08, V-09 (bank for the car ID; `GUIDs.txt` in `sfx\` or AC's shared one), V-10 (`ui_car.json` parses; badge PNG; 128×128 from the PNG header).
-4. **V-14:** read the KN5 header, texture table and first material only (layout from `scratch/kn5_survey.py` notes, no AcTools code); must reproduce M0's 36 files in 10 folders.
-5. **Wiring (VA-1):** Validate tab, the car list's Validation column, after import, `acmod validate`, the export/install gate with override, and the V-14 Save confirmation.
-6. **Exit gate:** every rule passes and fails in tests; a read-only run over the installed cars compared with M0's survey; the owner validates the tutorial car in the app.
+Read the M6 row, WS-7, WS-8 and PK-1 to PK-4 in `docs/REQUIREMENTS.md`, propose small steps, and get the owner's approval before coding. Exit gate: the ZIP installs through Content Manager and drives in AC.
+Already built: PK-2 ZIP export, part of PK-3 (dev files and the install marker are left out), and PK-4 (validation errors block export unless overridden).
+Open from M5: V-07 flags 22 installed cars as errors; whether they break in game is untested, so V-07 may become a warning.
 Also pending from TU-9: how AC treats `LIMITER` above the last `power.lut` row (not tested).
 
 Still unverified after M4:
