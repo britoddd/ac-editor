@@ -130,6 +130,28 @@ public partial class CarWindow
         ShowPower();
     }
 
+    /// <summary>
+    /// TU-9: adds a row one rpm step above the last (the step between the last two rows), with the last row's torque, so the engine can rev higher
+    /// with power. Unverified: how AC treats LIMITER above the last row, so extend the curve before raising LIMITER.
+    /// </summary>
+    private void AddRow_Click(object sender, RoutedEventArgs e)
+    {
+        if (_edit.ReadOnly || PowerEstimate.CurveFile(_edit.CurrentFiles) is not { } curveName || _chartPoints.Count < 2) return;
+        var (last, previous) = (_chartPoints[^1], _chartPoints[^2]);
+        var rpm = last.Rpm + Math.Max(1, last.Rpm - previous.Rpm);
+        Status.Text = _edit.Apply(curveName, bytes => GearEdits.AddCurveRow(bytes, rpm, last.Torque)) ?? Invariant($"Added a row at {rpm:0} rpm. Drag or type its torque.");
+        MarkChanged();
+        ShowPower();
+    }
+
+    private void RemoveRow_Click(object sender, RoutedEventArgs e)
+    {
+        if (_edit.ReadOnly || PowerEstimate.CurveFile(_edit.CurrentFiles) is not { } curveName) return;
+        Status.Text = _edit.Apply(curveName, GearEdits.RemoveLastCurveRow) ?? "Removed the last row.";
+        MarkChanged();
+        ShowPower();
+    }
+
     /// <summary>A typed number. AC files always use '.', but Indonesian Windows types ',' for decimals, so accept either (QS-11).</summary>
     private static bool TryNumber(string text, out double number) =>
         double.TryParse(text.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out number) && double.IsFinite(number);
