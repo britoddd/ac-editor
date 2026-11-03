@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 6 is done (2026-11-03). Next: plan Milestone 7** (see "Next" below).
+**Milestone 7 is in progress** (plan in "Next" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -33,7 +33,15 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 ## Next: Milestone 7 (Learning aids)
 
-Read the M7 row and LE-1 to LE-4 in `docs/REQUIREMENTS.md`, propose small steps, and get the owner's approval before coding. Exit gate: the owner can build a second car using only the dashboard and its links.
+Exit gate: the owner can build a second car using only the dashboard and its links.
+Plan approved by the owner (2026-11-03). One commit per step, prefixed `M7 step N`.
+Owner decisions: Kunos's `formula_k` sample comments (read at runtime from AC's `sdk\dev\content\cars\formula_k`, never committed) are the second explanation source; manual checklist ticks live in the workspace root `checklists.json`, written through the guarded file service; the second car can be simple (for example a new body on the same chassis data).
+Sources: the SDK PDFs (`sdk\dev\car_pipeline_2.0rev\AC_Pipeline_PUB_Rev2.0.pdf`, `sdk\audio\AC Audio Pipeline 1.9.pdf`) are password-protected, so the app only links to them and never quotes or extracts them.
+1. **Field explanations (LE-1):** in order, the car's own comment, then `formula_k`'s comment on the same key, then short notes citing `docs/VERIFIED_FACTS.md` for fields we tested; each labelled with its source. Survey `formula_k`'s coverage first.
+2. **AC log reader (LE-4):** likely problems, known harmless lines, the car's own lines, `PW` against the estimate, and a warning when `CLEAN EXIT` is missing; app window and `acmod log`.
+3. **Outside the dashboard (LE-3):** Blender and ksEditor steps for findings the dashboard can't fix, from the M0 verified facts, with links.
+4. **First-car checklist (LE-2):** folders, dummies, FBX export, ksEditor, collider, data, sound; live status from the validator where it can check, manual ticks otherwise.
+5. **Exit gate:** the owner builds a second car with the checklist and the app's links.
 Open from M5: V-07 flags 22 installed cars as errors; whether they break in game is untested, so V-07 may become a warning.
 Also pending from TU-9: how AC treats `LIMITER` above the last `power.lut` row (not tested).
 
