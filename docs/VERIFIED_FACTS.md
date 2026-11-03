@@ -466,3 +466,4 @@ The owner set `engine.ini` `[ENGINE_DATA] LIMITER` from 6500 to 5500 on the app'
   `content\cars\acm_tutorial_basic\data\proview_nodes.ini` (13:07:20), and the install's rename of that folder was refused.
 - The failed install left `content\cars` unchanged: no `.acmod-installing` or `.acmod-old` folder and no extra trash copy. The fix is to close Content Manager (and AC) before installing.
 - Not verified: whether Content Manager holds the folder only after a session, or whenever it is open.
+- Later the same day, installs still failed with AC and Content Manager closed, and no file in the car was held open. **The cause was an Explorer tab showing the car's folder.** Closing it fixed the install (13:11). So any program with the folder open blocks the install's rename.
