@@ -14,35 +14,31 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 3 is in progress** (plan in "Next: Milestone 3" below).
+**Milestone 3 is done (2026-11-03). Next: plan Milestone 4** (see "Next: Milestone 4" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
-Done so far. Git history has the details: one commit per step, prefixed `M0`, `M1`, or `M2`.
+Done so far. Git history has the details: one commit per step, prefixed `M0`, `M1`, `M2`, or `M3`.
 - **M0 (2026-11-02):** the tutorial car `acm_tutorial_basic` was built and drives in AC. Facts about real AC data are in `docs/VERIFIED_FACTS.md`, the ACD format is in `docs/ACD.md`, and the V-01 to V-15 verdicts are in `docs/REQUIREMENTS.md` ("M0 verdicts"). The license is MIT, and no AcTools code is ported.
 - **M1 (2026-11-03):** `src/AcMod.Core` has `Text/TextDocument` (the lossless base) and `Formats/` with `LutFile` (.lut and .rto), `IniFile`, `UiCarJson`, and `GuidsFile`. `FixtureRunnerTests` checks QS-1 and every single-value edit (QS-2) on all 168 fixture files. 223 tests pass, with 0 warnings.
 - **M2 (2026-11-03):** `src/AcMod.Core/Acd/` has `AcdKey` (written clean-room from `docs/ACD.md`), `AcdFile` (`Parse` reports unreadable files per V-13, `Pack`, and `PackVerified` for PK-1), and `CarData` (effective data per TU-1 and V-12, and `PackFolder`). Core matches acd.py in both directions, and AC loaded a Core-packed `data.acd` (the log's `PW` matched the prediction exactly). 294 tests pass, with 0 warnings.
+- **M3 (2026-11-03):** `src/AcMod.Core/Workspaces/` has `Workspace` and `AcInstall`/`Settings`. `Workspace` covers the path guard (`Resolve`), snapshots with rollback, the car list and folder manager, trash with permanent delete, and import from a folder or ZIP. `Workspace.Install.cs` is the only code that writes into AC (WS-11). `AcInstall` finds AC through Steam, and `Settings` lives in `%LOCALAPPDATA%\AcMod\settings.json`. `src/AcMod.Cli` (`acmod`) is a thin CLI over Core. The owner ran the exit gate on `D:\ACModding`: snapshot restore, delete and restore, an install refusal, a 966 MB import peaking at 30.5 MB of memory (QS-7), and an app install that AC loaded with `PW` 188,460 W, the baseline. 409 tests pass, with 0 warnings.
 
-## Next: Milestone 3 (Workspace)
+## Next: Milestone 4 (Tuning)
 
-Exit gate: install to AC refuses unsafe targets, and delete and restore work end to end.
-M3 adds the guarded file service that every write goes through, including a packed `data.acd` (`CarData.PackFolder` returns bytes and writes nothing).
-
-Plan approved by the owner (2026-11-03). All logic lives in Core; one commit per step, prefixed `M3 step N`.
-
-1. **Workspace and path guard** (WS-1 layout, WS-2, QS-6): create or open `cars/`, `snapshots/`, `trash/`, `exports/`. One method resolves every write path and refuses `..` escapes, rooted paths, `:`, junctions or symlinks, and a workspace that overlaps the AC folder.
-2. **Snapshots and guarded write** (WS-9, WS-10, QS-3, QS-8): snapshot first, then write to a temp file and rename. Snapshot scope is `data.acd`, `data\`, `ui\`, `sfx\GUIDs.txt` (no KN5, banks, or textures). Restore makes the scope match the snapshot exactly, so a later `data.acd` is removed (V-12), and snapshots the current state first.
-3. **Car list and folder manager** (WS-3, WS-5): ID, display name from `ui_car.json`, size, last changed; stale cars, snapshot and trash sizes. Validation status is "not run" until M5.
-4. **Trash** (WS-6): delete moves to `trash/<id>_<time>`, restore from trash, empty trash only after the typed car ID matches.
-5. **Import** (WS-4, QS-7, QS-8): from a folder or ZIP (`System.IO.Compression`). A car root holds `data.acd` or `data\`. Stream files, refuse zip-slip entries and existing IDs, extract to a temp folder, rename when complete.
-6. **Find AC and remember settings** (WS-1): the verified Steam route in `docs/VERIFIED_FACTS.md`. A hand-picked folder needs `acs.exe` and `content\cars`. Settings live in `%LOCALAPPDATA%\AcMod\settings.json` (owner decision).
-7. **Install to AC** (WS-11): copy to a temp folder in `content\cars`, rename, write an `acmod_install.json` marker. Replace only folders with that marker, and move a replaced install to workspace `trash/`. Refuse bad IDs, path escapes, unreadable data (V-13), and no write access. The validator gate comes in M5. The owner approved the marker file (2026-11-03).
-8. **Exit gate**: a thin `AcMod.Cli` (one `Program.cs`, no packages; owner decision, WPF starts in M4). The owner runs delete and restore, snapshot restore, install refusals, and one approved real install, then drives the car.
+No plan yet. Read the M4 row and the `TU-*` requirements in `docs/REQUIREMENTS.md`, propose small steps with requirement IDs, and get the owner's approval before coding.
+Exit gate: a tuned car loads in AC with the intended change visible in-game.
+The WPF app (`src/AcMod.App`, net10.0-windows) starts in M4 (owner decision, 2026-11-03). The owner is new to WPF, so introduce it in small steps.
 
 ### Notes for the next agent
 
+- **Workspace API:** every car write goes through `Workspace.WriteCarFiles(carId, files)`, which snapshots first, writes through temp files, and rolls back on failure (QS-3, QS-8).
+  Paths must be in the snapshot scope: `data.acd`, `data\`, `ui\`, `sfx\GUIDs.txt`. Methods return `(Value, Error)` tuples. File system failures throw `IOException` or `UnauthorizedAccessException`.
 - **Deleting folders:** use `Workspace.DeleteFolder`, never `Directory.Delete(path, recursive: true)`. Without admin rights the recursive version throws on a junction, and it refuses read-only files.
 - **Install marker:** WS-11 writes `acmod_install.json` into each car it installs. A car imported back from `content\cars` carries it, so M6 exports (PK-3) must leave it out.
+- **Owner's workspace:** `D:\ACModding`, with the imported `cars\acm_tutorial_basic`. The owner's own folders sit next to it: `acm_tutorial_basic` (loose; its `car.ini` says `SCREEN_NAME=ACM Testing` from a test edit), `acm_tutorial_basic_FOR_LATER_USE`, and `installed_backup\acm_tutorial_basic` (the old hand copy from `content\cars`). Leave those alone.
+- **Running the CLI with the owner:** some of the owner's `!` lines arrive as plain messages and don't run. Check for a `<bash-input>` block before assuming a command ran.
+  The owner twice edited the wrong copy of `car.ini`, so give full paths and check files on disk.
 
 - **Branches:** work happens on `main`. The owner switched to it during M2 and pushes it themselves, so never push. The local `milestone-0` branch is stale.
 - **Backslashes:** the Bash tool collapses `\\` into `\`, so Windows paths inside Python string literals get mangled (`\f` and `\a` become control characters).
@@ -54,15 +50,15 @@ Plan approved by the owner (2026-11-03). All logic lives in Core; one commit per
 - **Screenshots:** the owner saves them in `scratch/` with default Windows names. Read the newest file.
 - **Game checks:** read `%USERPROFILE%\Documents\Assetto Corsa\logs\log.txt` right after the owner quits, because the next AC start overwrites it.
   The `POWER CLASS INDEX ... PW:` line shows which data loaded (formula in the V-12 entry of `docs/VERIFIED_FACTS.md`). Versions: AC 1.16.4, CSP 0.3.0-preview634.
-- **Installed tutorial car:** `content\cars\acm_tutorial_basic` matches `D:\ACModding\acm_tutorial_basic`, plus AC's own `data\proview_nodes.ini`.
-  Write there only with the owner's approval, and remove test files afterwards. Ask for approval explicitly and wait for a clear yes before copying.
+- **Installed tutorial car:** `content\cars\acm_tutorial_basic` is an app install (it has `acmod_install.json`) of `D:\ACModding\cars\acm_tutorial_basic`, plus AC's own `data\proview_nodes.ini`.
+  `acmod install acm_tutorial_basic` replaces it and moves the old copy to the workspace trash. Install only with the owner's approval. Ask for approval explicitly and wait for a clear yes.
   `scratch/m2_game_check` is a Core-only console program that builds a test `data.acd` (see the M2 entry in `docs/VERIFIED_FACTS.md`).
 - **`fixtures/local` (gitignored):** `acm_tutorial_basic`, `formula_k`, `shelby_cobra_427sc`, `ks_porsche_911_gt3_r_2016/data.acd` (the `data.acd` only, with a `-1111` header), and `acdpy_reference/acm_tutorial_basic/data.acd` (acd.py's pack of the tutorial car).
 - **Synthetic ACD fixture:** `fixtures/synthetic/acd/acm_acd_synthetic/data.acd` is acd.py's pack of the `data` folder next to it.
   If any file in that folder changes, `AcdPyComparisonTests` fails until the owner repacks it with the command in `docs/ACD.md`. `FixtureRunnerTests` also scans those files.
 - **Core conventions:** each format has `Parse(bytes)` (never throws) and `ToBytes()`, and `With...()` edits return a new object.
   Add every new format to `FixtureRunnerTests`. Mark a known shortcut with a `ponytail:` comment that names its limit.
-- **ACD API for M3:** `AcdEntry(Name, Data)` is the file type for both `data.acd` entries and `data\` files.
+- **ACD API:** `AcdEntry(Name, Data)` is the file type for both `data.acd` entries and `data\` files.
   `CarData.Load` never falls back to `data\` when `data.acd` is unreadable, because AC doesn't. Show its `Error` and open the car read-only (V-13).
   `CarData.PackFolder` and `AcdFile.PackVerified` return `(Bytes, Error)` and write nothing.
   They refuse non-ASCII or path-character file names. One real mod has `data\suspensions - 副本.ini`, so the UI must tell the user to rename or remove such a file.

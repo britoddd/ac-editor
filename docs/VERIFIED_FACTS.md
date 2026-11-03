@@ -413,3 +413,15 @@ With the owner's approval it was copied to `content\cars\acm_tutorial_basic\data
 - The log has no new car-data errors, only the 4 known `ERROR: Variable type cannot be found` lines. `Data path: content/cars/acm_tutorial_basic/data/` appeared even though `data.acd` was used, as in M0.
 - The owner did not see "ACM Tutorial M2" anywhere in game. Where `car.ini` `SCREEN_NAME` appears is not verified, so it is not a usable visible check.
 - The test `data.acd` was removed afterwards, and a copy is in `scratch/m2_game_check/out/`. The installed `data\` still matches `D:\ACModding\acm_tutorial_basic\data`, plus `proview_nodes.ini`.
+
+## App install in game (BRITOD-DESK, 2026-11-03, M3 exit gate)
+
+The owner moved the hand-copied `content\cars\acm_tutorial_basic` to `D:\ACModding\installed_backup\`, then ran `acmod install acm_tutorial_basic`.
+The installed folder held the workspace car's 90 files, byte-identical, plus the app's marker `acmod_install.json` in the car root.
+
+- **Result: AC loads a car installed by the app, and the extra marker file does no harm.** The log has `PW:188460.000000`, the same as the M2 baseline, so the data loaded unchanged.
+- The log loads every LUT and `collider.kn5` and ends with `CLEAN EXIT`. No line mentions `acmod_install.json`.
+- Car-data errors: only the 4 known `ERROR: Variable type cannot be found` lines. The other errors (force feedback, missing Python apps, `NO STAT FOR` the car and the track, an FMOD collision event) are not about car data.
+- AC wrote `CREATING proview_nodes.ini` and created `data\proview_nodes.ini` in the installed car again, as in M0. That file exists only in the installed copy, not in the workspace.
+- Before the install, the app refused to replace the hand copy because it had no marker, and nothing in `content\cars` changed.
+- Not checked: whether Content Manager shows or treats the marker file in any way.
