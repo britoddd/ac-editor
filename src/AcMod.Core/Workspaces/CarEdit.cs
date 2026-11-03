@@ -51,9 +51,11 @@ public sealed class CarEdit
     public IReadOnlyList<string> WriteTargets =>
         _changes.Count == 0 ? [] : Data.Source == DataSource.Acd ? ["data.acd"] : [.. ChangedFiles.Select(n => Path.Combine("data", n))];
 
+    /// <summary>Every data file with any unsaved change applied, for live calculations such as the power estimate.</summary>
+    public IReadOnlyList<AcdEntry> CurrentFiles => [.. Data.Files.Select(f => _changes.TryGetValue(f.Name, out var changed) ? f with { Data = changed } : f)];
+
     /// <summary>Every unsaved change, field by field, to show before saving (TU-7).</summary>
-    public IReadOnlyList<FieldChange> Changes =>
-        DataDiff.Compare(Data.Files, Data.Files.Select(f => _changes.TryGetValue(f.Name, out var changed) ? f with { Data = changed } : f));
+    public IReadOnlyList<FieldChange> Changes => DataDiff.Compare(Data.Files, CurrentFiles);
 
     /// <summary>A data file's bytes, with any unsaved change.</summary>
     public byte[] Current(string name) => _changes.TryGetValue(name, out var changed) ? changed : Original(name);
@@ -105,8 +107,7 @@ public sealed class CarEdit
         var files = new Dictionary<string, byte[]>();
         if (Data.Source == DataSource.Acd)
         {
-            var entries = Data.Files.Select(f => _changes.TryGetValue(f.Name, out var changed) ? f with { Data = changed } : f).ToArray();
-            var (packed, packError) = AcdFile.PackVerified(entries, CarId);
+            var (packed, packError) = AcdFile.PackVerified(CurrentFiles, CarId);
             if (packed == null) return (null, packError);
             files["data.acd"] = packed;
         }
