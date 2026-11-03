@@ -55,6 +55,40 @@ public sealed class ExportTests : IDisposable
     }
 
     [Fact]
+    public void A_packed_export_holds_a_data_acd_for_the_car_ID_instead_of_the_data_folder()
+    {
+        var (zipPath, error) = _workspace.ExportZip(CarId, ignoreErrors: true, pack: true);
+
+        Assert.Null(error);
+        using var zip = ZipFile.OpenRead(zipPath!);
+        Assert.Equal([$"{CarId}/car.kn5", $"{CarId}/data.acd", $"{CarId}/skins/red/preview.jpg"], zip.Entries.Select(e => e.FullName).Order(StringComparer.Ordinal));
+        using var acd = new MemoryStream();
+        zip.GetEntry($"{CarId}/data.acd")!.Open().CopyTo(acd);
+        var unpacked = AcMod.Core.Acd.AcdFile.Parse(acd.ToArray(), CarId); // readable with the car ID's key
+        Assert.Null(unpacked.Error);
+        Assert.Equal("[INFO]\r\nSCREEN_NAME=x\r\n", System.Text.Encoding.UTF8.GetString(unpacked.Entries.Single(e => e.Name == "car.ini").Data));
+        Assert.True(Directory.Exists(Path.Combine(Car, "data"))); // the workspace car keeps data\
+        Assert.False(File.Exists(Path.Combine(Car, "data.acd")));
+    }
+
+    [Theory]
+    [InlineData("livery.pdn")]
+    [InlineData("livery.xcf")]
+    [InlineData("old_version.zip")]
+    [InlineData(@"data\car.ini.backup")]
+    [InlineData("export.log")]
+    public void Leftover_files_found_in_real_car_folders_stay_out_of_the_ZIP(string leftover)
+    {
+        var full = Path.Combine(Car, leftover);
+        Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+        File.WriteAllText(full, "x");
+
+        using var zip = ZipFile.OpenRead(_workspace.ExportZip(CarId, ignoreErrors: true).ZipPath!);
+
+        Assert.DoesNotContain(zip.Entries, e => e.FullName.EndsWith(leftover.Replace('\\', '/'), StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Validation_errors_block_the_export_unless_the_user_overrides()
     {
         var (zipPath, error) = _workspace.ExportZip(CarId); // this car has no collider.kn5, mandatory data files, or bank
