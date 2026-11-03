@@ -41,6 +41,7 @@ static int Run(string[] args)
         ["purge", var trashId] => Report(ws.PermanentDeleteWarning(trashId), w => $"{w}\nTo confirm, run: acmod purge {trashId} <car ID>"),
         ["purge", var trashId, var typed] => ws.DeletePermanently(trashId, typed) is { } error ? Fail(error) : Done($"Deleted {trashId} permanently"),
         ["install", var car] => Install(ws, car),
+        ["export", var car] => Report(ws.ExportZip(car), path => $"Exported {car} to {path}\nInstall it by dragging the ZIP onto Content Manager."),
         _ => Help(),
     };
 }
@@ -131,6 +132,7 @@ static int Help()
         acmod purge <trash ID>                         show what a permanent delete would remove
         acmod purge <trash ID> <car ID>                delete it permanently, with its snapshots; can't be undone
         acmod install <car ID>                         copy a car into AC's content\cars (WS-11)
+        acmod export <car ID>                          write a ZIP for Content Manager to the exports folder (PK-2)
         """);
     return 1;
 }

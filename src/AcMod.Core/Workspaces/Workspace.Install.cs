@@ -94,7 +94,7 @@ public sealed partial class Workspace
         {
             return (null, null,
                 $"Installing {carId} failed, and content\\cars was left as it was: {e.Message} " +
-                "Close AC and Content Manager and try again: while either is open it can hold the car's folder, and Windows then refuses access (seen 2026-11-03). If Windows refuses access to content\\cars, export a ZIP for Content Manager instead (M6).");
+                "Close AC and Content Manager and try again: while either is open it can hold the car's folder, and Windows then refuses access (seen 2026-11-03). If it keeps failing, use Export ZIP and install the ZIP through Content Manager instead.");
         }
         finally
         {

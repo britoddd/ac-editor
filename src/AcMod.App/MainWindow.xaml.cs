@@ -79,6 +79,36 @@ public partial class MainWindow : Window
         new CompareWindow(_workspace, (CarGrid.SelectedItem as CarRow)?.Id) { Owner = this }.ShowDialog();
     }
 
+    /// <summary>PK-2: writes a ZIP to the workspace's exports folder and shows it in Explorer, for installing through Content Manager.</summary>
+    private void Export_Click(object sender, RoutedEventArgs e)
+    {
+        if (_workspace == null || CarGrid.SelectedItem is not CarRow row)
+        {
+            Status.Text = "Choose a car in the list first.";
+            return;
+        }
+
+        try
+        {
+            var (zipPath, error) = _workspace.ExportZip(row.Id);
+            if (zipPath == null)
+            {
+                MessageBox.Show(this, error, "Export ZIP", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{zipPath}\"");
+            MessageBox.Show(this,
+                $"Exported to\n{zipPath}\n\nTo install: open Content Manager and drag this ZIP onto its window, then confirm the install. " +
+                "(Content Manager accepting a dropped ZIP is from a community tutorial; tell Claude if it behaves differently.)",
+                "Export ZIP", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(this, ex.Message, "Export ZIP", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void Install_Click(object sender, RoutedEventArgs e)
     {
         if (_workspace == null || CarGrid.SelectedItem is not CarRow row)
