@@ -8,7 +8,7 @@
             <TextBlock x:Name="Summary" VerticalAlignment="Center" Margin="12,0,0,0" />
         </StackPanel>
         <TextBlock DockPanel.Dock="Top" Margin="0,0,0,8" TextWrapping="Wrap">
-            <Run Text="Items marked (checked) follow the validator; tick the others yourself when they're done. Read more:" />
+            <Run Text="Steps marked (checked) follow the validator; tick the others yourself when they're done. Close an Explorer window on the car's folder before you delete, rename or install the car. Read more:" />
             <Hyperlink x:Name="PipelineLink" Click="OpenLink_Click">Kunos car pipeline (PDF in your AC's SDK)</Hyperlink>
             <Run Text="  ·  " />
             <Hyperlink NavigateUri="https://assettocorsamods.net/threads/your-first-car-in-assetto-corsa-basic-guide.1019/" Click="OpenLink_Click">Community first-car guide (web)</Hyperlink>
@@ -31,6 +31,19 @@
                 <DataGridTextColumn Header="Still open" Binding="{Binding Blocking}" IsReadOnly="True" Width="2*">
                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap" /></Style></DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
+                <DataGridTemplateColumn Header="Go to">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ItemsControl ItemsSource="{Binding Actions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding Label}" Click="Action_Click" Padding="6,1" Margin="0,1" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Source" Binding="{Binding Source}" IsReadOnly="True" Width="*">
                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap" /></Style></DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>

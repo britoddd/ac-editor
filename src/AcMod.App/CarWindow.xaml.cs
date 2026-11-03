@@ -41,7 +41,8 @@ public partial class CarWindow : Window
     private readonly List<FileRow> _rows;
     private bool _loading; // true while the code itself fills the editor, so that isn't taken as a user edit
 
-    public CarWindow(CarEdit edit)
+    /// <param name="startTab">"Validate" to open on the Validate tab; otherwise it opens on Forms.</param>
+    public CarWindow(CarEdit edit, string? startTab = null)
     {
         InitializeComponent();
         _edit = edit;
@@ -57,6 +58,11 @@ public partial class CarWindow : Window
         SaveButton.IsEnabled = DiscardButton.IsEnabled = !edit.ReadOnly;
         if (_rows.Count > 0) FileList.SelectedIndex = 0;
         InitForms();
+        if (startTab == "Validate")
+        {
+            Tabs.SelectedItem = ValidateTab;
+            ShowValidation(); // the tab handler waits until the window has loaded
+        }
     }
 
     private FileRow? Selected => FileList.SelectedItem as FileRow;
