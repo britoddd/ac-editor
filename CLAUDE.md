@@ -128,7 +128,7 @@ dotnet build AcMod.slnx      # must finish with 0 warnings; warnings are errors 
 dotnet test AcMod.slnx
 ```
 
-The CLI (M3) runs as `src\AcMod.Cli\bin\Debug\net10.0\acmod.exe` after a build; with no arguments it lists its commands. It reads and writes the owner's real settings in `%LOCALAPPDATA%\AcMod\settings.json`, so run it only when the owner asks. There is no app or MCP server yet. `LutReader/` is the warm-up and is not part of the solution.
+The CLI (M3) runs as `src\AcMod.Cli\bin\Debug\net10.0\acmod.exe` after a build; with no arguments it lists its commands. It reads and writes the owner's real settings in `%LOCALAPPDATA%\AcMod\settings.json`, so run it only when the owner asks. The WPF app (M4) is `src\AcMod.App\bin\Debug\net10.0-windows\AcMod.App.exe`; the owner starts it, because Claude can't see its window. There is no MCP server yet. `LutReader/` is the warm-up and is not part of the solution.
 
 ## Windows constraints
 

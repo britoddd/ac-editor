@@ -1,0 +1,26 @@
+<Window x:Class="AcMod.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AC Car Mod Dashboard" Width="960" Height="540">
+    <!-- DockPanel stacks children against its edges; the last child (the car list) fills what is left. -->
+    <DockPanel Margin="8">
+        <TextBlock x:Name="Header" DockPanel.Dock="Top" Margin="0,0,0,8" />
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+            <Button Content="Refresh" Click="Refresh_Click" Padding="12,4" />
+            <Button Content="Install to AC" Click="Install_Click" Padding="12,4" Margin="8,0,0,0" />
+            <TextBlock x:Name="Status" VerticalAlignment="Center" Margin="12,0,0,0" />
+        </StackPanel>
+
+        <!-- Each column shows one property of a CarRow; {Binding Id} reads CarRow.Id. -->
+        <DataGrid x:Name="CarGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Car ID" Binding="{Binding Id}" />
+                <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
+                <DataGridTextColumn Header="Size" Binding="{Binding Size}" />
+                <DataGridTextColumn Header="Last changed" Binding="{Binding LastChanged}" />
+                <DataGridTextColumn Header="Validation" Binding="{Binding Validation}" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>
