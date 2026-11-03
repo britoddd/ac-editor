@@ -43,8 +43,10 @@ static int Run(string[] args)
         ["purge", var trashId, var typed] => ws.DeletePermanently(trashId, typed) is { } error ? Fail(error) : Done($"Deleted {trashId} permanently"),
         ["install", var car] => Install(ws, car, force: false),
         ["install", var car, "--force"] => Install(ws, car, force: true),
-        ["export", var car, .. var flags] when flags is [] or ["--force"] =>
-            Report(ws.ExportZip(car, ignoreErrors: flags.Length == 1), path => $"Exported {car} to {path}\nInstall it by dragging the ZIP onto Content Manager."),
+        ["export", var car, .. var flags] when flags.All(f => f is "--force" or "--pack") =>
+            Report(ws.ExportZip(car, ignoreErrors: flags.Contains("--force"), pack: flags.Contains("--pack")),
+                path => $"Exported {car} to {path}\nInstall it by dragging the ZIP onto Content Manager."),
+        ["save-as", var car, var newId, .. var flags] => SaveAs(ws, car, newId, flags),
         _ => Help(),
     };
 }
@@ -108,6 +110,24 @@ static string Summary(Workspace ws, string car)
     return findings.Count == 0 ? "Validation: no findings." : $"Validation: {Count(AcMod.Core.Validation.Severity.Error)} error(s), {Count(AcMod.Core.Validation.Severity.Warning)} warning(s), {Count(AcMod.Core.Validation.Severity.Info)} info. Run: acmod validate {car}";
 }
 
+// WS-7 and WS-8: flags are --name "Display name" and --replace.
+static int SaveAs(Workspace ws, string car, string newId, string[] flags)
+{
+    var nameAt = Array.IndexOf(flags, "--name");
+    var name = nameAt >= 0 && nameAt + 1 < flags.Length ? flags[nameAt + 1] : null;
+    var (result, error) = ws.SaveAsNewCar(car, newId, name);
+    if (result == null) return Fail(error!);
+
+    Console.WriteLine($"Saved {car} as {newId}.");
+    foreach (var note in result.Notes) Console.WriteLine($"Note: {note}");
+    if (result.MentionsOfOldId.Count > 0) Console.WriteLine($"These files still mention {car}; check them: {string.Join(", ", result.MentionsOfOldId)}");
+    Console.WriteLine(Summary(ws, newId));
+    if (!flags.Contains("--replace")) return 0;
+
+    var (trashId, replaceError) = ws.ReplacePrevious(car, newId);
+    return trashId == null ? Fail(replaceError!) : Done($"Moved {car} to the trash as {trashId}.");
+}
+
 static int Install(Workspace ws, string car, bool force)
 {
     var (installed, replaced, error) = ws.InstallToAc(car, ignoreErrors: force);
@@ -157,7 +177,9 @@ static int Help()
         acmod purge <trash ID> <car ID>                delete it permanently, with its snapshots; can't be undone
         acmod validate <car ID>                        run the validator: every finding with its fix (VA-1, VA-2)
         acmod install <car ID> [--force]               copy a car into AC's content\cars (WS-11); --force despite validation errors
-        acmod export <car ID> [--force]                write a ZIP for Content Manager to the exports folder (PK-2, PK-4)
+        acmod export <car ID> [--pack] [--force]       write a ZIP for Content Manager to the exports folder (PK-2, PK-4); --pack ships data.acd (PK-1)
+        acmod save-as <car ID> <new ID> [--name "Display name"] [--replace]
+                                                       copy a car to a new ID (WS-7); --replace trashes the old one if the copy validates (WS-8)
         """);
     return 1;
 }

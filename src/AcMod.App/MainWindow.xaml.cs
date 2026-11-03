@@ -92,7 +92,7 @@ public partial class MainWindow : Window
         if (!ConfirmDespiteErrors(row.Id, "Export")) return;
         try
         {
-            var (zipPath, error) = _workspace.ExportZip(row.Id, ignoreErrors: true); // the user has seen any errors above
+            var (zipPath, error) = _workspace.ExportZip(row.Id, ignoreErrors: true, pack: PackBox.IsChecked == true); // the user has seen any errors above
             if (zipPath == null)
             {
                 MessageBox.Show(this, error, "Export ZIP", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -109,6 +109,51 @@ public partial class MainWindow : Window
         {
             MessageBox.Show(this, ex.Message, "Export ZIP", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    /// <summary>WS-7 and WS-8: copies the selected car to a new ID, then optionally trashes the old one if the copy validates.</summary>
+    private void SaveAs_Click(object sender, RoutedEventArgs e)
+    {
+        if (_workspace == null || CarGrid.SelectedItem is not CarRow row)
+        {
+            Status.Text = "Choose a car in the list first.";
+            return;
+        }
+
+        var dialog = new SaveAsWindow(row.Id, row.Name == "(no name)" ? null : row.Name) { Owner = this };
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var (result, error) = _workspace.SaveAsNewCar(row.Id, dialog.NewId, dialog.DisplayName.Length == 0 ? null : dialog.DisplayName);
+            if (result == null)
+            {
+                MessageBox.Show(this, error, "Save as new car", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var message = $"Saved {row.Id} as {result.CarId}.";
+            if (result.Notes.Count > 0) message += "\n\n" + string.Join("\n", result.Notes);
+            if (result.MentionsOfOldId.Count > 0)
+            {
+                message += $"\n\nThese files still mention {row.Id}. What that does isn't verified, so they weren't changed; check them:\n  " +
+                           string.Join("\n  ", result.MentionsOfOldId);
+            }
+
+            if (dialog.ReplacePrevious)
+            {
+                var (trashId, replaceError) = _workspace.ReplacePrevious(row.Id, result.CarId);
+                message += trashId != null ? $"\n\n{row.Id} was moved to the trash as {trashId}." : $"\n\n{replaceError}";
+            }
+
+            MessageBox.Show(this, message, "Save as new car", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(this, ex.Message, "Save as new car", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        Refresh();
     }
 
     private void Install_Click(object sender, RoutedEventArgs e)

@@ -12,6 +12,8 @@
             <Button Content="Compare..." Click="Compare_Click" Padding="12,4" Margin="8,0,0,0" />
             <Button Content="Install to AC" Click="Install_Click" Padding="12,4" Margin="8,0,0,0" />
             <Button Content="Export ZIP" Click="Export_Click" Padding="12,4" Margin="8,0,0,0" />
+            <CheckBox x:Name="PackBox" Content="Pack data into data.acd" IsChecked="True" VerticalAlignment="Center" Margin="6,0,0,0" />
+            <Button Content="Save as new car..." Click="SaveAs_Click" Padding="12,4" Margin="8,0,0,0" />
             <TextBlock x:Name="Status" VerticalAlignment="Center" Margin="12,0,0,0" />
         </StackPanel>
 
