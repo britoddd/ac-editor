@@ -490,3 +490,9 @@ Method: `scratch/tu9_setup_survey` (not committed) read `setup.ini` in the 230 i
 - 78 cars offer a final drive list (`[FINAL_GEAR_RATIO] RATIOS=<file>.rto`), and 55 offer gear lists (`[GEAR_n] RATIOS=`). The rest offer no ratio lists.
 - `[GEARS] USE_GEARSET` is missing in 110 cars, 0 in 108, and 1 in 12. With 1 the garage offers preset gearboxes; how that works is not verified.
 - One car names a `RATIOS` file it doesn't have.
+
+## Added garage ratio in game (BRITOD-DESK, 2026-11-03, TU-10)
+
+- The app added `19//43|2.26` to the tutorial car's `ratios.rto` and set `GEAR_1=2.26`. The owner reported the garage gear page showed it as expected (gear 1 at 19/43, top speed about 130 km/h at the 8500 rpm limiter).
+  So a ratio added to the list is offered and used, and a label of our own (`driver//driven`) is accepted. That AC reads only the number after `|` is consistent with this but not proven separately.
+- `GEAR_7=0.77` was still installed, which is not in the list, so the garage keeps replacing it with the first option (TU-9 entry).
