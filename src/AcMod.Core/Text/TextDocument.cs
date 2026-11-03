@@ -77,6 +77,43 @@ public sealed class TextDocument
         return new TextDocument(lines, EncodingKind, HasBom);
     }
 
+    /// <summary>
+    /// Returns a copy with new lines inserted before line <paramref name="index"/> (Lines.Count appends). Each new line ends with the line break
+    /// of the nearest line above that has one (or "\r\n" in a file without any), so the file keeps its style. Every other line stays as it was,
+    /// except that a last line without a line break gets one when lines are appended after it, and the appended block then ends without one.
+    /// </summary>
+    public TextDocument WithLinesInserted(int index, IReadOnlyList<string> contents)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(index, Lines.Count);
+        foreach (var content in contents) EnsureEncodable(content);
+        if (contents.Count == 0) return this;
+
+        var lines = Lines.ToList();
+        var ending = lines.Take(index).LastOrDefault(l => l.Ending != "")?.Ending ?? lines.FirstOrDefault(l => l.Ending != "")?.Ending ?? "\r\n";
+        var added = contents.Select(c => new TextLine(c, ending)).ToList();
+        if (index == lines.Count && index > 0 && lines[index - 1].Ending == "")
+        {
+            lines[index - 1] = lines[index - 1] with { Ending = ending };
+            added[^1] = added[^1] with { Ending = "" };
+        }
+
+        lines.InsertRange(index, added);
+        return new TextDocument(lines, EncodingKind, HasBom);
+    }
+
+    /// <summary>Returns a copy without lines <paramref name="index"/> to <paramref name="index"/> + <paramref name="count"/> - 1. Every other line stays as it was.</summary>
+    public TextDocument WithLinesRemoved(int index, int count)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(index + count, Lines.Count);
+
+        var lines = Lines.ToList();
+        lines.RemoveRange(index, count);
+        return new TextDocument(lines, EncodingKind, HasBom);
+    }
+
     /// <summary>Returns a copy holding new text, keeping the encoding and BOM. Used by formats whose values can span lines.</summary>
     public TextDocument WithText(string text)
     {

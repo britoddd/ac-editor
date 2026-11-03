@@ -188,6 +188,22 @@ public sealed class CarEditTests : IDisposable
     }
 
     [Fact]
+    public void AddGear_changes_drivetrain_and_setup_together()
+    {
+        File.WriteAllText(Path.Combine(Car, "data", "drivetrain.ini"), "[GEARS]\r\nCOUNT=1\r\nGEAR_1=2.5\r\nFINAL=3\r\n");
+        File.WriteAllText(Path.Combine(Car, "data", "setup.ini"), "[GEAR_1]\r\nRATIOS=ratios.rto\r\nNAME=First Gear\r\n");
+        var edit = Open();
+
+        Assert.Null(edit.AddGear(1.8));
+
+        Assert.Equal(["drivetrain.ini", "setup.ini"], edit.ChangedFiles);
+        Assert.Contains(new FieldChange("drivetrain.ini", "[GEARS] GEAR_2", null, "1.8"), edit.Changes);
+        Assert.Contains(new FieldChange("setup.ini", "[GEAR_2] NAME", null, "Gear 2"), edit.Changes);
+        Assert.Null(edit.RemoveLastGear());
+        Assert.Empty(edit.ChangedFiles); // back to the saved bytes
+    }
+
+    [Fact]
     public void Discard_drops_unsaved_changes()
     {
         var edit = Open();

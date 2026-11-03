@@ -74,6 +74,43 @@ public sealed class CarEdit
     /// <summary>Changes one row's value in a .lut or .rto file and nothing else in it (TU-4, QS-2). The value is written in invariant culture.</summary>
     public void SetLutValue(string name, int rowIndex, double value) => Set(name, LutFile.Parse(Current(name)).WithValue(rowIndex, value).ToBytes());
 
+    /// <summary>Adds a gear with this ratio to drivetrain.ini, and its section to setup.ini when that file has the previous gear's (TU-9).</summary>
+    /// <returns>Why it couldn't, or null.</returns>
+    public string? AddGear(double ratio)
+    {
+        if (FileName("drivetrain.ini") is not { } drivetrain) return "The car has no drivetrain.ini.";
+        var (bytes, gear, error) = Tuning.GearEdits.AddGear(Current(drivetrain), ratio);
+        if (bytes == null) return error;
+        Set(drivetrain, bytes);
+        if (FileName("setup.ini") is { } setup && Tuning.GearEdits.AddSetupGear(Current(setup), gear) is { } setupBytes) Set(setup, setupBytes);
+        return null;
+    }
+
+    /// <summary>Removes the last gear from drivetrain.ini, and its section from setup.ini (TU-9).</summary>
+    /// <returns>Why it couldn't, or null.</returns>
+    public string? RemoveLastGear()
+    {
+        if (FileName("drivetrain.ini") is not { } drivetrain) return "The car has no drivetrain.ini.";
+        var (bytes, gear, error) = Tuning.GearEdits.RemoveLastGear(Current(drivetrain));
+        if (bytes == null) return error;
+        Set(drivetrain, bytes);
+        if (FileName("setup.ini") is { } setup && Tuning.GearEdits.RemoveSetupGear(Current(setup), gear) is { } setupBytes) Set(setup, setupBytes);
+        return null;
+    }
+
+    /// <summary>Applies a whole-file edit, such as adding a power curve row, to one data file (TU-9).</summary>
+    /// <returns>The edit's error, or null.</returns>
+    public string? Apply(string name, Func<byte[], (byte[]? Bytes, string? Error)> edit)
+    {
+        var (bytes, error) = edit(Current(name));
+        if (bytes == null) return error;
+        Set(name, bytes);
+        return null;
+    }
+
+    /// <summary>The car's own spelling of a data file name (names can differ in case), or null when it has no such file.</summary>
+    public string? FileName(string name) => Data.Files.FirstOrDefault(f => f.Name.Equals(name, StringComparison.OrdinalIgnoreCase))?.Name;
+
     /// <summary>Changes several rows of a .lut or .rto file as one change (TU-8), and nothing else in it (QS-2).</summary>
     public void SetLutValues(string name, IReadOnlyDictionary<int, double> values)
     {
