@@ -74,6 +74,26 @@ public sealed class CarEdit
     /// <summary>Changes one row's value in a .lut or .rto file and nothing else in it (TU-4, QS-2). The value is written in invariant culture.</summary>
     public void SetLutValue(string name, int rowIndex, double value) => Set(name, LutFile.Parse(Current(name)).WithValue(rowIndex, value).ToBytes());
 
+    /// <summary>
+    /// Changes one .ini value, found by its line, and nothing else in the file (TU-2, QS-2). A single-number field accepts ',' as the decimal mark
+    /// (<see cref="Tuning.TuningForms.Normalize"/>).
+    /// </summary>
+    /// <returns>Why the value can't be stored, such as a ';' in it, or null.</returns>
+    public string? SetIniValue(string name, int lineIndex, string value)
+    {
+        var ini = IniFile.Parse(Current(name));
+        var entry = ini.Entries.FirstOrDefault(e => e.LineIndex == lineIndex) ?? throw new ArgumentException($"{name} has no entry on line {lineIndex + 1}.", nameof(lineIndex));
+        try
+        {
+            Set(name, ini.WithValue(entry, Tuning.TuningForms.Normalize(entry.Value, value)).ToBytes());
+            return null;
+        }
+        catch (ArgumentException e)
+        {
+            return e.Message;
+        }
+    }
+
     /// <summary>A data file as text, with any unsaved change (TU-3).</summary>
     public string Text(string name) => TextDocument.Parse(Current(name)).Text;
 

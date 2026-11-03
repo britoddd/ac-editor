@@ -13,19 +13,28 @@
 
         <!-- All tabs share one edit session, so a change on any tab gets the same * and the same Save preview. -->
         <TabControl x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged">
-            <TabItem Header="Raw files">
+            <TabItem x:Name="FormsTab" Header="Forms">
                 <DockPanel Margin="0,8,0,0">
-                    <!-- DisplayMemberPath shows each FileRow's Label; a * marks a file with unsaved changes (TU-7). -->
-                    <ListBox x:Name="FileList" DockPanel.Dock="Left" Width="260" DisplayMemberPath="Label"
-                             FontFamily="Consolas" SelectionChanged="FileList_SelectionChanged" />
-                    <TextBox x:Name="Editor" Margin="8,0,0,0" FontFamily="Consolas" FontSize="13"
-                             AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap"
-                             HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-                             TextChanged="Editor_TextChanged" />
+                    <ListBox x:Name="GroupList" DockPanel.Dock="Left" Width="150" SelectionChanged="GroupList_SelectionChanged" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,8">
+                        <TextBlock Text="Section" VerticalAlignment="Center" />
+                        <ComboBox x:Name="SectionBox" Width="260" Margin="8,0,0,0" SelectionChanged="SectionBox_SelectionChanged" />
+                        <TextBlock x:Name="FormNote" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    </StackPanel>
+                    <!-- * marks a value that differs from the saved file. Only the Value column is editable. -->
+                    <DataGrid x:Name="FormGrid" Margin="8,0,0,0" AutoGenerateColumns="False" CanUserAddRows="False"
+                              CanUserDeleteRows="False" CanUserSortColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="" Binding="{Binding Mark}" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Field" Binding="{Binding Key}" IsReadOnly="True" FontFamily="Consolas" />
+                            <DataGridTextColumn Header="Value" Binding="{Binding Value}" FontFamily="Consolas" />
+                            <DataGridTextColumn Header="Hint (from the file's own comments)" Binding="{Binding Hint}" IsReadOnly="True" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </DockPanel>
             </TabItem>
 
-            <TabItem Header="Power curve">
+            <TabItem x:Name="PowerTab" Header="Power curve">
                 <DockPanel Margin="0,8,0,0">
                     <TextBlock x:Name="PowerSummary" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,8" />
                     <!-- Only the Torque column is editable. Adding or removing rows is done on the Raw files tab. -->
@@ -43,7 +52,7 @@
                 </DockPanel>
             </TabItem>
 
-            <TabItem Header="Gears">
+            <TabItem x:Name="GearsTab" Header="Gears">
                 <DockPanel Margin="0,8,0,0">
                     <TextBlock x:Name="GearSummary" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,8" />
                     <!-- Read-only: the speeds follow LIMITER, the gear ratios, FINAL and the tyre radius, wherever they are edited. -->
@@ -56,6 +65,18 @@
                             <DataGridTextColumn x:Name="RearColumn" Binding="{Binding Rear}" />
                         </DataGrid.Columns>
                     </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem x:Name="RawTab" Header="Raw files">
+                <DockPanel Margin="0,8,0,0">
+                    <!-- DisplayMemberPath shows each FileRow's Label; a * marks a file with unsaved changes (TU-7). -->
+                    <ListBox x:Name="FileList" DockPanel.Dock="Left" Width="260" DisplayMemberPath="Label"
+                             FontFamily="Consolas" SelectionChanged="FileList_SelectionChanged" />
+                    <TextBox x:Name="Editor" Margin="8,0,0,0" FontFamily="Consolas" FontSize="13"
+                             AcceptsReturn="True" AcceptsTab="True" TextWrapping="NoWrap"
+                             HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                             TextChanged="Editor_TextChanged" />
                 </DockPanel>
             </TabItem>
         </TabControl>

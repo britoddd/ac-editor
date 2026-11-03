@@ -439,3 +439,13 @@ Method: `scratch/m4_field_survey` (not committed) loaded each of the 252 folders
 - `tyres.ini` `[COMPOUND_DEFAULT] INDEX`: 0 in 109, 1 in 78, 2 in 39, 3 in 4. Reading index 0 as `[FRONT]`/`[REAR]` and n as `[FRONT_n]`/`[REAR_n]` finds a `RADIUS` in 229 of 230 cars.
   That this is the compound AC uses is not verified in game. The radius differs between compounds in 13 cars, and front differs from rear in 133.
 - AC's log converts power with 745.7 W per HP: `PW:188460.000000 (252.728622 HP)` (M3 install entry).
+
+## Tuning file fields and comments (BRITOD-DESK, 2026-11-03, M4 step 8)
+
+Method: `scratch/m4_form_survey` (not committed) read `car.ini`, `engine.ini`, `drivetrain.ini`, `brakes.ini`, `suspensions.ini`, `tyres.ini`, and `aero.ini`
+in the 230 installed cars with readable data, counting each `[SECTION] KEY` (numbered sections such as `TURBO_0` counted as `TURBO_n`) and whether its line has a `;` or `//` comment.
+
+- Nearly every field appears in 90% or more of the cars that have the file. `tyres.ini` has about 100 fields per compound. So the TU-2 forms list every field rather than a chosen subset.
+- Comments usually sit on the `[FRONT]` copy of a field only. `[FRONT] SPRING_RATE` has one in 212 of 229 cars, `[REAR] SPRING_RATE` in 9. The forms reuse the same key's comment from another section as the hint, and say where it came from.
+- Some common fields have no comment in any car, for example `tyres.ini` `[FRONT] WIDTH`, `DX0`, and `DY0`. Their hints stay empty until LE-1 (M7) adds sourced explanations.
+- Vector values use `,` between parts, for example `car.ini` `[BASIC] GRAPHICS_OFFSET=0,-0.65,0.05`. So `,` is read as a decimal mark only in a field that holds a single number.

@@ -56,24 +56,25 @@ public partial class CarWindow : Window
         Editor.IsReadOnly = edit.ReadOnly;
         SaveButton.IsEnabled = DiscardButton.IsEnabled = !edit.ReadOnly;
         if (_rows.Count > 0) FileList.SelectedIndex = 0;
+        InitForms();
     }
 
     private FileRow? Selected => FileList.SelectedItem as FileRow;
 
     private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (e.Source == Tabs) ShowCurrentTab(); // SelectionChanged also bubbles up from the file list and the power table
+        // SelectionChanged also bubbles up from the lists and tables inside the tabs. While the window is still being built,
+        // the constructor fills the first tab itself, so only react once it has loaded.
+        if (e.Source == Tabs && IsLoaded) ShowCurrentTab();
     }
 
     /// <summary>Redraws the visible tab from the edit session, so a change made on another tab shows.</summary>
     private void ShowCurrentTab()
     {
-        switch (Tabs.SelectedIndex)
-        {
-            case 1: ShowPower(); break;
-            case 2: ShowGears(); break;
-            default: ShowSelected(); break;
-        }
+        if (Tabs.SelectedItem == FormsTab) ShowForms();
+        else if (Tabs.SelectedItem == PowerTab) ShowPower();
+        else if (Tabs.SelectedItem == GearsTab) ShowGears();
+        else ShowSelected();
     }
 
     private void FileList_SelectionChanged(object sender, SelectionChangedEventArgs e) => ShowSelected();

@@ -166,6 +166,28 @@ public sealed class CarEditTests : IDisposable
     }
 
     [Fact]
+    public void SetIniValue_changes_only_that_value_and_keeps_the_comment()
+    {
+        File.WriteAllText(Path.Combine(Car, "data", "engine.ini"), "[ENGINE_DATA]\r\nINERTIA=0.120\r\nLIMITER=6500\t\t\t; engine rev limiter\r\n");
+        var edit = Open();
+
+        Assert.Null(edit.SetIniValue("engine.ini", 2, "5500"));
+        Assert.Null(edit.SetIniValue("engine.ini", 1, "0,13")); // decimal comma
+
+        Assert.Equal("[ENGINE_DATA]\r\nINERTIA=0.13\r\nLIMITER=5500\t\t\t; engine rev limiter\r\n", Text(edit.Current("engine.ini")));
+    }
+
+    [Fact]
+    public void SetIniValue_refuses_a_value_that_would_read_back_differently()
+    {
+        var edit = Open();
+
+        Assert.Contains("';'", edit.SetIniValue("engine.ini", 1, "5500 ; note"));
+        Assert.Empty(edit.ChangedFiles);
+        Assert.Throws<ArgumentException>(() => edit.SetIniValue("engine.ini", 0, "x")); // line 0 is the section header
+    }
+
+    [Fact]
     public void Discard_drops_unsaved_changes()
     {
         var edit = Open();
