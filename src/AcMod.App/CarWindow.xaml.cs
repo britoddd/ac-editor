@@ -68,8 +68,12 @@ public partial class CarWindow : Window
     /// <summary>Redraws the visible tab from the edit session, so a change made on another tab shows.</summary>
     private void ShowCurrentTab()
     {
-        if (Tabs.SelectedIndex == 1) ShowPower();
-        else ShowSelected();
+        switch (Tabs.SelectedIndex)
+        {
+            case 1: ShowPower(); break;
+            case 2: ShowGears(); break;
+            default: ShowSelected(); break;
+        }
     }
 
     private void FileList_SelectionChanged(object sender, SelectionChangedEventArgs e) => ShowSelected();

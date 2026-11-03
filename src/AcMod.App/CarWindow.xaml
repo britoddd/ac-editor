@@ -42,6 +42,22 @@
                     </Border>
                 </DockPanel>
             </TabItem>
+
+            <TabItem Header="Gears">
+                <DockPanel Margin="0,8,0,0">
+                    <TextBlock x:Name="GearSummary" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,8" />
+                    <!-- Read-only: the speeds follow LIMITER, the gear ratios, FINAL and the tyre radius, wherever they are edited. -->
+                    <DataGrid x:Name="GearGrid" HorizontalAlignment="Left" AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserSortColumns="False" FontFamily="Consolas">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Gear" Binding="{Binding Gear}" />
+                            <DataGridTextColumn Header="Ratio" Binding="{Binding Ratio}" />
+                            <DataGridTextColumn x:Name="FrontColumn" Binding="{Binding Front}" />
+                            <DataGridTextColumn x:Name="RearColumn" Binding="{Binding Rear}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
         </TabControl>
     </DockPanel>
 </Window>
