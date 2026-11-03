@@ -74,6 +74,14 @@ public sealed class CarEdit
     /// <summary>Changes one row's value in a .lut or .rto file and nothing else in it (TU-4, QS-2). The value is written in invariant culture.</summary>
     public void SetLutValue(string name, int rowIndex, double value) => Set(name, LutFile.Parse(Current(name)).WithValue(rowIndex, value).ToBytes());
 
+    /// <summary>Changes several rows of a .lut or .rto file as one change (TU-8), and nothing else in it (QS-2).</summary>
+    public void SetLutValues(string name, IReadOnlyDictionary<int, double> values)
+    {
+        var lut = LutFile.Parse(Current(name));
+        foreach (var (row, value) in values) lut = lut.WithValue(row, value);
+        Set(name, lut.ToBytes());
+    }
+
     /// <summary>
     /// Changes one .ini value, found by its line, and nothing else in the file (TU-2, QS-2). A single-number field accepts ',' as the decimal mark
     /// (<see cref="Tuning.TuningForms.Normalize"/>).
