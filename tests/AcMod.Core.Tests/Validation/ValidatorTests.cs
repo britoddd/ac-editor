@@ -29,7 +29,21 @@ public sealed class ValidatorTests : IDisposable
         foreach (var file in DataFiles) Put(car, Path.Combine("data", file), file.EndsWith(".lut") ? "0|100\r\n8000|200\r\n" : "[HEADER]\r\nVERSION=1\r\n");
         Put(car, @"data\lods.ini", "[LOD_0]\r\nFILE=Car_Main.kn5\r\nOUT=600\r\n"); // case differs from the file, as in formula_k
         Put(car, @"data\engine.ini", "[HEADER]\r\nPOWER_CURVE=POWER.lut\r\nCOAST_CURVE=FROM_COAST_REF\r\n[COAST_CURVE]\r\nFILENAME=coast.lut\r\n"); // AC ignores this one
+        Put(car, $@"sfx\{carId.ToUpperInvariant()}.bank", "bank"); // case ignored
+        Put(car, @"sfx\GUIDs.txt", $"{{00000000-0000-0000-0000-000000000000}} bank:/{carId}\r\n{{00000000-0000-0000-0000-000000000001}} event:/cars/{carId}/engine_ext\r\n");
+        Put(car, @"ui\ui_car.json", "{\"name\": \"Good car\",\r\n\"description\": \"raw\r\nline break\"}"); // only lenient JSON allows that
+        File.WriteAllBytes(Path.Combine(car, "ui", "badge.png"), Png(128, 128));
         return car;
+    }
+
+    /// <summary>The PNG signature and an IHDR header with this size; the validator reads nothing more.</summary>
+    private static byte[] Png(int width, int height)
+    {
+        var bytes = new byte[33];
+        new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 13, (byte)'I', (byte)'H', (byte)'D', (byte)'R' }.CopyTo(bytes, 0);
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(16), width);
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(20), height);
+        return bytes;
     }
 
     private static void Put(string car, string path, string text)
@@ -116,6 +130,59 @@ public sealed class ValidatorTests : IDisposable
         Assert.Contains("[FRONT] WEAR_CURVE names front.lut", finding.Message);
         Put(car, @"data\front.lut", "0|1\r\n");
         Assert.Empty(Validator.Run(car));
+    }
+
+    [Fact]
+    public void V08_digital_instruments_ini_is_info()
+    {
+        var car = GoodCar();
+        Put(car, @"data\digital_instruments.ini", "[LED_0]\r\nOBJECT_NAME=LED_0\r\n");
+
+        Assert.Equal(["V-08 Info digital_instruments.ini"], Rules(car));
+    }
+
+    [Fact]
+    public void V09_a_missing_bank_is_an_error()
+    {
+        var car = GoodCar();
+        File.Delete(Path.Combine(car, "sfx", "ACM_GOOD.bank"));
+
+        Assert.Equal([@"V-09 Error sfx\acm_good.bank"], Rules(car));
+    }
+
+    [Fact]
+    public void V09_GUIDs_may_come_from_ACs_shared_file_like_Kunos_cars()
+    {
+        var car = GoodCar();
+        Put(car, @"sfx\GUIDs.txt", "{00000000-0000-0000-0000-000000000000} bank:/someone_else\r\n");
+        var ac = Path.Combine(_temp, "ac");
+
+        Assert.Equal([@"V-09 Error sfx\GUIDs.txt"], [.. Validator.Run(car, ac).Select(f => $"{f.Rule} {f.Severity} {f.File}")]);
+        Put(ac, @"content\sfx\GUIDs.txt", "{00000000-0000-0000-0000-000000000000} bank:/common\r\n{00000000-0000-0000-0000-000000000001} event:/cars/ACM_GOOD/engine_int\r\n");
+        Assert.Empty(Validator.Run(car, ac));
+        Assert.Contains("AC folder isn't set", Validator.Run(car).Single().Message);
+    }
+
+    [Theory]
+    [InlineData(@"ui\ui_car.json", "{\"name\": ", "V-10 Warning ui\\ui_car.json")]
+    [InlineData(@"ui\badge.png", "not a png", "V-10 Warning ui\\badge.png")]
+    public void V10_broken_ui_files_are_warnings(string path, string text, string rule)
+    {
+        var car = GoodCar();
+        Put(car, path, text);
+
+        Assert.Equal([rule], Rules(car));
+    }
+
+    [Fact]
+    public void V10_a_badge_that_isnt_128_square_is_info()
+    {
+        var car = GoodCar();
+        File.WriteAllBytes(Path.Combine(car, "ui", "badge.png"), Png(256, 128));
+
+        var finding = Assert.Single(Validator.Run(car));
+        Assert.Equal(("V-10", Severity.Info), (finding.Rule, finding.Severity));
+        Assert.Contains("256×128", finding.Message);
     }
 
     [Fact]

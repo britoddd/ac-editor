@@ -33,7 +33,8 @@ public static class Validator
     private static readonly EnumerationOptions AllFiles = new() { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint };
 
     /// <summary>Runs every rule on a car folder. The folder's name is the car ID. Read-only.</summary>
-    public static IReadOnlyList<Finding> Run(string carFolder)
+    /// <param name="acFolder">The AC install, for its shared content\sfx\GUIDs.txt (V-09), or null when it isn't known.</param>
+    public static IReadOnlyList<Finding> Run(string carFolder, string? acFolder = null)
     {
         carFolder = Path.TrimEndingDirectorySeparator(Path.GetFullPath(carFolder));
         var carId = Path.GetFileName(carFolder);
@@ -78,7 +79,17 @@ public static class Validator
             }
 
             CheckReferences(carFolder, data, names, Add);
+
+            // V-08: the tutorial car loaded and drove with formula_k's digital_instruments.ini, whose objects its model doesn't have.
+            if (names.Contains("digital_instruments.ini"))
+            {
+                Add("V-08", Severity.Info, "digital_instruments.ini", "digital_instruments.ini exists. Its instruments may refer to objects your model doesn't have.",
+                    "Check the dashboard in game. This app can't read the model's object names in version 1.", Evidence.Verified);
+            }
         }
+
+        CheckSound(carFolder, carId, acFolder, Add);
+        CheckUi(carFolder, Add);
 
         // V-12: in game, AC used data.acd and ignored data\ while both existed.
         if (data.FolderIgnored)
@@ -105,6 +116,66 @@ public static class Validator
 
         return findings;
     }
+
+    /// <summary>
+    /// V-09: sfx\ holds a bank named for the car ID (ignoring case), and a GUIDs.txt names the car, either the car's own sfx\GUIDs.txt or AC's shared
+    /// content\sfx\GUIDs.txt, which lists the Kunos cars. Bank plus GUIDs.txt gave the tutorial car sound in M0; how AC fails without them is untested.
+    /// </summary>
+    private static void CheckSound(string carFolder, string carId, string? acFolder, Action<string, Severity, string?, string, string, Evidence> add)
+    {
+        var bank = Path.Combine("sfx", carId + ".bank");
+        if (!File.Exists(Path.Combine(carFolder, bank)))
+        {
+            add("V-09", Severity.Error, bank, $"sfx\\ has no sound bank named {carId}.bank.",
+                $"Copy a bank from a car with similar sound and rename it {carId}.bank, then point sfx\\GUIDs.txt at the new ID.", Evidence.Verified);
+        }
+
+        bool Names(string path) => File.Exists(path) && GuidsFile.Parse(File.ReadAllBytes(path)).Entries.Any(e =>
+            (e.Kind == "bank" && e.Path.Equals(carId, StringComparison.OrdinalIgnoreCase)) ||
+            (e.Kind == "event" && e.Path.StartsWith($"cars/{carId}/", StringComparison.OrdinalIgnoreCase)));
+
+        var shared = acFolder == null ? null : Path.Combine(acFolder, "content", "sfx", "GUIDs.txt");
+        if (Names(Path.Combine(carFolder, "sfx", "GUIDs.txt")) || (shared != null && Names(shared))) return;
+        add("V-09", Severity.Error, Path.Combine("sfx", "GUIDs.txt"),
+            shared == null ? $"sfx\\GUIDs.txt doesn't name {carId}, and AC's shared GUIDs.txt can't be checked because the AC folder isn't set."
+                           : $"Neither sfx\\GUIDs.txt nor AC's shared GUIDs.txt names {carId}.",
+            $"Add sfx\\GUIDs.txt with this car's bank and event lines (bank:/{carId}, event:/cars/{carId}/...).", Evidence.Verified);
+    }
+
+    /// <summary>
+    /// V-10: ui\ui_car.json parses leniently (171 of 177 Kunos files only parse that way), and ui\badge.png is a PNG. A badge that isn't 128×128 is
+    /// only info, because 14 Kunos badges aren't. The size comes from the PNG's IHDR header; nothing else is decoded.
+    /// </summary>
+    private static void CheckUi(string carFolder, Action<string, Severity, string?, string, string, Evidence> add)
+    {
+        var json = Path.Combine("ui", "ui_car.json");
+        if (!File.Exists(Path.Combine(carFolder, json)))
+        {
+            add("V-10", Severity.Warning, json, "ui\\ui_car.json is missing.", "Add ui\\ui_car.json with at least a \"name\".", Evidence.Verified);
+        }
+        else if (UiCarJson.Parse(File.ReadAllBytes(Path.Combine(carFolder, json))).Error is { } error)
+        {
+            add("V-10", Severity.Warning, json, $"ui\\ui_car.json isn't valid JSON, even read leniently: {error}", "Fix the JSON on the Raw files tab (a missing comma or quote is typical).", Evidence.Verified);
+        }
+
+        var badge = Path.Combine("ui", "badge.png");
+        var path = Path.Combine(carFolder, badge);
+        var bytes = File.Exists(path) ? File.ReadAllBytes(path) : null;
+        if (bytes == null || bytes.Length < 24 || !bytes.AsSpan(0, 8).SequenceEqual(PngSignature))
+        {
+            add("V-10", Severity.Warning, badge, bytes == null ? "ui\\badge.png is missing." : "ui\\badge.png isn't a PNG file.",
+                "Add the maker's logo as a 128×128 PNG named badge.png in ui\\.", Evidence.Verified);
+            return;
+        }
+
+        var (width, height) = (System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(bytes.AsSpan(16)), System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(bytes.AsSpan(20)));
+        if (width != 128 || height != 128)
+        {
+            add("V-10", Severity.Info, badge, $"ui\\badge.png is {width}×{height}, not 128×128.", "Resize it to 128×128 if it looks wrong in the car list.", Evidence.Verified);
+        }
+    }
+
+    private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
     /// <summary>
     /// V-02: every .kn5 that lods.ini names exists in the car folder (all 781 such references on BRITOD-DESK exist when case is ignored).
