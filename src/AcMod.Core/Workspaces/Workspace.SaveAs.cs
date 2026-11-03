@@ -68,6 +68,7 @@ public sealed partial class Workspace
 
             var mentions = MentionsOf(temp, carId, newId);
             Directory.Move(temp, target);
+            if (SetCopiedFrom(newId, carId) is { } recordError) notes.Add($"The checklist couldn't record the source car: {recordError}");
             return (new SaveAsResult(newId, mentions, notes), null);
         }
         finally

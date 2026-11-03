@@ -8,8 +8,11 @@ namespace AcMod.Core.Learning;
 /// </summary>
 public sealed record ChecklistItem(string Id, string Title, string Steps, string Source, IReadOnlyList<string> Rules);
 
-/// <summary>An item's state for one car: Done, ToDo (with the findings that block it), or Manual (ticked or not by the user).</summary>
-public sealed record ChecklistStatus(ChecklistItem Item, string State, IReadOnlyList<Finding> Blocking);
+/// <summary>
+/// An item's state for one car, the findings that block it, and the id the user ticks for it (the item itself for manual items, "own:&lt;item&gt;" for a
+/// copied model or collider), or null when the validator alone decides.
+/// </summary>
+public sealed record ChecklistStatus(ChecklistItem Item, string State, IReadOnlyList<Finding> Blocking, string? TickId, bool Ticked);
 
 /// <summary>
 /// The first-car checklist (LE-2): folders, dummies, FBX export, ksEditor, collider, data, and sound. The steps come from this project's M0 work
@@ -31,7 +34,7 @@ public static class FirstCarChecklist
             "docs/VERIFIED_FACTS.md: \"FBX export format\" and \"Blender FBX export settings for ksEditor\"", []),
         new("kseditor", "ksEditor model",
             "Import the FBX, check the node tree and the materials (ksPerPixel with a txDiffuse texture), then File > Save KN5 > Car into the car folder with the name lods.ini gives.",
-            "docs/VERIFIED_FACTS.md: \"KN5 written by ksEditor\"; docs/REQUIREMENTS.md, M0 verdict V-02", ["V-02", "V-14"]),
+            "docs/VERIFIED_FACTS.md: \"KN5 written by ksEditor\"; docs/REQUIREMENTS.md, M0 verdict V-02", ["V-02", "V-14", "V-05:lods.ini"]), // no lods.ini: no model yet
         new("collider", "Collider",
             "Export a simple low-poly shape of the body on its own and save it from ksEditor as collider.kn5 in the car folder.",
             "docs/REQUIREMENTS.md, M0 verdict V-04; the tutorial car; community first-car guide", ["V-04"]),
@@ -43,14 +46,36 @@ public static class FirstCarChecklist
             "docs/VERIFIED_FACTS.md: \"Car sound files\"; docs/REQUIREMENTS.md, M0 verdict V-09", ["V-09"]),
     ];
 
-    /// <summary>Each item's state for a car, from its validator findings and its manual ticks.</summary>
-    public static IReadOnlyList<ChecklistStatus> For(IReadOnlyList<Finding> findings, IReadOnlySet<string> ticked) =>
+    /// <summary>
+    /// Steps whose files exist in a copied car but aren't the user's work yet: the validator can't tell a copied model from a new one,
+    /// so after Save as new car these wait for the user's own tick (owner report, 2026-11-03).
+    /// </summary>
+    public static readonly string[] CopySensitive = ["kseditor", "collider"];
+
+    /// <summary>A rule such as "V-04", or "V-05:lods.ini" for that rule's finding about one file only.</summary>
+    private static bool Matches(string rule, Finding finding) =>
+        rule.Split(':') is [var id, var file] ? finding.Rule == id && string.Equals(finding.File, file, StringComparison.OrdinalIgnoreCase) : finding.Rule == rule;
+
+    /// <summary>Each item's state for a car, from its validator findings, its manual ticks, and the car it was copied from, if any.</summary>
+    public static IReadOnlyList<ChecklistStatus> For(IReadOnlyList<Finding> findings, IReadOnlySet<string> ticked, string? copiedFrom = null) =>
     [
         .. Items.Select(item =>
         {
-            if (item.Rules.Count == 0) return new ChecklistStatus(item, ticked.Contains(item.Id) ? "Done (ticked)" : "To do (tick when done)", []);
-            var blocking = findings.Where(f => item.Rules.Contains(f.Rule) && f.Severity != Severity.Info).ToList();
-            return new ChecklistStatus(item, blocking.Count == 0 ? "Done (checked)" : "To do", blocking);
+            if (item.Rules.Count == 0)
+            {
+                var done = ticked.Contains(item.Id);
+                return new ChecklistStatus(item, done ? "Done (ticked)" : "To do (tick when done)", [], item.Id, done);
+            }
+
+            var blocking = findings.Where(f => f.Severity != Severity.Info && item.Rules.Any(r => Matches(r, f))).ToList();
+            if (copiedFrom != null && CopySensitive.Contains(item.Id))
+            {
+                var own = ticked.Contains("own:" + item.Id);
+                var state = blocking.Count > 0 ? "To do" : own ? "Done (your own)" : $"Copied from {copiedFrom}: replace it with your own, then tick";
+                return new ChecklistStatus(item, state, blocking, "own:" + item.Id, own);
+            }
+
+            return new ChecklistStatus(item, blocking.Count == 0 ? "Done (checked)" : "To do", blocking, null, blocking.Count == 0);
         }),
     ];
 }
