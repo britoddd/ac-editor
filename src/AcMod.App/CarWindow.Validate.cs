@@ -13,7 +13,11 @@ public partial class CarWindow
         var findings = _edit.Validate();
         FindingGrid.ItemsSource = findings
             .OrderByDescending(f => f.Severity)
-            .Select(f => new { Severity = f.Severity.ToString(), f.Rule, File = f.File ?? "(car)", f.Message, f.Fix, Evidence = f.Evidence.ToString().ToLowerInvariant() })
+            .Select(f => new
+            {
+                Severity = f.Severity.ToString(), f.Rule, File = f.File ?? "(car)", f.Message, f.Fix, Evidence = f.Evidence.ToString().ToLowerInvariant(),
+                Outside = AcMod.Core.Learning.OutsideSteps.For(f) is { } step ? $"{step.Tools}: {step.Steps}  [{step.Source}]" : "",
+            })
             .ToList();
         ValidationSummary.Text = Summary(findings) +
                                  (_edit.ChangedFiles.Count > 0 ? "   This checks the saved files; save first to include your unsaved changes." : "");

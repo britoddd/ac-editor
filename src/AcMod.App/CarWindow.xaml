@@ -152,6 +152,10 @@
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap" /></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
                             <DataGridTextColumn Header="Evidence" Binding="{Binding Evidence}" />
+                            <!-- LE-3: steps in Blender or ksEditor for what the dashboard can't fix, with their source. -->
+                            <DataGridTextColumn Header="Outside the dashboard" Binding="{Binding Outside}" Width="2*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap" /></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
