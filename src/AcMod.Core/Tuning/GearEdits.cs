@@ -79,12 +79,14 @@ public static class GearEdits
     }
 
     /// <summary>
-    /// The ratios AC's garage setup offers for a gear: the values of the .rto file named by setup.ini [GEAR_n] RATIOS, or null when the car offers none.
-    /// Whether AC snaps a drivetrain.ini ratio that isn't one of these is not verified, so the app only warns.
+    /// The ratios AC's garage setup offers for a drivetrain.ini [GEARS] key, GEAR_n or FINAL: the values of the .rto file named by setup.ini
+    /// [GEAR_n] or [FINAL_GEAR_RATIO] RATIOS, or null when the car offers none (TU-9 survey: 55 of 230 cars list gears, 78 the final drive).
+    /// Seen in game (2026-11-03): AC's garage replaces a ratio that isn't in the list with the list's first option, so offer only these.
     /// </summary>
-    public static IReadOnlyList<double>? RatioOptions(IReadOnlyList<Acd.AcdEntry> files, int gear)
+    public static IReadOnlyList<double>? RatioOptions(IReadOnlyList<Acd.AcdEntry> files, string key)
     {
-        if (DataFiles.Ini(files, "setup.ini") is not { } setup || DataFiles.Value(setup, $"GEAR_{gear}", "RATIOS") is not { } name) return null;
+        var section = key == "FINAL" ? "FINAL_GEAR_RATIO" : key;
+        if (DataFiles.Ini(files, "setup.ini") is not { } setup || DataFiles.Value(setup, section, "RATIOS") is not { } name) return null;
         return DataFiles.Find(files, name) is { } rto ? [.. LutFile.Parse(rto.Data).Rows.Select(r => r.Value)] : null;
     }
 

@@ -6,9 +6,18 @@ using static System.FormattableString;
 namespace AcMod.App;
 
 /// <summary>One row of the gear table. Setting Ratio (by editing the cell) hands the typed text back to the window.</summary>
-public sealed class GearRow(string gear, string key, string ratio, string front, string rear, string note, Action<string, string> setRatio)
+public sealed class GearRow(string gear, string key, string ratio, string front, string rear, string note, IReadOnlyList<string>? options, bool editable, Action<string, string> setRatio)
 {
     public string Gear { get; } = gear;
+
+    /// <summary>The garage setup's ratios for this gear, or null when the car offers none (then the ratio is typed).</summary>
+    public IReadOnlyList<string>? Options { get; } = options;
+
+    public bool HasOptions => Options != null;
+
+    public bool FreeText => Options == null;
+
+    public bool Editable { get; } = editable;
 
     public string Front { get; } = front;
 
@@ -45,17 +54,21 @@ public partial class CarWindow
         RearColumn.Header = "Rear tyre km/h" + (driven is "rear" or "both" ? " (driven)" : "");
 
         // Seen in game 2026-11-03: AC's garage puts an off-list ratio on the setup list's FIRST option, not the nearest one.
-        string Note(int gear, double ratio) => GearEdits.RatioOptions(files, gear) is { Count: > 0 } options && !options.Any(o => Math.Abs(o - ratio) < 0.0005)
-            ? Invariant($"not in the garage setup's list: AC uses its first option, {options[0]}, instead")
-            : "";
+        // So a gear with a list gets a drop-down of exactly those ratios (owner decision), and the note flags a value that is already off-list.
+        GearRow Row(string label, string key, double ratio, string front, string rear, string note)
+        {
+            var options = GearEdits.RatioOptions(files, key);
+            var offList = options is { Count: > 0 } && !options.Any(o => Math.Abs(o - ratio) < 0.0005);
+            return new GearRow(label, key, Invariant($"{ratio}"), front, rear,
+                offList ? Invariant($"{ratio} isn't in the garage setup's list, so AC uses {options![0]}. Pick a ratio from the list.") : note,
+                options?.Select(o => Invariant($"{o}")).ToList(), !_edit.ReadOnly, SetRatio);
+        }
 
         var rows = table.Gears
-            .Select(g => new GearRow(g.Gear.ToString(CultureInfo.InvariantCulture), $"GEAR_{g.Gear}", Invariant($"{g.Ratio}"),
-                Invariant($"{g.FrontKmh:0.0}"), Invariant($"{g.RearKmh:0.0}"), Note(g.Gear, g.Ratio), SetRatio))
-            .Append(new GearRow("Final", "FINAL", Invariant($"{table.Final}"), "", "", "final drive, applies to every gear", SetRatio))
+            .Select(g => Row(g.Gear.ToString(CultureInfo.InvariantCulture), $"GEAR_{g.Gear}", g.Ratio, Invariant($"{g.FrontKmh:0.0}"), Invariant($"{g.RearKmh:0.0}"), ""))
+            .Append(Row("Final", "FINAL", table.Final, "", "", "final drive, applies to every gear"))
             .ToList();
         GearGrid.ItemsSource = rows;
-        GearGrid.IsReadOnly = _edit.ReadOnly;
 
         GearSummary.Text =
             Invariant($"Speed at the rev limiter, {table.LimiterRpm:0} rpm, with final drive {table.Final}. ") +
@@ -66,9 +79,9 @@ public partial class CarWindow
     }
 
     /// <summary>Stores a typed ratio for GEAR_n or FINAL in drivetrain.ini [GEARS].</summary>
-    private void SetRatio(string key, string text)
+    private void SetRatio(string key, string? text)
     {
-        if (_edit.ReadOnly || _edit.FileName("drivetrain.ini") is not { } drivetrain) return;
+        if (text == null || _edit.ReadOnly || _edit.FileName("drivetrain.ini") is not { } drivetrain) return; // null: the drop-down was emptied by a rebuild
         var field = TuningForms.Fields(_edit.Current(drivetrain)).FirstOrDefault(f => f.Section == "GEARS" && f.Key == key);
         if (field == null) return;
 
@@ -85,7 +98,9 @@ public partial class CarWindow
     private void AddGear_Click(object sender, RoutedEventArgs e)
     {
         if (_edit.ReadOnly || GearTable.FromData(_edit.CurrentFiles).Table is not { } table) return;
-        var ratio = Math.Round(table.Gears[^1].Ratio * 0.88, 2);
+        // With a garage list, start on the list's lowest ratio, the tallest gear it offers; without one, last gear × 0.88.
+        var options = GearEdits.RatioOptions(_edit.CurrentFiles, $"GEAR_{table.Gears.Count}");
+        var ratio = options is { Count: > 0 } ? options.Min() : Math.Round(table.Gears[^1].Ratio * 0.88, 2);
         Status.Text = _edit.AddGear(ratio) ?? Invariant($"Added gear {table.Gears.Count + 1} with ratio {ratio}. Edit it in the table.");
         MarkChanged();
         ShowGears();

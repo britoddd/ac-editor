@@ -94,8 +94,9 @@ public sealed class GearEditsTests
         var setupAdded = GearEdits.AddSetupGear(setup, gear);
 
         Assert.Equal(7, gear);
-        Assert.Contains(2.36, GearEdits.RatioOptions(files, 1)!); // GEAR_1=2.36 is the ratios.rto option 14//33
-        Assert.Null(GearEdits.RatioOptions(files, 9));
+        Assert.Contains(2.36, GearEdits.RatioOptions(files, "GEAR_1")!); // GEAR_1=2.36 is the ratios.rto option 14//33
+        Assert.Equal([3.10, 4.10, 5.10], GearEdits.RatioOptions(files, "FINAL")!); // [FINAL_GEAR_RATIO] RATIOS=final.rto
+        Assert.Null(GearEdits.RatioOptions(files, "GEAR_9"));
         Assert.NotNull(setupAdded);
         Assert.Contains("GEAR_7=0.78", Text(added));
         Assert.Equal(drivetrain, GearEdits.RemoveLastGear(added!).Bytes);

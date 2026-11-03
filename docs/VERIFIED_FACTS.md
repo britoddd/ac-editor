@@ -477,8 +477,16 @@ Evidence: the owner's screenshot of the garage gear page (`scratch/Screenshot 20
 - **AC accepts an added gear.** The log lists `ADDING GEAR:1` to `ADDING GEAR:7`, and the garage shows seven gear sliders.
 - **A ratio that is not in `ratios.rto` is not used as written.** The garage puts it on the list's first option: gear 1 (2.26) and gear 7 (0.77) both show `14/37` (2.64), not the nearest option.
   Gears whose ratio is in the list (1.73, 1.40, 1.17, 1.00, 0.88) show that ratio, and the final drive shows `10/31` (3.10).
-  Not yet confirmed by driving: that the car then drives with 2.64.
+  The owner then drove 1st gear to the limiter and reported it reached it, as the garage's 111 km/h for 2.64 predicted (no exact speedometer reading).
 - The garage's top speeds match the rear tyre radius (0.285 m) at the 8500 rpm limiter: 111 km/h for 2.64 (rear predicts 111.6, front 107.7), and 332 for 0.88 (rear 334.8).
   Every gear reads about 0.5 to 0.8% below the rear-radius prediction. On this AWD car with different radii, the garage uses the rear radius.
 - The log's `PW:325407.593750 (436.378082 HP)` matched the app's estimate from the tuned `power.lut` (325,469 W, peak torque × rpm at 8000 rpm × 3) within 0.02%.
 - The log ends with `CLEAN EXIT`.
+
+## Garage ratio lists in setup.ini (BRITOD-DESK, 2026-11-03, TU-9)
+
+Method: `scratch/tu9_setup_survey` (not committed) read `setup.ini` in the 230 installed cars with readable data.
+
+- 78 cars offer a final drive list (`[FINAL_GEAR_RATIO] RATIOS=<file>.rto`), and 55 offer gear lists (`[GEAR_n] RATIOS=`). The rest offer no ratio lists.
+- `[GEARS] USE_GEARSET` is missing in 110 cars, 0 in 108, and 1 in 12. With 1 the garage offers preset gearboxes; how that works is not verified.
+- One car names a `RATIOS` file it doesn't have.

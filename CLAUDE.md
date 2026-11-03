@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 4 is done (2026-11-03). Next: TU-8, then plan Milestone 5** (see "Next" below).
+**Milestone 4 is done (2026-11-03), and so are TU-8 and TU-9. Next: plan Milestone 5** (see "Next" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -25,24 +25,12 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 - **M3 (2026-11-03):** `src/AcMod.Core/Workspaces/` has `Workspace` and `AcInstall`/`Settings`. `Workspace` covers the path guard (`Resolve`), snapshots with rollback, the car list and folder manager, trash with permanent delete, and import from a folder or ZIP. `Workspace.Install.cs` is the only code that writes into AC (WS-11). `AcInstall` finds AC through Steam, and `Settings` lives in `%LOCALAPPDATA%\AcMod\settings.json`. `src/AcMod.Cli` (`acmod`) is a thin CLI over Core. The owner ran the exit gate on `D:\ACModding`: snapshot restore, delete and restore, an install refusal, a 966 MB import peaking at 30.5 MB of memory (QS-7), and an app install that AC loaded with `PW` 188,460 W, the baseline. 409 tests pass, with 0 warnings.
 - **M4 (2026-11-03):** `src/AcMod.App` is a plain WPF app (no MVVM package, owner decision): a car list with Open, Compare and Install, and a car window with Forms (TU-2), Power curve (TU-4), Gears (TU-5) and Raw files (TU-3) tabs that share one `CarEdit` session (TU-1, TU-7). Compare covers TU-6. Core added `Workspaces/CarEdit` (unsaved changes, save through `WriteCarFiles`, `data.acd` repacked and verified), `Formats/DataDiff`, and `Tuning/` (`PowerEstimate`, `GearTable`, `TuningForms`). Exit gate: the owner lowered `LIMITER` 6500 → 5500 in the app, installed, and AC cut at 5500 rpm with about 80 km/h in 1st (80.8 predicted). 461 tests pass, with 0 warnings.
 
-## Next: TU-8, then Milestone 5 (Validator)
+- **After M4 (2026-11-03), owner requests:** TU-8 (power curve drag and multi-select, a shared torque/power scale with a grid) and TU-9 (edit gear ratios and FINAL, add or remove gears with their `setup.ini` sections, extend `power.lut`). Also PK-2 ZIP export, built early. AC's garage replaces a ratio that isn't in its `ratios.rto` list with the list's first option, so a gear with a list offers only those ratios (owner decision). 477 tests pass, with 0 warnings.
 
-**TU-9 (P2, owner request, in progress):** plan approved 2026-11-03. One commit per step, prefixed `TU-9 step N`.
-1. **Core:** `TextDocument` can insert and remove whole lines (new lines copy the neighbouring line break). Gear edits: add a gear (`COUNT`, a new `GEAR_n` line, and a `setup.ini` `[GEAR_n]` section copied from the previous gear's), remove the last gear (the reverse). Power curve: add a row above the highest rpm, or remove the last row.
-2. **Gears tab editing:** editable ratio cells and `FINAL`, with live speeds and a warning when a ratio isn't a `ratios.rto` option.
-3. **Buttons:** Add gear (default ratio = last × 0.88) and Remove last gear on Gears; Add row and Remove last row on Power curve.
-4. **Game check:** a 7th gear and an off-list ratio. Unverified until then: whether AC needs the `setup.ini` `[GEAR_n]` section, whether it snaps a ratio to `ratios.rto`, and how it treats `LIMITER` above the last `power.lut` row.
-Owner decisions: "maximum rpm" means extending `power.lut` (option b); a new gear also gets a `setup.ini` section.
+## Next: Milestone 5 (Validator)
 
-**TU-8 (P2, owner request): done 2026-11-03.** Commits prefixed `TU-8`. Later owner additions: a shared torque/power scale with a labelled grid, and clicking empty chart space clears the selection.
-Owner decisions: a drag moves every selected point by the same Nm; dragged values are rounded to 0.1 Nm (typed values never); no Ctrl+Z (Discard and the save snapshot cover mistakes).
-1. **Core:** `CarEdit.SetLutValues(file, {row → value})` as one change, plus scale-by-% and add-Nm helpers, with QS-2 tests.
-2. **Table multi-select:** Ctrl/Shift selection on the Power curve table, with Scale % and Add Nm buttons.
-3. **Chart drag:** dots for points, click and Ctrl-click to select (kept in sync with the table), vertical drag with a live label, one change on release.
-Check: the owner tries each feature and the Save preview; no drive needed.
-
-After TU-8, plan M5.
-For M5, read the M5 row and V-01 to V-15 ("M0 verdicts") in `docs/REQUIREMENTS.md`, propose small steps, and get the owner's approval before coding. Exit gate: each rule has a passing and failing fixture.
+Read the M5 row and V-01 to V-15 ("M0 verdicts") in `docs/REQUIREMENTS.md`, propose small steps, and get the owner's approval before coding. Exit gate: each rule has a passing and failing fixture.
+Also pending from TU-9: how AC treats `LIMITER` above the last `power.lut` row (not tested).
 
 Still unverified after M4:
 - Which tyre radius sets the speed on an AWD car with different front and rear radii. The M4 gate read about 80 km/h, against 80.8 predicted for the rear and 77.9 for the front.
