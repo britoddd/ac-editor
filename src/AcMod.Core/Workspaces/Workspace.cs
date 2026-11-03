@@ -131,9 +131,7 @@ public sealed class Workspace
         if (car == null) return (null, error);
         if (!Directory.Exists(car)) return (null, $"There is no car {carId} in the workspace.");
 
-        var stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture);
-        var id = stamp;
-        for (var n = 1; Directory.Exists(Path.Combine(Root, "snapshots", carId, id)); n++) id = $"{stamp}-{n}";
+        var id = UniqueName(Path.Combine(Root, "snapshots", carId), "");
 
         // Copy into a .tmp folder and rename it, so a failed copy never looks like a complete snapshot (QS-8).
         var (temp, tempError) = Resolve(Path.Combine("snapshots", carId, id + ".tmp"));
@@ -193,6 +191,73 @@ public sealed class Workspace
         if (beforeId == null) return (null, error);
         WithRollback(carId, beforeId, () => MatchSnapshot(carId, snapshotId));
         return (beforeId, null);
+    }
+
+    /// <summary>Moves a car to trash\&lt;car ID&gt;_&lt;UTC time&gt; (WS-6). The move is one rename, so it either happens fully or not at all.</summary>
+    /// <returns>The trash ID, which is the folder name in trash\.</returns>
+    public (string? TrashId, string? Error) DeleteCar(string carId)
+    {
+        var (car, error) = CarFile(carId, ".");
+        if (car == null) return (null, error);
+        if (!Directory.Exists(car)) return (null, $"There is no car {carId} in the workspace.");
+
+        var trashId = UniqueName(Path.Combine(Root, "trash"), carId + "_");
+        var (target, targetError) = Resolve(Path.Combine("trash", trashId));
+        if (target == null) return (null, targetError);
+
+        Directory.Move(car, target);
+        return (trashId, null);
+    }
+
+    /// <summary>Moves a trash entry back to cars\. Refuses when a car with that ID exists again.</summary>
+    /// <returns>The car ID.</returns>
+    public (string? CarId, string? Error) RestoreFromTrash(string trashId)
+    {
+        var (entry, carId, error) = TrashEntry(trashId);
+        if (entry == null) return (null, error);
+
+        var (car, carError) = CarFile(carId!, ".");
+        if (car == null) return (null, carError);
+        if (Directory.Exists(car)) return (null, $"A car {carId} is already in the workspace. Delete or rename it first.");
+
+        Directory.Move(entry, car);
+        return (carId, null);
+    }
+
+    /// <summary>
+    /// Deletes a trash entry for good (WS-6, hard rule 4). <paramref name="typedCarId"/> is what the user typed to confirm,
+    /// and it must match the car ID exactly. The car's snapshots are kept.
+    /// </summary>
+    public string? DeletePermanently(string trashId, string typedCarId)
+    {
+        var (entry, carId, error) = TrashEntry(trashId);
+        if (entry == null) return error;
+        if (typedCarId != carId) return $"Type the car ID {carId} exactly to delete it permanently.";
+
+        // Directory.Delete refuses read-only files, which some mods ship with.
+        foreach (var file in Directory.EnumerateFiles(entry, "*", SearchOption.AllDirectories)) File.SetAttributes(file, FileAttributes.Normal);
+        Directory.Delete(entry, recursive: true);
+        return null;
+    }
+
+    /// <summary>The full path and car ID of a trash entry, or an error.</summary>
+    private (string? Path, string? CarId, string? Error) TrashEntry(string trashId)
+    {
+        // The time part has no "_", so the car ID is everything before the last one.
+        var split = trashId.LastIndexOf('_');
+        var (entry, error) = CheckName(trashId) == null && split > 0 ? Resolve(Path.Combine("trash", trashId)) : (null, null);
+        return entry != null && Directory.Exists(entry)
+            ? (entry, trashId[..split], null)
+            : (null, null, error ?? $"There is no {trashId} in the trash.");
+    }
+
+    /// <summary>A new folder name in <paramref name="folder"/>: the prefix plus the UTC time, such as 20261103-142233-123, with -1, -2, ... on a clash.</summary>
+    private static string UniqueName(string folder, string prefix)
+    {
+        var stamp = prefix + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture);
+        var name = stamp;
+        for (var n = 1; Directory.Exists(Path.Combine(folder, name)); n++) name = $"{stamp}-{n}";
+        return name;
     }
 
     /// <summary>Runs a change to a car. If it throws, puts the snapshot scope back to the given snapshot, then rethrows (QS-8).</summary>
