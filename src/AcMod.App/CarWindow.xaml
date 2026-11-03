@@ -57,7 +57,7 @@
                     </DockPanel>
                     <Border BorderBrush="Gray" BorderThickness="1" Margin="8,0,0,0">
                         <Canvas x:Name="Chart" ClipToBounds="True" Background="White" SizeChanged="Chart_SizeChanged"
-                                MouseMove="Chart_MouseMove" MouseLeftButtonUp="Chart_MouseLeftButtonUp" LostMouseCapture="Chart_LostMouseCapture" />
+                                MouseLeftButtonDown="Chart_MouseLeftButtonDown" MouseMove="Chart_MouseMove" MouseLeftButtonUp="Chart_MouseLeftButtonUp" LostMouseCapture="Chart_LostMouseCapture" />
                     </Border>
                 </DockPanel>
             </TabItem>

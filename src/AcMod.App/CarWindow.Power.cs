@@ -31,11 +31,13 @@ public sealed class PowerRow(int rowIndex, string rpm, string torque, string pow
 public partial class CarWindow
 {
     private const double ChartPad = 30;
+    private const double ChartLeft = 55; // room for the grid labels
+    private double _chartTop = 1; // the value at the top grid line; torque and power share this scale
     private List<(int Row, double Rpm, double Torque)> _chartPoints = [];
     private double _boostFactor = 1;
 
     // While a point is dragged: where the drag started, the torque scale at that moment (kept fixed so the curve doesn't jump), and the change so far.
-    private (double StartY, double MaxTorque)? _drag;
+    private (double StartY, double Scale)? _drag;
     private double _dragDelta;
 
     private HashSet<int> SelectedPowerRows => PowerGrid.SelectedItems.OfType<PowerRow>().Select(r => r.RowIndex).ToHashSet();
@@ -149,24 +151,35 @@ public partial class CarWindow
         if (_chartPoints.Count < 2 || Chart.ActualWidth < 50 || Chart.ActualHeight < 50) return;
 
         const double pad = ChartPad;
-        var (width, height) = (Chart.ActualWidth - 2 * pad, Chart.ActualHeight - 2 * pad);
+        var (left, width, height) = (ChartLeft, Chart.ActualWidth - ChartLeft - pad, Chart.ActualHeight - 2 * pad);
         var selected = SelectedPowerRows;
         var points = _chartPoints
             .Select(p => (p.Row, p.Rpm, Torque: _drag != null && selected.Contains(p.Row) ? p.Torque + _dragDelta : p.Torque))
             .Select(p => (p.Row, p.Rpm, p.Torque, Hp: PowerEstimate.PowerW(p.Rpm, p.Torque, _boostFactor) / 745.699872))
             .ToList();
         var maxRpm = Math.Max(1, points.Max(p => p.Rpm));
-        var maxTorque = _drag?.MaxTorque ?? Math.Max(1e-9, points.Max(p => p.Torque));
-        var maxHp = Math.Max(1e-9, points.Max(p => p.Hp));
-        Point At(double rpm, double value, double max) => new(pad + rpm / maxRpm * width, pad + height - value / max * height);
+        var maxTorque = points.Max(p => p.Torque);
+        var maxHp = points.Max(p => p.Hp);
 
-        Chart.Children.Add(new Line { X1 = pad, Y1 = pad + height, X2 = pad + width, Y2 = pad + height, Stroke = Brushes.Gray });
-        Chart.Children.Add(new Polyline { Stroke = Brushes.SteelBlue, StrokeThickness = 2, Points = [.. points.Select(p => At(p.Rpm, p.Torque, maxTorque))] });
-        Chart.Children.Add(new Polyline { Stroke = Brushes.DarkOrange, StrokeThickness = 2, Points = [.. points.Select(p => At(p.Rpm, p.Hp, maxHp))] });
+        // One scale for both curves, in round steps, with the top line just above the higher curve. It stays fixed during a drag.
+        var (top, step) = NiceScale(Math.Max(1e-9, Math.Max(maxTorque, maxHp)));
+        if (_drag is { } drag) (top, step) = (drag.Scale, NiceScale(drag.Scale / 1.02).Step);
+        _chartTop = top;
+        Point At(double rpm, double value) => new(left + rpm / maxRpm * width, pad + height - value / top * height);
+
+        for (var v = 0.0; v <= top + step / 2; v += step)
+        {
+            var y = At(0, v).Y;
+            Chart.Children.Add(new Line { X1 = left, Y1 = y, X2 = left + width, Y2 = y, Stroke = v == 0 ? Brushes.Gray : Brushes.Gainsboro });
+            AddText(Number(Math.Round(v, 6)), 4, y - 8, Brushes.Gray);
+        }
+
+        Chart.Children.Add(new Polyline { Stroke = Brushes.SteelBlue, StrokeThickness = 2, Points = [.. points.Select(p => At(p.Rpm, p.Torque))] });
+        Chart.Children.Add(new Polyline { Stroke = Brushes.DarkOrange, StrokeThickness = 2, Points = [.. points.Select(p => At(p.Rpm, p.Hp))] });
 
         foreach (var p in points)
         {
-            var at = At(p.Rpm, p.Torque, maxTorque);
+            var at = At(p.Rpm, p.Torque);
             var dot = new Ellipse
             {
                 Width = 10, Height = 10, Tag = p.Row, Cursor = _edit.ReadOnly ? null : Cursors.SizeNS,
@@ -178,11 +191,27 @@ public partial class CarWindow
             Chart.Children.Add(dot);
         }
 
-        AddText($"torque, peak {Number(maxTorque)}  (drag a dot; Ctrl-click to pick several)", 4, 4, Brushes.SteelBlue);
-        AddText(Invariant($"power, peak {maxHp:0.0} hp"), 4, 20, Brushes.DarkOrange);
-        AddText("0 rpm", pad, pad + height + 4, Brushes.Gray);
-        AddText(Invariant($"{maxRpm:0} rpm"), pad + width - 60, pad + height + 4, Brushes.Gray);
-        if (_drag != null) AddText(Invariant($"{_dragDelta:+0.0;-0.0;0.0} Nm on {selected.Count} point(s)"), pad + width / 2 - 60, 4, Brushes.Black);
+        AddText(Invariant($"torque (Nm, as in the file), peak {maxTorque:0.0}"), left + 4, 2, Brushes.SteelBlue);
+        AddText(Invariant($"power (hp), peak {maxHp:0.0}    same scale for both; drag a dot, Ctrl-click to pick several"), left + 4, 16, Brushes.DarkOrange);
+        AddText("0 rpm", left, pad + height + 4, Brushes.Gray);
+        AddText(Invariant($"{maxRpm:0} rpm"), left + width - 60, pad + height + 4, Brushes.Gray);
+        if (_drag != null) AddText(Invariant($"{_dragDelta:+0.0;-0.0;0.0} Nm on {selected.Count} point(s)"), left + width / 2 - 60, pad + 4, Brushes.Black);
+    }
+
+    /// <summary>A grid step of 1, 2 or 5 × 10ⁿ giving about five lines, and the first line at or above the value with 2% headroom.</summary>
+    private static (double Top, double Step) NiceScale(double max)
+    {
+        var raw = max / 5;
+        var magnitude = Math.Pow(10, Math.Floor(Math.Log10(raw)));
+        var fraction = raw / magnitude;
+        var step = (fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10) * magnitude;
+        return (Math.Ceiling(max * 1.02 / step) * step, step);
+    }
+
+    /// <summary>A click on empty chart space (not on a dot) without Ctrl clears the selection.</summary>
+    private void Chart_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) PowerGrid.UnselectAll();
     }
 
     /// <summary>A click picks the point (Ctrl-click adds or removes it), then starts a drag of every selected point.</summary>
@@ -204,7 +233,7 @@ public partial class CarWindow
         e.Handled = true;
         if (!PowerGrid.SelectedItems.Contains(item)) return; // Ctrl-click just removed it, so there's nothing to drag
 
-        _drag = (e.GetPosition(Chart).Y, Math.Max(1e-9, _chartPoints.Max(p => p.Torque)));
+        _drag = (e.GetPosition(Chart).Y, _chartTop);
         _dragDelta = 0;
         Chart.CaptureMouse(); // keep getting mouse moves even outside the chart
     }
@@ -213,7 +242,7 @@ public partial class CarWindow
     {
         if (_drag is not { } drag) return;
         var plotHeight = Chart.ActualHeight - 2 * ChartPad;
-        _dragDelta = (drag.StartY - e.GetPosition(Chart).Y) / plotHeight * drag.MaxTorque;
+        _dragDelta = (drag.StartY - e.GetPosition(Chart).Y) / plotHeight * drag.Scale;
         DrawChart();
     }
 
