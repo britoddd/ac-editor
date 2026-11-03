@@ -45,6 +45,11 @@
                             <Button Content="Scale %" Click="Scale_Click" Padding="8,2" Margin="6,0,0,0" />
                             <Button Content="Add Nm" Click="Add_Click" Padding="8,2" Margin="6,0,0,0" />
                         </StackPanel>
+                        <!-- TU-9: extend the curve to a higher rpm, or shorten it. -->
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                            <Button Content="Add row above the top rpm" Click="AddRow_Click" Padding="8,2" />
+                            <Button Content="Remove last row" Click="RemoveRow_Click" Padding="8,2" Margin="6,0,0,0" />
+                        </StackPanel>
                         <!-- Only the Torque column is editable. Adding or removing rows is done on the Raw files tab. -->
                         <DataGrid x:Name="PowerGrid" AutoGenerateColumns="False" SelectionMode="Extended" SelectionChanged="PowerGrid_SelectionChanged"
                                   CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" FontFamily="Consolas">
@@ -65,14 +70,19 @@
             <TabItem x:Name="GearsTab" Header="Gears">
                 <DockPanel Margin="0,8,0,0">
                     <TextBlock x:Name="GearSummary" DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,8" />
-                    <!-- Read-only: the speeds follow LIMITER, the gear ratios, FINAL and the tyre radius, wherever they are edited. -->
-                    <DataGrid x:Name="GearGrid" HorizontalAlignment="Left" AutoGenerateColumns="False" IsReadOnly="True"
-                              CanUserSortColumns="False" FontFamily="Consolas">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                        <Button Content="Add gear" Click="AddGear_Click" Padding="8,2" />
+                        <Button Content="Remove last gear" Click="RemoveGear_Click" Padding="8,2" Margin="6,0,0,0" />
+                    </StackPanel>
+                    <!-- Only Ratio is editable (the gears and FINAL). Speeds follow LIMITER, the ratios and the tyre radius, wherever they are edited. -->
+                    <DataGrid x:Name="GearGrid" HorizontalAlignment="Left" AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" FontFamily="Consolas">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Gear" Binding="{Binding Gear}" />
+                            <DataGridTextColumn Header="Gear" Binding="{Binding Gear}" IsReadOnly="True" />
                             <DataGridTextColumn Header="Ratio" Binding="{Binding Ratio}" />
-                            <DataGridTextColumn x:Name="FrontColumn" Binding="{Binding Front}" />
-                            <DataGridTextColumn x:Name="RearColumn" Binding="{Binding Rear}" />
+                            <DataGridTextColumn x:Name="FrontColumn" Binding="{Binding Front}" IsReadOnly="True" />
+                            <DataGridTextColumn x:Name="RearColumn" Binding="{Binding Rear}" IsReadOnly="True" />
+                            <DataGridTextColumn Header="Note" Binding="{Binding Note}" IsReadOnly="True" FontFamily="Segoe UI" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

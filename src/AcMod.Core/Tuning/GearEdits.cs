@@ -78,6 +78,16 @@ public static class GearEdits
         return (lut.Document.WithLinesRemoved(lut.Rows[^1].LineIndex, 1).ToBytes(), null);
     }
 
+    /// <summary>
+    /// The ratios AC's garage setup offers for a gear: the values of the .rto file named by setup.ini [GEAR_n] RATIOS, or null when the car offers none.
+    /// Whether AC snaps a drivetrain.ini ratio that isn't one of these is not verified, so the app only warns.
+    /// </summary>
+    public static IReadOnlyList<double>? RatioOptions(IReadOnlyList<Acd.AcdEntry> files, int gear)
+    {
+        if (DataFiles.Ini(files, "setup.ini") is not { } setup || DataFiles.Value(setup, $"GEAR_{gear}", "RATIOS") is not { } name) return null;
+        return DataFiles.Find(files, name) is { } rto ? [.. LutFile.Parse(rto.Data).Rows.Select(r => r.Value)] : null;
+    }
+
     private static (IniFile? Ini, int Count, string? Error) Gears(byte[] drivetrain)
     {
         var ini = IniFile.Parse(drivetrain);
