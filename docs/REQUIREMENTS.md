@@ -190,7 +190,7 @@ The tool must never lose a user's work or change a file it could not read safely
 | QS-3 | Every write is preceded by a snapshot | Integration test |
 | QS-4 | The app itself has no uploads, accounts, or analytics; Claude Code use is covered by CC-10 | Network check during a full workflow |
 | QS-5 | Encrypted or unreadable content opens read-only, and the tool offers no bypass | Fixture test |
-| QS-6 | The app only writes inside the workspace, except WS-11 installs | Code review and test |
+| QS-6 | The app only writes inside the workspace, except WS-11 installs and its settings file `%LOCALAPPDATA%\AcMod\settings.json` (owner decision, 2026-11-03) | Code review and test |
 | QS-7 | Large binary files stay out of app memory unless needed | Import a car of at least 500 MB without running out of memory |
 | QS-8 | Failed operations leave the original car intact | Interrupt copy and pack tests |
 | QS-9 | Fixtures from Kunos cars or other people's mods are never committed | `.gitignore` plus a pre-commit check |

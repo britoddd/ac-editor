@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 2 is done (2026-11-03). Next: plan Milestone 3** (see "Next: Milestone 3" below).
+**Milestone 3 is in progress** (plan in "Next: Milestone 3" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -25,9 +25,19 @@ Done so far. Git history has the details: one commit per step, prefixed `M0`, `M
 
 ## Next: Milestone 3 (Workspace)
 
-No plan yet. Read the M3 row and the `WS-*` requirements in `docs/REQUIREMENTS.md`, propose small steps with requirement IDs, and get the owner's approval before coding.
 Exit gate: install to AC refuses unsafe targets, and delete and restore work end to end.
 M3 adds the guarded file service that every write goes through, including a packed `data.acd` (`CarData.PackFolder` returns bytes and writes nothing).
+
+Plan approved by the owner (2026-11-03). All logic lives in Core; one commit per step, prefixed `M3 step N`.
+
+1. **Workspace and path guard** (WS-1 layout, WS-2, QS-6): create or open `cars/`, `snapshots/`, `trash/`, `exports/`. One method resolves every write path and refuses `..` escapes, rooted paths, `:`, junctions or symlinks, and a workspace that overlaps the AC folder.
+2. **Snapshots and guarded write** (WS-9, WS-10, QS-3, QS-8): snapshot first, then write to a temp file and rename. Snapshot scope is `data.acd`, `data\`, `ui\`, `sfx\GUIDs.txt` (no KN5, banks, or textures). Restore makes the scope match the snapshot exactly, so a later `data.acd` is removed (V-12), and snapshots the current state first.
+3. **Car list and folder manager** (WS-3, WS-5): ID, display name from `ui_car.json`, size, last changed; stale cars, snapshot and trash sizes. Validation status is "not run" until M5.
+4. **Trash** (WS-6): delete moves to `trash/<id>_<time>`, restore from trash, empty trash only after the typed car ID matches.
+5. **Import** (WS-4, QS-7, QS-8): from a folder or ZIP (`System.IO.Compression`). A car root holds `data.acd` or `data\`. Stream files, refuse zip-slip entries and existing IDs, extract to a temp folder, rename when complete.
+6. **Find AC and remember settings** (WS-1): the verified Steam route in `docs/VERIFIED_FACTS.md`. A hand-picked folder needs `acs.exe` and `content\cars`. Settings live in `%LOCALAPPDATA%\AcMod\settings.json` (owner decision).
+7. **Install to AC** (WS-11): copy to a temp folder in `content\cars`, rename, write an `acmod_install.json` marker. Replace only folders with that marker, and move a replaced install to workspace `trash/`. Refuse bad IDs, path escapes, unreadable data (V-13), and no write access. The validator gate comes in M5. The marker is still pending the owner's OK.
+8. **Exit gate**: a thin `AcMod.Cli` (one `Program.cs`, no packages; owner decision, WPF starts in M4). The owner runs delete and restore, snapshot restore, install refusals, and one approved real install, then drives the car.
 
 ### Notes for the next agent
 
@@ -70,7 +80,7 @@ These apply to every change:
 2. **Never add content conversion** from other games.
 3. **Keep the app local.** The app itself has no uploads, accounts, analytics, or other network calls with user content. Content Claude Code reads is sent to Anthropic for processing, so CC-10 must explain that and let the owner exclude a car.
 4. **Never lose work.** Snapshot before every write. Deletes go to `trash/`. Permanent deletion needs the user to type the car ID.
-5. **Stay inside the chosen workspace.** The only exception is the `WS-11` install into `content/cars`. Any other write outside it is a bug.
+5. **Stay inside the chosen workspace.** The only exceptions are the `WS-11` install into `content/cars` and the app's own settings file, `%LOCALAPPDATA%\AcMod\settings.json`, which never holds car data. Any other write outside it is a bug.
 6. **Do not commit third-party game content.** Kunos cars and other people's mods stay in the gitignored `fixtures/local/` folder. Commit only synthetic fixtures.
 7. **Respect licenses.** You may port AcTools code under Ms-PL. Keep its license in the repo and list ported files in `docs/THIRD_PARTY.md`. Do not copy code from `acd`, because it is GPL-2.0, but you may use it to compare output. Setup, safety notes, and commands are in `docs/ACD.md`. Check any other project's license first and tell the owner.
 8. **Never use or decompile `AcManager.Internal.dll`.** AcTools gets its ACD key factory from that closed DLL, so write key code from public format notes.
