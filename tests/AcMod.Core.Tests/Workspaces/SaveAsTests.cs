@@ -124,6 +124,26 @@ public sealed class SaveAsTests : IDisposable
     }
 
     [Fact]
+    public void Replace_previous_trashes_the_old_car_only_when_the_new_one_validates()
+    {
+        Assert.Null(_workspace.SaveAsNewCar(OldId, NewId, null).Error);
+        var (trashId, error) = _workspace.ReplacePrevious(OldId, NewId); // this small test car has validation errors
+
+        Assert.Null(trashId);
+        Assert.Contains("so acm_old is kept", error);
+        Assert.True(Directory.Exists(Car(OldId)));
+
+        Validation.ValidatorTests.MakeGoodCar(Path.Combine(_workspace.Root, "cars"), "acm_good");
+        Assert.Null(_workspace.SaveAsNewCar("acm_good", "acm_good_v2", null).Error);
+        (trashId, error) = _workspace.ReplacePrevious("acm_good", "acm_good_v2");
+
+        Assert.Null(error);
+        Assert.StartsWith("acm_good_", trashId);
+        Assert.False(Directory.Exists(Car("acm_good")));
+        Assert.True(Directory.Exists(Car("acm_good_v2")));
+    }
+
+    [Fact]
     public void Missing_pieces_are_reported_as_notes()
     {
         File.Delete(Path.Combine(Car(OldId), "sfx", "ACM_OLD.bank"));

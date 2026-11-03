@@ -76,6 +76,25 @@ public sealed partial class Workspace
         }
     }
 
+    /// <summary>
+    /// WS-8: moves the old car to the trash, but only when the new copy validates without errors, so the old one is never lost for a broken copy.
+    /// </summary>
+    /// <returns>The old car's trash ID.</returns>
+    public (string? TrashId, string? Error) ReplacePrevious(string oldId, string newId)
+    {
+        if (oldId.Equals(newId, StringComparison.OrdinalIgnoreCase)) return (null, "The new car and the previous one are the same.");
+        var (findings, error) = Validate(newId);
+        if (findings == null) return (null, error);
+
+        var errors = findings.Where(f => f.Severity == Validation.Severity.Error).ToList();
+        if (errors.Count > 0)
+        {
+            return (null, $"{newId} has {errors.Count} validation error(s), so {oldId} is kept: " + string.Join("; ", errors.Take(3).Select(f => $"{f.Rule} {f.Message}")));
+        }
+
+        return DeleteCar(oldId);
+    }
+
     private static void SetDisplayName(string json, string displayName, List<string> notes)
     {
         var ui = File.Exists(json) ? UiCarJson.Parse(File.ReadAllBytes(json)) : null;

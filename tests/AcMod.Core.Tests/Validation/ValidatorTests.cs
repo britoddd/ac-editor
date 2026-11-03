@@ -19,10 +19,12 @@ public sealed class ValidatorTests : IDisposable
         "brakes.ini", "colliders.ini", "drivetrain.ini", "setup.ini",
     ];
 
-    /// <summary>A car that passes every rule.</summary>
-    private string GoodCar(string carId = "acm_good")
+    private string GoodCar(string carId = "acm_good") => MakeGoodCar(_temp, carId);
+
+    /// <summary>A car that passes every rule, in <paramref name="parent"/>\&lt;car ID&gt;. Other tests use it too.</summary>
+    internal static string MakeGoodCar(string parent, string carId)
     {
-        var car = Path.Combine(_temp, carId);
+        var car = Path.Combine(parent, carId);
         Put(car, "collider.kn5", "kn5");
         Put(car, "car_main.kn5", "kn5");
         Put(car, @"skins\default\preview.jpg", "jpg");
