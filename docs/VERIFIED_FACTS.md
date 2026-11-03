@@ -459,3 +459,10 @@ The owner set `engine.ini` `[ENGINE_DATA] LIMITER` from 6500 to 5500 on the app'
   but "about 80" is not precise enough to settle which radius sets the speed on this AWD car. Still unverified.
 - The log's `POWER CLASS INDEX` stayed `PW:188460.000000`, the same as with `LIMITER=6500`, so the logged power does not depend on `LIMITER` here.
 - The log ends with `CLEAN EXIT`, with only the 4 known `ERROR: Variable type cannot be found` lines.
+
+## Install blocked by Content Manager (BRITOD-DESK, 2026-11-03, TU-9)
+
+- With Content Manager running (started 13:07), the app's install of `acm_tutorial_basic` failed with "access denied". A session from it had just written
+  `content\cars\acm_tutorial_basic\data\proview_nodes.ini` (13:07:20), and the install's rename of that folder was refused.
+- The failed install left `content\cars` unchanged: no `.acmod-installing` or `.acmod-old` folder and no extra trash copy. The fix is to close Content Manager (and AC) before installing.
+- Not verified: whether Content Manager holds the folder only after a session, or whenever it is open.
