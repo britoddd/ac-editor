@@ -75,6 +75,8 @@ The workspace layout is `cars/<car_id>/`, `snapshots/`, `trash/`, and `exports/`
 | WS-10 | Snapshots store text data and UI files only, not KN5 models | P1 |
 | WS-11 | Install to AC copies a validated car into `content/cars`, and may only replace a car the app installed; use ZIP export if testing shows this is unreliable | P1 |
 | WS-12 | Launch AC or Content Manager from the app | P2 |
+| WS-13 | **New car** creates a car from an empty template (`data\`, `ui\`, `sfx\`, `skins\default\` and a `ui_car.json` holding the name), so the checklist starts at To do; a "start from a complete car" option copies a whole car instead (owner request, 2026-11-03) | P1 |
+| WS-14 | Open ksEditor, the car's folder and the SDK folder from the app, launch AC through Steam, and launch Content Manager from a path the user picks once (owner request, 2026-11-03) | P2 |
 
 ### Physics tuning
 
@@ -113,7 +115,7 @@ The workspace layout is `cars/<car_id>/`, `snapshots/`, `trash/`, and `exports/`
 | ID | Requirement | Priority |
 | --- | --- | --- |
 | LE-1 | Explain fields inline, labelled with where the explanation came from | P1 |
-| LE-2 | Provide a first-car checklist covering folders, dummies, FBX export, ksEditor, collider, data, and sound | P1 |
+| LE-2 | Provide a first-car checklist covering folders, dummies, FBX export, ksEditor, collider, data, and sound. Each step sends the user to the right place (folder, ksEditor, copy data or sound, Forms, Validate), and steps copied from another car say so until the user makes their own (owner request, 2026-11-03) | P1 |
 | LE-3 | Show what must happen in Blender or ksEditor when a problem cannot be fixed in the dashboard | P1 |
 | LE-4 | Read the latest AC log and highlight likely errors | P2 |
 

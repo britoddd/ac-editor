@@ -42,6 +42,13 @@ Sources: the SDK PDFs (`sdk\dev\car_pipeline_2.0rev\AC_Pipeline_PUB_Rev2.0.pdf`,
 3. **Outside the dashboard (LE-3):** Blender and ksEditor steps for findings the dashboard can't fix, from the M0 verified facts, with links.
 4. **First-car checklist (LE-2):** folders, dummies, FBX export, ksEditor, collider, data, sound; live status from the validator where it can check, manual ticks otherwise.
 5. **Exit gate:** the owner builds a second car with the checklist and the app's links.
+
+M7 additions, approved by the owner (2026-11-03) after trying steps 1 to 4, done before the exit gate. Commits prefixed `M7 step 4N`.
+Owner decisions: "Copy data from…" offers workspace cars and Kunos's `formula_k`; Content Manager is launched from a path the user picks once (saved in settings).
+- **4a. Template and copy-awareness (WS-13):** `NewEmptyCar`; Save as new car records the source car, so the model and collider steps say "copied from …" until ticked as the user's own; copy data or sound from another car.
+- **4b. Checklist actions (LE-2):** each step's buttons open the car folder, ksEditor, Forms or Validate, or copy data or sound.
+- **4c. CRUD in the app (WS-4, WS-6, WS-9):** New car (empty or complete), Import, Rename (save-as plus replace), Delete, Trash (restore, permanent delete), Snapshots (list, restore).
+- **4d. Launchers (WS-12, WS-14):** ksEditor, the car folder, the SDK folder, AC through `steam://rungameid/244210`, and Content Manager from a picked path.
 Open from M5: V-07 flags 22 installed cars as errors; whether they break in game is untested, so V-07 may become a warning.
 Also pending from TU-9: how AC treats `LIMITER` above the last `power.lut` row (not tested).
 
