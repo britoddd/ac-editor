@@ -85,7 +85,19 @@ public sealed class ValidatorTests : IDisposable
         var car = GoodCar();
         File.Delete(Path.Combine(car, "data", "power.lut"));
 
-        Assert.Equal(["V-05 Error power.lut"], Rules(car));
+        Assert.Equal(["V-05 Error POWER.lut"], Rules(car)); // as engine.ini spells it
+    }
+
+    [Fact]
+    public void V05_the_power_curve_is_the_file_engine_ini_names()
+    {
+        var car = GoodCar();
+        Put(car, @"data\engine.ini", "[HEADER]\r\nPOWER_CURVE=custom_power.lut\r\n");
+        File.Move(Path.Combine(car, "data", "power.lut"), Path.Combine(car, "data", "custom_power.lut")); // like the VRC Formula Alpha cars
+
+        Assert.Empty(Validator.Run(car));
+        File.Delete(Path.Combine(car, "data", "custom_power.lut"));
+        Assert.Equal(["V-05 Error custom_power.lut"], Rules(car)); // reported once, not also as V-07
     }
 
     [Fact]

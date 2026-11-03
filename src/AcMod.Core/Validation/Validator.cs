@@ -68,7 +68,9 @@ public static class Validator
         {
             var names = data.Files.Select(f => f.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var where = data.Source == DataSource.Acd ? "data.acd" : "the data folder";
-            foreach (var file in Mandatory.Where(f => !names.Contains(f)))
+            // The power curve is whatever engine.ini [HEADER] POWER_CURVE names: 4 of 230 installed cars, such as the VRC Formula Alpha cars, don't use power.lut.
+            var curve = Tuning.PowerEstimate.CurveFile(data.Files) ?? "power.lut";
+            foreach (var file in Mandatory.Select(f => f == "power.lut" ? curve : f).Where(f => !names.Contains(f)))
             {
                 Add("V-05", Severity.Error, file, $"{file} is missing from {where}.", $"Add {file}; copy one from a similar car and adjust it.", Evidence.Verified);
             }
@@ -209,7 +211,7 @@ public static class Validator
                         $"Export {value} from ksEditor into the car folder, or fix the name in lods.ini.", Evidence.Verified);
                 }
                 else if (extension is ".lut" or ".rto" && !(isEngine && entry.Section == "COAST_CURVE" && entry.Key == "FILENAME") && !names.Contains(value)
-                         && !Mandatory.Contains(value, StringComparer.OrdinalIgnoreCase)) // a missing power.lut is already V-05
+                         && !(isEngine && entry.Section == "HEADER" && entry.Key == "POWER_CURVE")) // a missing power curve is already V-05
                 {
                     add("V-07", Severity.Error, file.Name, $"{file.Name} [{entry.Section}] {entry.Key} names {value}, which isn't in the data.",
                         $"Add {value} to the data, or point {entry.Key} at a table the car has.", Evidence.Verified);

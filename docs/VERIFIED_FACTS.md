@@ -513,3 +513,25 @@ Method: `scratch/m5_ref_survey` (not committed) read every `.ini` in the effecti
 
 - `Kn5Probe.Check` (header, texture table, first material only) over every top-level `.kn5` in `content\cars` gives 1,109 files: 1,073 standard in 248 folders and 36 with unknown tables in 10 folders.
   That is exactly M0's Python survey (`scratch/kn5_survey.py`), so V-14 flags the same files. Run with `scratch/m5_kn5_check` (not committed).
+
+## Validator over the installed cars (BRITOD-DESK, 2026-11-03, M5 exit gate)
+
+Method: `scratch/m5_gate` (not committed) ran `Validator.Run` with the AC folder on all 252 folders in `content\cars`. Read-only. No car made it throw.
+
+| Rule | Findings | Cars | Compared with M0 |
+| --- | --- | --- | --- |
+| V-01 Warning | 10 | 10 | M0: 9 folders with capitals and 1 with a space |
+| V-04 Error | 2 | 2 | `ks_ferrari_488_challenge_evo` and `ks_ferrari_488_gt3_2020`, new since M0 (250 → 252 folders). They also lack skins (V-11) and a sound bank (V-09), so they look like incomplete installs |
+| V-05 Error | 0 | 0 | After the fix below |
+| V-07 Error | 123 | 22 | As the step 2 survey found |
+| V-08 Info | 213 | 213 | Most cars have `digital_instruments.ini` |
+| V-09 Error | 4 | 2 | The two Ferrari folders above |
+| V-10 Warning / Info | 6 / 29 | 4 / 29 | M0: 2 mod badges not PNG, 14 Kunos badges not 128×128 |
+| V-12 Warning | 4 | 4 | `Fardier_Cugnot`, `gp_2023_rb19`, `jw_porsche_991.2_gt2_rs_us`, `traffic_hino4` |
+| V-13 Error | 22 | 22 | Same 22 as the step 5 and M5 surveys |
+| V-14 Warning | 36 | 10 | Exactly M0 |
+| V-15 Info | 77 | 31 | 26 `.psd`, 12 `.fbx`, 17 `.tmp`, 2 `.bak` as in M0; 18 `texture\NULL.dds` (M0's 22 includes 4 deeper `NULL.dds` files) |
+
+- **V-05 correction:** the M0 list names `power.lut`, but 4 installed cars (the VRC Formula Alpha cars among them) name another curve in `engine.ini` `[HEADER] POWER_CURVE`.
+  V-05 now requires the file `POWER_CURVE` names, with `power.lut` as the default. With that, no installed car fails V-05.
+- 44 cars have at least one error, 22 of them only because their data can't be read (V-13).
