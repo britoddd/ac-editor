@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 3 is done (2026-11-03). Next: plan Milestone 4** (see "Next: Milestone 4" below).
+**Milestone 4 is in progress** (plan in "Next: Milestone 4" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -26,9 +26,24 @@ Done so far. Git history has the details: one commit per step, prefixed `M0`, `M
 
 ## Next: Milestone 4 (Tuning)
 
-No plan yet. Read the M4 row and the `TU-*` requirements in `docs/REQUIREMENTS.md`, propose small steps with requirement IDs, and get the owner's approval before coding.
 Exit gate: a tuned car loads in AC with the intended change visible in-game.
 The WPF app (`src/AcMod.App`, net10.0-windows) starts in M4 (owner decision, 2026-11-03). The owner is new to WPF, so introduce it in small steps.
+
+Plan approved by the owner (2026-11-03). Logic and calculations live in Core with tests; the app stays thin. One commit per step, prefixed `M4 step N`.
+Owner decisions: plain WPF (XAML, data binding, a little code-behind, no MVVM package); cars that use `data.acd` may be edited (Save repacks and verifies, PK-1).
+
+1. **WPF shell** (WS-3, WS-11): `src/AcMod.App`, one window with the car list and an Install button.
+2. **Edit session in Core** (TU-1, TU-7, V-12, V-13): open the effective data, hold unsaved changes per file, save through `WriteCarFiles` (`data\` files, or a repacked and verified `data.acd`). Unreadable data opens read-only.
+3. **Field diff in Core** (TU-6, TU-7): per INI key and LUT row. `CarData` must load with an explicit car ID, because a snapshot folder's name isn't the car ID and the `data.acd` key comes from it.
+4. **Raw editor** (TU-3, TU-7): file list and text box, unsaved marker, Save lists the files and fields that will change.
+5. **Power and gear numbers in Core** (TU-4, TU-5): power by the formula that matched the log `PW` in M0 and M2, with turbo boost; speed per gear from `LIMITER`, `GEAR_n`, `FINAL`, tyre `RADIUS`. Check the field names across fixtures first.
+6. **`power.lut` editor** (TU-4): table, curve drawn with WPF shapes (no chart package), estimated peak power and torque.
+7. **Gear calculator** (TU-5): speed per gear at the limiter.
+8. **Guided forms** (TU-2): seven groups, only fields found in real files; each hint is the file's own comment, labelled "from the file". Sourced explanations are LE-1 (M7).
+9. **Compare view** (TU-6): two snapshots or two cars, field by field.
+10. **Exit gate**: lower `LIMITER` on the tutorial car (for example 6500 to 5500) in the app, predict the 1st-gear speed at the limiter, install, and the owner reads the rev limit and speedometer in game.
+
+Unverified, to label in the UI and settle at the exit gate: which tyre radius sets the speed (`[COMPOUND_DEFAULT] INDEX=1`; the tutorial car is AWD with front 0.275 and rear 0.285), how close the speedometer comes to the formula, and the community estimate rated torque ≈ `power.lut` ÷ 0.85.
 
 ### Notes for the next agent
 
