@@ -14,10 +14,11 @@ public sealed partial class Workspace
     /// Copies a workspace car to content\cars\&lt;car ID&gt; and marks it with <see cref="InstallMarker"/> (WS-11). It refuses a car whose
     /// data can't be read (V-13), and any existing folder without the marker, such as a Kunos car, a Content Manager install, or a copy made
     /// by hand. A previous install by this app is copied to the workspace trash before it is replaced, so tuning done in place isn't lost.
-    /// ponytail: "validated" means readable data until the M5 validator exists; dev files (PK-3) are copied too until M6.
+    /// Validation errors refuse the install unless <paramref name="ignoreErrors"/>. ponytail: dev files (PK-3) are copied too until M6.
     /// </summary>
     /// <returns>The installed folder, and the trash ID of the previous install when one was replaced.</returns>
-    public (string? InstalledFolder, string? ReplacedTrashId, string? Error) InstallToAc(string carId)
+    /// <param name="ignoreErrors">True when the user chose to install despite validation errors (owner decision, 2026-11-03). Unreadable data is still refused.</param>
+    public (string? InstalledFolder, string? ReplacedTrashId, string? Error) InstallToAc(string carId, bool ignoreErrors = false)
     {
         if (AcFolder == null || !AcInstall.IsAcFolder(AcFolder))
         {
@@ -29,6 +30,7 @@ public sealed partial class Workspace
         if (!Directory.Exists(car)) return (null, null, $"There is no car {carId} in the workspace.");
         var data = CarData.Load(car);
         if (data.Error != null) return (null, null, $"{carId} can't be installed, because its data can't be read: {data.Error}");
+        if (!ignoreErrors && ValidationBlock(carId) is { } block) return (null, null, block);
 
         var acCars = Path.Combine(AcFolder, "content", "cars");
         var target = Path.Combine(acCars, carId);

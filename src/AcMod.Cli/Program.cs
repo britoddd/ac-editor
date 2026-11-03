@@ -31,7 +31,8 @@ static int Run(string[] args)
     {
         ["list"] => List(ws),
         ["usage", var days] when int.TryParse(days, out var d) => Usage(ws, d),
-        ["import", var source] => Report(ws.ImportCar(source), id => $"Imported {id} into {Path.Combine(ws.Root, "cars", id)}"),
+        ["import", var source] => Report(ws.ImportCar(source), id => $"Imported {id} into {Path.Combine(ws.Root, "cars", id)}\n{Summary(ws, id)}"),
+        ["validate", var car] => Validate(ws, car),
         ["snapshot", var car] => Report(ws.Snapshot(car), id => $"Snapshot {id} of {car}"),
         ["snapshots", var car] => Print(ws.Snapshots(car)),
         ["restore-snapshot", var car, var id] => Report(ws.RestoreSnapshot(car, id), before => $"Restored {car} to {id}. To undo, restore {before}."),
@@ -40,8 +41,10 @@ static int Run(string[] args)
         ["restore", var trashId] => Report(ws.RestoreFromTrash(trashId), id => $"Restored {id} from the trash"),
         ["purge", var trashId] => Report(ws.PermanentDeleteWarning(trashId), w => $"{w}\nTo confirm, run: acmod purge {trashId} <car ID>"),
         ["purge", var trashId, var typed] => ws.DeletePermanently(trashId, typed) is { } error ? Fail(error) : Done($"Deleted {trashId} permanently"),
-        ["install", var car] => Install(ws, car),
-        ["export", var car] => Report(ws.ExportZip(car), path => $"Exported {car} to {path}\nInstall it by dragging the ZIP onto Content Manager."),
+        ["install", var car] => Install(ws, car, force: false),
+        ["install", var car, "--force"] => Install(ws, car, force: true),
+        ["export", var car, .. var flags] when flags is [] or ["--force"] =>
+            Report(ws.ExportZip(car, ignoreErrors: flags.Length == 1), path => $"Exported {car} to {path}\nInstall it by dragging the ZIP onto Content Manager."),
         _ => Help(),
     };
 }
@@ -84,9 +87,30 @@ static int Usage(Workspace ws, int days)
     return 0;
 }
 
-static int Install(Workspace ws, string car)
+// VA-1, VA-2: every finding with severity, rule, file, message, fix, and evidence. Exit code 1 when there are errors.
+static int Validate(Workspace ws, string car)
 {
-    var (installed, replaced, error) = ws.InstallToAc(car);
+    var (findings, error) = ws.Validate(car);
+    if (findings == null) return Fail(error!);
+    foreach (var f in findings)
+    {
+        Console.WriteLine($"{f.Severity.ToString().ToUpperInvariant(),-8} {f.Rule}  {f.File ?? "(car)"}\n         {f.Message}\n         Fix: {f.Fix}  [{f.Evidence.ToString().ToLowerInvariant()}]");
+    }
+
+    Console.WriteLine(Summary(ws, car));
+    return findings.Any(f => f.Severity == AcMod.Core.Validation.Severity.Error) ? 1 : 0;
+}
+
+static string Summary(Workspace ws, string car)
+{
+    var findings = ws.Validate(car).Findings ?? [];
+    int Count(AcMod.Core.Validation.Severity s) => findings.Count(f => f.Severity == s);
+    return findings.Count == 0 ? "Validation: no findings." : $"Validation: {Count(AcMod.Core.Validation.Severity.Error)} error(s), {Count(AcMod.Core.Validation.Severity.Warning)} warning(s), {Count(AcMod.Core.Validation.Severity.Info)} info. Run: acmod validate {car}";
+}
+
+static int Install(Workspace ws, string car, bool force)
+{
+    var (installed, replaced, error) = ws.InstallToAc(car, ignoreErrors: force);
     if (installed == null) return Fail(error!);
     return Done($"Installed {car} to {installed}" + (replaced == null ? "" : $"\nThe previous install is in the trash as {replaced}"));
 }
@@ -131,8 +155,9 @@ static int Help()
         acmod restore <trash ID>                       move a car back from the trash
         acmod purge <trash ID>                         show what a permanent delete would remove
         acmod purge <trash ID> <car ID>                delete it permanently, with its snapshots; can't be undone
-        acmod install <car ID>                         copy a car into AC's content\cars (WS-11)
-        acmod export <car ID>                          write a ZIP for Content Manager to the exports folder (PK-2)
+        acmod validate <car ID>                        run the validator: every finding with its fix (VA-1, VA-2)
+        acmod install <car ID> [--force]               copy a car into AC's content\cars (WS-11); --force despite validation errors
+        acmod export <car ID> [--force]                write a ZIP for Content Manager to the exports folder (PK-2, PK-4)
         """);
     return 1;
 }

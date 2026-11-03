@@ -74,6 +74,7 @@ public partial class CarWindow : Window
         if (Tabs.SelectedItem == FormsTab) ShowForms();
         else if (Tabs.SelectedItem == PowerTab) ShowPower();
         else if (Tabs.SelectedItem == GearsTab) ShowGears();
+        else if (Tabs.SelectedItem == ValidateTab) ShowValidation();
         else ShowSelected();
     }
 
@@ -105,6 +106,7 @@ public partial class CarWindow : Window
         var preview = $"Files that will be written:\n  {string.Join("\n  ", _edit.WriteTargets)}\n\nChanges:\n{Describe(changes)}\n\n" +
                       "A snapshot is taken first, so this can be undone. Save?";
         if (MessageBox.Show(this, preview, "Save", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        if (!ConfirmSaveOnProtectedModel()) return;
 
         try
         {

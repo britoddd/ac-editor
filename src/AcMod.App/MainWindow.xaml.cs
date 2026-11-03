@@ -44,7 +44,8 @@ public partial class MainWindow : Window
             _workspace = workspace;
             Header.Text = $"Workspace: {workspace.Root}    AC: {workspace.AcFolder ?? "not set"}";
             CarGrid.ItemsSource = workspace.Cars()
-                .Select(c => new CarRow(c.Id, c.DisplayName ?? "(no name)", Megabytes(c.Size), Local(c.LastChangedUtc), "not run (M5)"))
+                .Select(c => new CarRow(c.Id, c.DisplayName ?? "(no name)", Megabytes(c.Size), Local(c.LastChangedUtc),
+                    workspace.Validate(c.Id).Findings is { } findings ? CarWindow.Summary(findings) : "can't run"))
                 .ToList();
             Status.Text = "";
         }
@@ -88,9 +89,10 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (!ConfirmDespiteErrors(row.Id, "Export")) return;
         try
         {
-            var (zipPath, error) = _workspace.ExportZip(row.Id);
+            var (zipPath, error) = _workspace.ExportZip(row.Id, ignoreErrors: true); // the user has seen any errors above
             if (zipPath == null)
             {
                 MessageBox.Show(this, error, "Export ZIP", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -119,11 +121,12 @@ public partial class MainWindow : Window
 
         var question = $"Copy {row.Id} into AC's content\\cars?\n\n{_workspace.AcFolder}";
         if (MessageBox.Show(this, question, "Install to AC", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        if (!ConfirmDespiteErrors(row.Id, "Install")) return;
 
         try
         {
             // ponytail: runs on the UI thread, so the window freezes while a large car copies; move to Task.Run if that bothers.
-            var (installed, replaced, error) = _workspace.InstallToAc(row.Id);
+            var (installed, replaced, error) = _workspace.InstallToAc(row.Id, ignoreErrors: true); // the user has seen any errors above
             var message = error ?? $"Installed to {installed}" + (replaced == null ? "" : $"\n\nThe previous install is in the trash as {replaced}.");
             MessageBox.Show(this, message, "Install to AC", MessageBoxButton.OK, error == null ? MessageBoxImage.Information : MessageBoxImage.Warning);
         }
@@ -133,6 +136,18 @@ public partial class MainWindow : Window
         }
 
         Refresh();
+    }
+
+    /// <summary>
+    /// PK-4 and the install gate (owner decision, 2026-11-03): validation errors block, unless the user explicitly continues. Warnings and infos never block.
+    /// </summary>
+    private bool ConfirmDespiteErrors(string carId, string action)
+    {
+        var errors = _workspace?.Validate(carId).Findings?.Where(f => f.Severity == AcMod.Core.Validation.Severity.Error).ToList() ?? [];
+        if (errors.Count == 0) return true;
+        var list = string.Join("\n", errors.Take(8).Select(f => $"  {f.Rule}  {f.Message}")) + (errors.Count > 8 ? $"\n  ...and {errors.Count - 8} more" : "");
+        var question = $"Validation found {errors.Count} error(s) in {carId}:\n\n{list}\n\nThe car may not load or may misbehave in AC. {action} anyway?";
+        return MessageBox.Show(this, question, $"{action}: validation errors", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
     }
 
     private static string Megabytes(long bytes) => (bytes / 1048576.0).ToString("0.0", CultureInfo.InvariantCulture) + " MB";

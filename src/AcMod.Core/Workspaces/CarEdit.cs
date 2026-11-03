@@ -51,6 +51,9 @@ public sealed class CarEdit
     public IReadOnlyList<string> WriteTargets =>
         _changes.Count == 0 ? [] : Data.Source == DataSource.Acd ? ["data.acd"] : [.. ChangedFiles.Select(n => Path.Combine("data", n))];
 
+    /// <summary>Runs the validator on the car's saved files (VA-1). Unsaved changes aren't included.</summary>
+    public IReadOnlyList<Validation.Finding> Validate() => _workspace.Validate(CarId).Findings ?? [];
+
     /// <summary>Every data file with any unsaved change applied, for live calculations such as the power estimate.</summary>
     public IReadOnlyList<AcdEntry> CurrentFiles => [.. Data.Files.Select(f => _changes.TryGetValue(f.Name, out var changed) ? f with { Data = changed } : f)];
 

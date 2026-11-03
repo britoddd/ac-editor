@@ -37,7 +37,7 @@ public sealed class InstallTests : IDisposable
 
     private string Install()
     {
-        var (installed, _, error) = _workspace.InstallToAc(CarId);
+        var (installed, _, error) = _workspace.InstallToAc(CarId, ignoreErrors: true);
         Assert.Null(error);
         return installed!;
     }
@@ -49,7 +49,7 @@ public sealed class InstallTests : IDisposable
     [Fact]
     public void A_fresh_install_copies_the_car_and_marks_it()
     {
-        var (installed, replaced, error) = _workspace.InstallToAc(CarId);
+        var (installed, replaced, error) = _workspace.InstallToAc(CarId, ignoreErrors: true);
 
         Assert.Null(error);
         Assert.Null(replaced);
@@ -70,7 +70,7 @@ public sealed class InstallTests : IDisposable
         Put(Installed, @"data\proview_nodes.ini", "written by AC"); // AC creates this file (docs/VERIFIED_FACTS.md)
         Put(Car, @"data\car.ini", "[INFO]\r\nSCREEN_NAME=v2\r\n");
 
-        var (_, replaced, error) = _workspace.InstallToAc(CarId);
+        var (_, replaced, error) = _workspace.InstallToAc(CarId, ignoreErrors: true);
 
         Assert.Null(error);
         Assert.Contains("v2", File.ReadAllText(Path.Combine(Installed, "data", "car.ini")));
@@ -86,7 +86,7 @@ public sealed class InstallTests : IDisposable
     {
         Put(Installed, @"data\car.ini", "someone else's mod"); // a hand copy, a Content Manager install, or a Kunos car
 
-        var (installed, _, error) = _workspace.InstallToAc(CarId);
+        var (installed, _, error) = _workspace.InstallToAc(CarId, ignoreErrors: true);
 
         Assert.Null(installed);
         Assert.Contains("wasn't installed by this app", error);
@@ -105,7 +105,7 @@ public sealed class InstallTests : IDisposable
         string? error;
         using (File.Open(Path.Combine(Installed, "data", "car.ini"), FileMode.Open, FileAccess.Read, FileShare.Read)) // like AC holding it open
         {
-            (_, _, error) = _workspace.InstallToAc(CarId);
+            (_, _, error) = _workspace.InstallToAc(CarId, ignoreErrors: true);
         }
 
         Assert.Contains("left as it was", error);
@@ -126,11 +126,22 @@ public sealed class InstallTests : IDisposable
     }
 
     [Fact]
+    public void Validation_errors_block_the_install_unless_the_user_overrides()
+    {
+        var (installed, _, error) = _workspace.InstallToAc(CarId); // this test car fails V-04, V-05 and V-09
+
+        Assert.Null(installed);
+        Assert.Contains("Validation found", error);
+        AssertAcCarsHoldsOnly();
+        Assert.NotNull(_workspace.InstallToAc(CarId, ignoreErrors: true).InstalledFolder);
+    }
+
+    [Fact]
     public void A_car_with_unreadable_data_is_refused()
     {
         File.WriteAllText(Path.Combine(Car, "data.acd"), "not an acd file"); // AC would use this and ignore data\ (V-12)
 
-        var (installed, _, error) = _workspace.InstallToAc(CarId);
+        var (installed, _, error) = _workspace.InstallToAc(CarId, ignoreErrors: true);
 
         Assert.Null(installed);
         Assert.Contains("data can't be read", error);
@@ -142,7 +153,7 @@ public sealed class InstallTests : IDisposable
     {
         Directory.Delete(Path.Combine(Car, "data"), recursive: true);
 
-        Assert.Contains("data can't be read", _workspace.InstallToAc(CarId).Error);
+        Assert.Contains("data can't be read", _workspace.InstallToAc(CarId, ignoreErrors: true).Error);
         AssertAcCarsHoldsOnly();
     }
 
@@ -153,7 +164,7 @@ public sealed class InstallTests : IDisposable
     [InlineData("")]
     public void A_missing_or_bad_car_ID_is_refused(string carId)
     {
-        Assert.NotNull(_workspace.InstallToAc(carId).Error);
+        Assert.NotNull(_workspace.InstallToAc(carId, ignoreErrors: true).Error);
         AssertAcCarsHoldsOnly();
     }
 
@@ -163,8 +174,8 @@ public sealed class InstallTests : IDisposable
         var noAc = Workspace.Open(Path.Combine(_temp, "ws"), null).Workspace!;
         File.Delete(Path.Combine(_ac, "acs.exe"));
 
-        Assert.Contains("Choose the AC folder first", noAc.InstallToAc(CarId).Error);
-        Assert.Contains("Choose the AC folder first", _workspace.InstallToAc(CarId).Error);
+        Assert.Contains("Choose the AC folder first", noAc.InstallToAc(CarId, ignoreErrors: true).Error);
+        Assert.Contains("Choose the AC folder first", _workspace.InstallToAc(CarId, ignoreErrors: true).Error);
         AssertAcCarsHoldsOnly();
     }
 
@@ -175,7 +186,7 @@ public sealed class InstallTests : IDisposable
         File.WriteAllText(Path.Combine(elsewhere, Workspace.InstallMarker), "{}"); // even with a marker inside
         WorkspaceTests.MakeJunction(Installed, elsewhere);
 
-        var error = _workspace.InstallToAc(CarId).Error;
+        var error = _workspace.InstallToAc(CarId, ignoreErrors: true).Error;
 
         Directory.Delete(Installed); // removes only the junction
         Assert.Contains("junction or symlink", error);

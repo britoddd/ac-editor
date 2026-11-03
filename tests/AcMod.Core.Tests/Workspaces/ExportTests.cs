@@ -32,7 +32,7 @@ public sealed class ExportTests : IDisposable
     [Fact]
     public void The_ZIP_has_the_car_under_its_ID_without_the_marker_or_dev_files()
     {
-        var (zipPath, error) = _workspace.ExportZip(CarId);
+        var (zipPath, error) = _workspace.ExportZip(CarId, ignoreErrors: true);
 
         Assert.Null(error);
         Assert.StartsWith(Path.Combine(_workspace.Root, "exports", CarId + "_"), zipPath);
@@ -46,7 +46,7 @@ public sealed class ExportTests : IDisposable
     [Fact]
     public void An_exported_ZIP_imports_back_as_the_same_car()
     {
-        var zipPath = _workspace.ExportZip(CarId).ZipPath!;
+        var zipPath = _workspace.ExportZip(CarId, ignoreErrors: true).ZipPath!;
         var other = Workspace.Open(Path.Combine(_temp, "ws2"), null).Workspace!;
 
         Assert.Equal((CarId, null), other.ImportCar(zipPath));
@@ -55,12 +55,24 @@ public sealed class ExportTests : IDisposable
     }
 
     [Fact]
+    public void Validation_errors_block_the_export_unless_the_user_overrides()
+    {
+        var (zipPath, error) = _workspace.ExportZip(CarId); // this car has no collider.kn5, mandatory data files, or bank
+
+        Assert.Null(zipPath);
+        Assert.Contains("Validation found", error);
+        Assert.Contains("V-04", error);
+        Assert.Empty(Directory.GetFiles(Path.Combine(_workspace.Root, "exports")));
+        Assert.NotNull(_workspace.ExportZip(CarId, ignoreErrors: true).ZipPath);
+    }
+
+    [Fact]
     public void A_car_with_unreadable_data_or_a_bad_ID_is_not_exported()
     {
         File.WriteAllText(Path.Combine(Car, "data.acd"), "not an acd file");
 
-        Assert.Contains("can't be read", _workspace.ExportZip(CarId).Error);
-        Assert.NotNull(_workspace.ExportZip("..").Error);
+        Assert.Contains("can't be read", _workspace.ExportZip(CarId, ignoreErrors: true).Error);
+        Assert.NotNull(_workspace.ExportZip("..", ignoreErrors: true).Error);
         Assert.Empty(Directory.GetFiles(Path.Combine(_workspace.Root, "exports")));
     }
 }
