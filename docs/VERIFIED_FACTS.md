@@ -467,3 +467,18 @@ The owner set `engine.ini` `[ENGINE_DATA] LIMITER` from 6500 to 5500 on the app'
 - The failed install left `content\cars` unchanged: no `.acmod-installing` or `.acmod-old` folder and no extra trash copy. The fix is to close Content Manager (and AC) before installing.
 - Not verified: whether Content Manager holds the folder only after a session, or whenever it is open.
 - Later the same day, installs still failed with AC and Content Manager closed, and no file in the car was held open. **The cause was an Explorer tab showing the car's folder.** Closing it fixed the install (13:11). So any program with the folder open blocks the install's rename.
+
+## Added gear and off-list ratios in game (BRITOD-DESK, 2026-11-03, TU-9 game check)
+
+The app installed the tutorial car with `COUNT=7`, `GEAR_1=2.26`, a new `GEAR_7=0.77`, a `setup.ini` `[GEAR_7]` copied from `[GEAR_6]`, `LIMITER=8500`, and `power.lut` extended to 9500 rpm.
+`ratios.rto` (the garage's gear list) offers 2.64, 2.36, 1.94, 1.73, 1.56, 1.50, 1.40, 1.29, 1.23, 1.17, 1.10, 1.05, 1.00, 0.96, 0.92, 0.88.
+Evidence: the owner's screenshot of the garage gear page (`scratch/Screenshot 2026-11-03 131644.png`) and `log.txt`.
+
+- **AC accepts an added gear.** The log lists `ADDING GEAR:1` to `ADDING GEAR:7`, and the garage shows seven gear sliders.
+- **A ratio that is not in `ratios.rto` is not used as written.** The garage puts it on the list's first option: gear 1 (2.26) and gear 7 (0.77) both show `14/37` (2.64), not the nearest option.
+  Gears whose ratio is in the list (1.73, 1.40, 1.17, 1.00, 0.88) show that ratio, and the final drive shows `10/31` (3.10).
+  Not yet confirmed by driving: that the car then drives with 2.64.
+- The garage's top speeds match the rear tyre radius (0.285 m) at the 8500 rpm limiter: 111 km/h for 2.64 (rear predicts 111.6, front 107.7), and 332 for 0.88 (rear 334.8).
+  Every gear reads about 0.5 to 0.8% below the rear-radius prediction. On this AWD car with different radii, the garage uses the rear radius.
+- The log's `PW:325407.593750 (436.378082 HP)` matched the app's estimate from the tuned `power.lut` (325,469 W, peak torque × rpm at 8000 rpm × 3) within 0.02%.
+- The log ends with `CLEAN EXIT`.

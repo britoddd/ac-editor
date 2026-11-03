@@ -44,8 +44,9 @@ public partial class CarWindow
         FrontColumn.Header = "Front tyre km/h" + (driven is "front" or "both" ? " (driven)" : "");
         RearColumn.Header = "Rear tyre km/h" + (driven is "rear" or "both" ? " (driven)" : "");
 
-        string Note(int gear, double ratio) => GearEdits.RatioOptions(files, gear) is { } options && !options.Any(o => Math.Abs(o - ratio) < 0.0005)
-            ? "not one of the garage setup's ratios (unverified: AC may change it)"
+        // Seen in game 2026-11-03: AC's garage puts an off-list ratio on the setup list's FIRST option, not the nearest one.
+        string Note(int gear, double ratio) => GearEdits.RatioOptions(files, gear) is { Count: > 0 } options && !options.Any(o => Math.Abs(o - ratio) < 0.0005)
+            ? Invariant($"not in the garage setup's list: AC uses its first option, {options[0]}, instead")
             : "";
 
         var rows = table.Gears
