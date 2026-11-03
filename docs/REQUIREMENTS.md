@@ -87,6 +87,7 @@ The workspace layout is `cars/<car_id>/`, `snapshots/`, `trash/`, and `exports/`
 | TU-5 | Calculate speed per gear from redline, gear ratios, final drive, and tyre radius | P1 |
 | TU-6 | Compare two snapshots, or two cars, field by field | P1 |
 | TU-7 | Mark changes as unsaved and show exactly which files will change before writing | P1 |
+| TU-8 | Edit the power curve directly on the chart: drag a point to change its torque, and select several points to change them together (for example scale by a percentage or add a fixed amount). Requested by the owner during M4 step 6 (2026-11-03); planned for after the M4 exit gate | P2 |
 
 ### Validator
 

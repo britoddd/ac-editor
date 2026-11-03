@@ -43,6 +43,8 @@ Owner decisions: plain WPF (XAML, data binding, a little code-behind, no MVVM pa
 9. **Compare view** (TU-6): two snapshots or two cars, field by field.
 10. **Exit gate**: lower `LIMITER` on the tutorial car (for example 6500 to 5500) in the app, predict the 1st-gear speed at the limiter, install, and the owner reads the rev limit and speedometer in game.
 
+After the exit gate: TU-8 (owner request, P2), dragging power curve points on the chart and changing several points at once. Propose it as an M4 follow-up step before M5.
+
 Unverified, to label in the UI and settle at the exit gate: which tyre radius sets the speed (`[COMPOUND_DEFAULT] INDEX=1`; the tutorial car is AWD with front 0.275 and rear 0.285), how close the speedometer comes to the formula, and the community estimate rated torque ≈ `power.lut` ÷ 0.85.
 
 ### Notes for the next agent
