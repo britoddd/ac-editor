@@ -449,3 +449,13 @@ in the 230 installed cars with readable data, counting each `[SECTION] KEY` (num
 - Comments usually sit on the `[FRONT]` copy of a field only. `[FRONT] SPRING_RATE` has one in 212 of 229 cars, `[REAR] SPRING_RATE` in 9. The forms reuse the same key's comment from another section as the hint, and say where it came from.
 - Some common fields have no comment in any car, for example `tyres.ini` `[FRONT] WIDTH`, `DX0`, and `DY0`. Their hints stay empty until LE-1 (M7) adds sourced explanations.
 - Vector values use `,` between parts, for example `car.ini` `[BASIC] GRAPHICS_OFFSET=0,-0.65,0.05`. So `,` is read as a decimal mark only in a field that holds a single number.
+
+## Tuned limiter in game (BRITOD-DESK, 2026-11-03, M4 exit gate)
+
+The owner set `engine.ini` `[ENGINE_DATA] LIMITER` from 6500 to 5500 on the app's Forms tab, saved, installed with the app, and drove the tutorial car.
+
+- **Result: the rev limiter cut at 5500 rpm in game**, and 1st gear at the limiter read about 80 km/h on the speedometer.
+- The app's Gears tab predicted 80.8 km/h with the rear radius (0.285 m) and 77.9 km/h with the front (0.275 m). The reading leans towards the rear radius,
+  but "about 80" is not precise enough to settle which radius sets the speed on this AWD car. Still unverified.
+- The log's `POWER CLASS INDEX` stayed `PW:188460.000000`, the same as with `LIMITER=6500`, so the logged power does not depend on `LIMITER` here.
+- The log ends with `CLEAN EXIT`, with only the 4 known `ERROR: Variable type cannot be found` lines.

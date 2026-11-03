@@ -14,38 +14,27 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 4 is in progress** (plan in "Next: Milestone 4" below).
+**Milestone 4 is done (2026-11-03). Next: TU-8, then plan Milestone 5** (see "Next" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
-Done so far. Git history has the details: one commit per step, prefixed `M0`, `M1`, `M2`, or `M3`.
+Done so far. Git history has the details: one commit per step, prefixed `M0` to `M4`.
 - **M0 (2026-11-02):** the tutorial car `acm_tutorial_basic` was built and drives in AC. Facts about real AC data are in `docs/VERIFIED_FACTS.md`, the ACD format is in `docs/ACD.md`, and the V-01 to V-15 verdicts are in `docs/REQUIREMENTS.md` ("M0 verdicts"). The license is MIT, and no AcTools code is ported.
 - **M1 (2026-11-03):** `src/AcMod.Core` has `Text/TextDocument` (the lossless base) and `Formats/` with `LutFile` (.lut and .rto), `IniFile`, `UiCarJson`, and `GuidsFile`. `FixtureRunnerTests` checks QS-1 and every single-value edit (QS-2) on all 168 fixture files. 223 tests pass, with 0 warnings.
 - **M2 (2026-11-03):** `src/AcMod.Core/Acd/` has `AcdKey` (written clean-room from `docs/ACD.md`), `AcdFile` (`Parse` reports unreadable files per V-13, `Pack`, and `PackVerified` for PK-1), and `CarData` (effective data per TU-1 and V-12, and `PackFolder`). Core matches acd.py in both directions, and AC loaded a Core-packed `data.acd` (the log's `PW` matched the prediction exactly). 294 tests pass, with 0 warnings.
 - **M3 (2026-11-03):** `src/AcMod.Core/Workspaces/` has `Workspace` and `AcInstall`/`Settings`. `Workspace` covers the path guard (`Resolve`), snapshots with rollback, the car list and folder manager, trash with permanent delete, and import from a folder or ZIP. `Workspace.Install.cs` is the only code that writes into AC (WS-11). `AcInstall` finds AC through Steam, and `Settings` lives in `%LOCALAPPDATA%\AcMod\settings.json`. `src/AcMod.Cli` (`acmod`) is a thin CLI over Core. The owner ran the exit gate on `D:\ACModding`: snapshot restore, delete and restore, an install refusal, a 966 MB import peaking at 30.5 MB of memory (QS-7), and an app install that AC loaded with `PW` 188,460 W, the baseline. 409 tests pass, with 0 warnings.
+- **M4 (2026-11-03):** `src/AcMod.App` is a plain WPF app (no MVVM package, owner decision): a car list with Open, Compare and Install, and a car window with Forms (TU-2), Power curve (TU-4), Gears (TU-5) and Raw files (TU-3) tabs that share one `CarEdit` session (TU-1, TU-7). Compare covers TU-6. Core added `Workspaces/CarEdit` (unsaved changes, save through `WriteCarFiles`, `data.acd` repacked and verified), `Formats/DataDiff`, and `Tuning/` (`PowerEstimate`, `GearTable`, `TuningForms`). Exit gate: the owner lowered `LIMITER` 6500 → 5500 in the app, installed, and AC cut at 5500 rpm with about 80 km/h in 1st (80.8 predicted). 461 tests pass, with 0 warnings.
 
-## Next: Milestone 4 (Tuning)
+## Next: TU-8, then Milestone 5 (Validator)
 
-Exit gate: a tuned car loads in AC with the intended change visible in-game.
-The WPF app (`src/AcMod.App`, net10.0-windows) starts in M4 (owner decision, 2026-11-03). The owner is new to WPF, so introduce it in small steps.
+M4 left one owner request: TU-8 (P2), dragging power curve points on the chart and changing several points at once (for example scaling the selected rows by a percentage). Propose small steps for it and get the owner's approval, then plan M5.
+For M5, read the M5 row and V-01 to V-15 ("M0 verdicts") in `docs/REQUIREMENTS.md`, propose small steps, and get the owner's approval before coding. Exit gate: each rule has a passing and failing fixture.
 
-Plan approved by the owner (2026-11-03). Logic and calculations live in Core with tests; the app stays thin. One commit per step, prefixed `M4 step N`.
-Owner decisions: plain WPF (XAML, data binding, a little code-behind, no MVVM package); cars that use `data.acd` may be edited (Save repacks and verifies, PK-1).
-
-1. **WPF shell** (WS-3, WS-11): `src/AcMod.App`, one window with the car list and an Install button.
-2. **Edit session in Core** (TU-1, TU-7, V-12, V-13): open the effective data, hold unsaved changes per file, save through `WriteCarFiles` (`data\` files, or a repacked and verified `data.acd`). Unreadable data opens read-only.
-3. **Field diff in Core** (TU-6, TU-7): per INI key and LUT row. `CarData` must load with an explicit car ID, because a snapshot folder's name isn't the car ID and the `data.acd` key comes from it.
-4. **Raw editor** (TU-3, TU-7): file list and text box, unsaved marker, Save lists the files and fields that will change.
-5. **Power and gear numbers in Core** (TU-4, TU-5): power by the formula that matched the log `PW` in M0 and M2, with turbo boost; speed per gear from `LIMITER`, `GEAR_n`, `FINAL`, tyre `RADIUS`. Check the field names across fixtures first.
-6. **`power.lut` editor** (TU-4): table, curve drawn with WPF shapes (no chart package), estimated peak power and torque.
-7. **Gear calculator** (TU-5): speed per gear at the limiter.
-8. **Guided forms** (TU-2): seven groups, only fields found in real files; each hint is the file's own comment, labelled "from the file". Sourced explanations are LE-1 (M7).
-9. **Compare view** (TU-6): two snapshots or two cars, field by field.
-10. **Exit gate**: lower `LIMITER` on the tutorial car (for example 6500 to 5500) in the app, predict the 1st-gear speed at the limiter, install, and the owner reads the rev limit and speedometer in game.
-
-After the exit gate: TU-8 (owner request, P2), dragging power curve points on the chart and changing several points at once. Propose it as an M4 follow-up step before M5.
-
-Unverified, to label in the UI and settle at the exit gate: which tyre radius sets the speed (`[COMPOUND_DEFAULT] INDEX=1`; the tutorial car is AWD with front 0.275 and rear 0.285), how close the speedometer comes to the formula, and the community estimate rated torque ≈ `power.lut` ÷ 0.85.
+Still unverified after M4:
+- Which tyre radius sets the speed on an AWD car with different front and rear radii. The M4 gate read about 80 km/h, against 80.8 predicted for the rear and 77.9 for the front.
+- That `[COMPOUND_DEFAULT] INDEX` n means `[FRONT_n]`/`[REAR_n]`.
+- Adding several turbos' boosts in the power estimate.
+- The community estimate rated torque ≈ `power.lut` ÷ 0.85.
 
 ### Notes for the next agent
 
@@ -67,7 +56,8 @@ Unverified, to label in the UI and settle at the exit gate: which tyre radius se
 - **Screenshots:** the owner saves them in `scratch/` with default Windows names. Read the newest file.
 - **Game checks:** read `%USERPROFILE%\Documents\Assetto Corsa\logs\log.txt` right after the owner quits, because the next AC start overwrites it.
   The `POWER CLASS INDEX ... PW:` line shows which data loaded (formula in the V-12 entry of `docs/VERIFIED_FACTS.md`). Versions: AC 1.16.4, CSP 0.3.0-preview634.
-- **Installed tutorial car:** `content\cars\acm_tutorial_basic` is an app install (it has `acmod_install.json`) of `D:\ACModding\cars\acm_tutorial_basic`, plus AC's own `data\proview_nodes.ini`.
+- **App builds:** the owner often has `AcMod.App` open, which locks its output folder. Build-check app code with `dotnet build src\AcMod.App\AcMod.App.csproj -o <job tmp>\appcheck`, and ask the owner to close the app before a full build.
+- **Installed tutorial car:** `content\cars\acm_tutorial_basic` is an app install (it has `acmod_install.json`) of `D:\ACModding\cars\acm_tutorial_basic`, plus AC's own `data\proview_nodes.ini`. Since the M4 gate both have `LIMITER=5500`; the 6500 version is in workspace snapshots and the trash.
   `acmod install acm_tutorial_basic` replaces it and moves the old copy to the workspace trash. Install only with the owner's approval. Ask for approval explicitly and wait for a clear yes.
   `scratch/m2_game_check` is a Core-only console program that builds a test `data.acd` (see the M2 entry in `docs/VERIFIED_FACTS.md`).
 - **`fixtures/local` (gitignored):** `acm_tutorial_basic`, `formula_k`, `shelby_cobra_427sc`, `ks_porsche_911_gt3_r_2016/data.acd` (the `data.acd` only, with a `-1111` header), and `acdpy_reference/acm_tutorial_basic/data.acd` (acd.py's pack of the tutorial car).
