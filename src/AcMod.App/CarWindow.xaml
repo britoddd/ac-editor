@@ -49,6 +49,12 @@
                             <Button Content="Scale %" Click="Scale_Click" Padding="8,2" Margin="6,0,0,0" />
                             <Button Content="Add Nm" Click="Add_Click" Padding="8,2" Margin="6,0,0,0" />
                         </StackPanel>
+                        <!-- TU-9: the rev limiter (engine.ini [ENGINE_DATA] LIMITER), drawn as a red line on the chart. -->
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Limiter (rpm):" VerticalAlignment="Center" />
+                            <TextBox x:Name="LimiterBox" Width="70" Margin="6,0,0,0" />
+                            <Button Content="Set" Click="SetLimiter_Click" Padding="8,2" Margin="6,0,0,0" />
+                        </StackPanel>
                         <!-- TU-9: extend the curve to a higher rpm, or shorten it. -->
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
                             <Button Content="Add row above the top rpm" Click="AddRow_Click" Padding="8,2" />

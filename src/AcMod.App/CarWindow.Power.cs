@@ -35,6 +35,7 @@ public partial class CarWindow
     private double _chartTop = 1; // the value at the top grid line; torque and power share this scale
     private List<(int Row, double Rpm, double Torque)> _chartPoints = [];
     private double _boostFactor = 1;
+    private double? _limiter; // engine.ini [ENGINE_DATA] LIMITER, drawn as a vertical line
 
     // While a point is dragged: where the drag started, the torque scale at that moment (kept fixed so the curve doesn't jump), and the change so far.
     private (double StartY, double Scale)? _drag;
@@ -73,6 +74,15 @@ public partial class CarWindow
         PowerGrid.ItemsSource = grid;
         foreach (var row in grid.Where(r => keep.Contains(r.RowIndex))) PowerGrid.SelectedItems.Add(row);
         PowerGrid.IsReadOnly = _edit.ReadOnly;
+
+        var limiterField = LimiterField();
+        _limiter = limiterField != null && TryNumber(limiterField.Value, out var limiter) ? limiter : null;
+        LimiterBox.Text = limiterField?.Value ?? "";
+        LimiterBox.IsEnabled = limiterField != null && !_edit.ReadOnly;
+        var topRpm = _chartPoints.Count > 0 ? _chartPoints[^1].Rpm : 0;
+        var limiterNote = _limiter > topRpm
+            ? Invariant($"\nThe limiter ({_limiter:0} rpm) is above the curve's last row ({topRpm:0} rpm). How AC treats the gap isn't verified; add rows up to the limiter.")
+            : "";
         var turbos = estimate.TurboCount == 0 ? "no turbo" : $"{estimate.TurboCount} turbo(s), so torque × {Number(estimate.BoostFactor)}";
         // Invariant(...) formats numbers with '.', whatever the Windows number settings are.
         PowerSummary.Text =
@@ -80,7 +90,8 @@ public partial class CarWindow
             Invariant($"peak torque {estimate.PeakTorqueNm:0.0} Nm at {estimate.PeakTorqueRpm:0} rpm.\n") +
             "The power formula matched the PW in AC's log within 0.1% for the tutorial car (one turbo)." +
             (estimate.TurboCount > 1 ? " With several turbos, adding their boosts is not verified." : "") +
-            (estimate.RatedTorqueEstimateNm is { } rated ? Invariant($"\nRated engine torque ≈ {rated:0} Nm (community estimate: power.lut torque ÷ 0.85, no turbo).") : "");
+            (estimate.RatedTorqueEstimateNm is { } rated ? Invariant($"\nRated engine torque ≈ {rated:0} Nm (community estimate: power.lut torque ÷ 0.85, no turbo).") : "") +
+            limiterNote;
         DrawChart();
     }
 
@@ -101,6 +112,27 @@ public partial class CarWindow
 
         // Rebuild the table after the grid finishes its edit; rebuilding during the edit isn't allowed.
         Dispatcher.BeginInvoke(ShowPower);
+    }
+
+    /// <summary>engine.ini's [ENGINE_DATA] LIMITER field, or null when the car has none.</summary>
+    private FormField? LimiterField() =>
+        _edit.FileName("engine.ini") is { } engine
+            ? TuningForms.Fields(_edit.Current(engine)).FirstOrDefault(f => f.Section == "ENGINE_DATA" && f.Key == "LIMITER")
+            : null;
+
+    /// <summary>TU-9: sets the rev limiter. It changes the Gears tab's speeds too, which follow LIMITER.</summary>
+    private void SetLimiter_Click(object sender, RoutedEventArgs e)
+    {
+        if (_edit.ReadOnly || LimiterField() is not { } field || _edit.FileName("engine.ini") is not { } engine) return;
+        if (!TryNumber(LimiterBox.Text, out var rpm) || rpm <= 0)
+        {
+            Status.Text = $"\"{LimiterBox.Text}\" isn't an rpm above 0.";
+            return;
+        }
+
+        Status.Text = _edit.SetIniValue(engine, field.LineIndex, Invariant($"{Math.Round(rpm)}")) ?? Invariant($"Limiter set to {Math.Round(rpm)} rpm.");
+        MarkChanged();
+        ShowPower();
     }
 
     private void Scale_Click(object sender, RoutedEventArgs e) => ApplyToSelected(CurveEdits.Scale, "scaled by {0}%");
@@ -179,7 +211,7 @@ public partial class CarWindow
             .Select(p => (p.Row, p.Rpm, Torque: _drag != null && selected.Contains(p.Row) ? p.Torque + _dragDelta : p.Torque))
             .Select(p => (p.Row, p.Rpm, p.Torque, Hp: PowerEstimate.PowerW(p.Rpm, p.Torque, _boostFactor) / 745.699872))
             .ToList();
-        var maxRpm = Math.Max(1, points.Max(p => p.Rpm));
+        var maxRpm = Math.Max(1, Math.Max(points.Max(p => p.Rpm), _limiter ?? 0));
         var maxTorque = points.Max(p => p.Torque);
         var maxHp = points.Max(p => p.Hp);
 
@@ -194,6 +226,13 @@ public partial class CarWindow
             var y = At(0, v).Y;
             Chart.Children.Add(new Line { X1 = left, Y1 = y, X2 = left + width, Y2 = y, Stroke = v == 0 ? Brushes.Gray : Brushes.Gainsboro });
             AddText(Number(Math.Round(v, 6)), 4, y - 8, Brushes.Gray);
+        }
+
+        if (_limiter is { } limiter)
+        {
+            var x = At(limiter, 0).X;
+            Chart.Children.Add(new Line { X1 = x, Y1 = pad, X2 = x, Y2 = pad + height, Stroke = Brushes.Red, StrokeThickness = 1.5, StrokeDashArray = [4, 3] });
+            AddText(Invariant($"limiter {limiter:0}"), x - 70, pad + height - 18, Brushes.Red);
         }
 
         Chart.Children.Add(new Polyline { Stroke = Brushes.SteelBlue, StrokeThickness = 2, Points = [.. points.Select(p => At(p.Rpm, p.Torque))] });
