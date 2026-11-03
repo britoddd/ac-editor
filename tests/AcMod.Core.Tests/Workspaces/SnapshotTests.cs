@@ -108,6 +108,50 @@ public sealed class SnapshotTests : IDisposable
     }
 
     [Fact]
+    public void A_write_that_fails_partway_puts_back_the_files_already_written()
+    {
+        File.SetAttributes(Path.Combine(_car, "data", "car.ini"), FileAttributes.ReadOnly);
+
+        // power.lut is moved into place first, then car.ini fails.
+        Assert.Throws<UnauthorizedAccessException>(() =>
+            _workspace.WriteCarFiles(CarId, Files((@"data\power.lut", "0|1\r\n"), (@"data\car.ini", "changed"))));
+
+        File.SetAttributes(Path.Combine(_car, "data", "car.ini"), FileAttributes.Normal);
+        Assert.Equal("0|100\r\n8000|200\r\n", Read(@"data\power.lut"));
+        Assert.Contains("original", Read(@"data\car.ini"));
+    }
+
+    [Fact]
+    public void A_failed_write_to_an_acd_only_car_leaves_no_empty_data_folder()
+    {
+        var packed = CarData.PackFolder(_car);
+        Assert.Null(_workspace.WriteCarFiles(CarId, new Dictionary<string, byte[]> { ["data.acd"] = packed.Bytes! }).Error);
+        Directory.Delete(Path.Combine(_car, "data"), recursive: true);
+        File.SetAttributes(Path.Combine(_car, "ui", "ui_car.json"), FileAttributes.ReadOnly);
+
+        Assert.Throws<UnauthorizedAccessException>(() =>
+            _workspace.WriteCarFiles(CarId, Files((@"data\car.ini", "unpacked"), (@"ui\ui_car.json", "{}"))));
+
+        File.SetAttributes(Path.Combine(_car, "ui", "ui_car.json"), FileAttributes.Normal);
+        Assert.False(Directory.Exists(Path.Combine(_car, "data"))); // an empty data\ would raise a false V-12 warning
+        Assert.False(CarData.Load(_car).FolderIgnored);
+    }
+
+    [Fact]
+    public void A_restore_that_fails_partway_puts_back_the_files_it_changed()
+    {
+        var original = Write((@"data\power.lut", "edited"), (@"ui\ui_car.json", "edited"));
+        // data\ is restored before ui\, so power.lut is put back first, then ui_car.json fails.
+        File.SetAttributes(Path.Combine(_car, "ui", "ui_car.json"), FileAttributes.ReadOnly);
+
+        Assert.Throws<UnauthorizedAccessException>(() => _workspace.RestoreSnapshot(CarId, original));
+
+        File.SetAttributes(Path.Combine(_car, "ui", "ui_car.json"), FileAttributes.Normal);
+        Assert.Equal("edited", Read(@"data\power.lut"));
+        Assert.Equal("edited", Read(@"ui\ui_car.json"));
+    }
+
+    [Fact]
     public void Restore_removes_a_data_acd_packed_after_the_snapshot_and_can_be_undone()
     {
         var beforeEdit = Write((@"data\car.ini", "[INFO]\r\nSCREEN_NAME=edited\r\n"));

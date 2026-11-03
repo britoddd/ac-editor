@@ -124,7 +124,7 @@ public sealed class Workspace
 
         var (snapshotId, snapshotError) = Snapshot(carId);
         if (snapshotId == null) return (null, snapshotError);
-        Replace(carId, targets);
+        WithRollback(carId, snapshotId, () => Replace(carId, targets));
         return (snapshotId, null);
     }
 
@@ -142,29 +142,61 @@ public sealed class Workspace
 
         var (beforeId, error) = Snapshot(carId);
         if (beforeId == null) return (null, error);
+        WithRollback(carId, beforeId, () => MatchSnapshot(carId, snapshotId));
+        return (beforeId, null);
+    }
 
+    /// <summary>Runs a change to a car. If it throws, puts the snapshot scope back to the given snapshot, then rethrows (QS-8).</summary>
+    private void WithRollback(string carId, string snapshotId, Action change)
+    {
+        try
+        {
+            change();
+        }
+        catch (Exception failure)
+        {
+            try
+            {
+                MatchSnapshot(carId, snapshotId);
+            }
+            catch (Exception rollback)
+            {
+                throw new IOException(
+                    $"Changing car {carId} failed ({failure.Message}), and putting its files back failed too ({rollback.Message}). Snapshot {snapshotId} still holds them.",
+                    failure);
+            }
+
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Makes a car's snapshot scope match a snapshot: removes folders and files the snapshot doesn't have, and writes the files that differ.
+    /// Unchanged files aren't touched, so a rollback still works when an unchanged file is read-only.
+    /// </summary>
+    private void MatchSnapshot(string carId, string snapshotId)
+    {
         var car = Path.Combine(Root, "cars", carId);
         var snapshot = Path.Combine(Root, "snapshots", carId, snapshotId);
+        string Checked((string? Path, string? Error) result) => result.Path ?? throw new IOException(result.Error);
+
         foreach (var folder in SnapshotFolders.Where(f => !Directory.Exists(Path.Combine(snapshot, f))))
         {
-            var (path, folderError) = CarFile(carId, folder);
-            if (path == null) return (null, folderError);
+            var path = Checked(CarFile(carId, folder));
             if (Directory.Exists(path)) Directory.Delete(path, recursive: true);
         }
 
         foreach (var file in ScopeFiles(car).Where(f => !File.Exists(Path.Combine(snapshot, f))))
         {
-            var (path, fileError) = ScopedCarFile(carId, file);
-            if (path == null) return (null, fileError);
-            File.Delete(path);
+            File.Delete(Checked(ScopedCarFile(carId, file)));
         }
 
         var targets = new List<(string Path, byte[] Data)>();
         foreach (var file in ScopeFiles(snapshot))
         {
-            var (path, fileError) = ScopedCarFile(carId, file);
-            if (path == null) return (null, fileError);
-            targets.Add((path, File.ReadAllBytes(Path.Combine(snapshot, file))));
+            var path = Checked(ScopedCarFile(carId, file));
+            var data = File.ReadAllBytes(Path.Combine(snapshot, file));
+            if (!File.Exists(path) || !File.ReadAllBytes(path).AsSpan().SequenceEqual(data)) targets.Add((path, data));
         }
 
         foreach (var folder in SnapshotFolders.Where(f => Directory.Exists(Path.Combine(snapshot, f))))
@@ -173,12 +205,11 @@ public sealed class Workspace
         }
 
         Replace(carId, targets);
-        return (beforeId, null);
     }
 
     /// <summary>
-    /// Writes every file to a temp file first, then moves each over its target, so a failed write (a full disk, say) changes nothing (QS-8).
-    /// ponytail: a move failing midway leaves the earlier files replaced; the snapshot taken first still holds all of them.
+    /// Writes every file to a temp file first, then moves each over its target, so a failed write (a full disk, say) changes nothing.
+    /// A move that fails midway is undone by <see cref="WithRollback"/>.
     /// </summary>
     private void Replace(string carId, List<(string Path, byte[] Data)> targets)
     {
