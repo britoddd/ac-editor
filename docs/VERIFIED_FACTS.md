@@ -27,6 +27,8 @@ Checked so the app can find AC on its first run on another PC. On this PC, these
   does **not** exist on this PC. Do not rely on it.
 - Not verified: Steam in a non-default folder, AC in a secondary library, or non-Steam installs.
   Check these on the second PC.
+- `AcInstall.Find()` (M3 step 6) follows this route and returns `C:\Program Files (x86)\Steam\steamapps\common\assettocorsa`
+  on BRITOD-DESK (2026-11-03). The registry's `SteamPath` is lower case, so the code prefers the `libraryfolders.vdf` spelling.
 
 ## Contents of the AC folder (BRITOD-DESK, 2026-11-02)
 
