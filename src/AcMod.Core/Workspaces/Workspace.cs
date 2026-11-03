@@ -1,4 +1,12 @@
+using AcMod.Core.Formats;
+
 namespace AcMod.Core.Workspaces;
+
+/// <summary>A folder's total file size in bytes, and the latest change to it or anything inside it.</summary>
+public sealed record FolderInfo(string Name, long Size, DateTime LastChangedUtc);
+
+/// <summary>A car in the workspace (WS-3). <paramref name="DisplayName"/> is null when ui_car.json is missing or unreadable.</summary>
+public sealed record CarInfo(string Id, string? DisplayName, long Size, DateTime LastChangedUtc);
 
 /// <summary>
 /// The Mod Workspace (WS-1): cars\, snapshots\, trash\, and exports\ under one root folder.
@@ -60,6 +68,47 @@ public sealed class Workspace
         }
 
         return (full, null);
+    }
+
+    /// <summary>The cars in cars\ (WS-3), by ID. Validation status joins this in M5.</summary>
+    public CarInfo[] Cars() =>
+        [.. Subfolders("cars").Select(f => new CarInfo(f.Name, DisplayName(Path.Combine(Root, "cars", f.Name)), f.Size, f.LastChangedUtc))];
+
+    /// <summary>Cars that haven't changed for at least <paramref name="unchangedFor"/> (WS-5).</summary>
+    public CarInfo[] UnusedCars(TimeSpan unchangedFor) => [.. Cars().Where(c => DateTime.UtcNow - c.LastChangedUtc >= unchangedFor)];
+
+    /// <summary>
+    /// The folders inside one workspace folder, such as each car's snapshots or each trash entry, with their size (WS-5).
+    /// Junctions and symlinks are skipped, so a link can't make a folder look bigger.
+    /// </summary>
+    /// <param name="workspaceFolder">One of <see cref="Folders"/>.</param>
+    public FolderInfo[] Subfolders(string workspaceFolder)
+    {
+        if (!Folders.Contains(workspaceFolder)) throw new ArgumentException($"Not a workspace folder: {workspaceFolder}", nameof(workspaceFolder));
+
+        var top = new EnumerationOptions { AttributesToSkip = FileAttributes.ReparsePoint };
+        var all = new EnumerationOptions { AttributesToSkip = FileAttributes.ReparsePoint, RecurseSubdirectories = true };
+        return [.. new DirectoryInfo(Path.Combine(Root, workspaceFolder)).EnumerateDirectories("*", top)
+            .Select(dir =>
+            {
+                // A folder's own time changes when it is created, so a car imported with old files still counts as recent.
+                var (size, last) = (0L, dir.LastWriteTimeUtc);
+                foreach (var entry in dir.EnumerateFileSystemInfos("*", all))
+                {
+                    if (entry is FileInfo file) size += file.Length;
+                    if (entry.LastWriteTimeUtc > last) last = entry.LastWriteTimeUtc;
+                }
+
+                return new FolderInfo(dir.Name, size, last);
+            })
+            .OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)];
+    }
+
+    /// <summary>ui\ui_car.json's "name", or null when the file is missing or isn't JSON even when read leniently (V-10).</summary>
+    private static string? DisplayName(string car)
+    {
+        var path = Path.Combine(car, "ui", "ui_car.json");
+        return File.Exists(path) ? UiCarJson.Parse(File.ReadAllBytes(path)).GetString("/name") : null;
     }
 
     // WS-10: snapshots hold text data and UI files only, never KN5 models, sound banks, or textures.
