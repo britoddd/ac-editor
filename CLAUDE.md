@@ -27,7 +27,14 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 ## Next: TU-8, then Milestone 5 (Validator)
 
-M4 left one owner request: TU-8 (P2), dragging power curve points on the chart and changing several points at once (for example scaling the selected rows by a percentage). Propose small steps for it and get the owner's approval, then plan M5.
+TU-8 (P2, owner request): plan approved 2026-11-03. One commit per step, prefixed `TU-8 step N`.
+Owner decisions: a drag moves every selected point by the same Nm; dragged values are rounded to 0.1 Nm (typed values never); no Ctrl+Z (Discard and the save snapshot cover mistakes).
+1. **Core:** `CarEdit.SetLutValues(file, {row → value})` as one change, plus scale-by-% and add-Nm helpers, with QS-2 tests.
+2. **Table multi-select:** Ctrl/Shift selection on the Power curve table, with Scale % and Add Nm buttons.
+3. **Chart drag:** dots for points, click and Ctrl-click to select (kept in sync with the table), vertical drag with a live label, one change on release.
+Check: the owner tries each feature and the Save preview; no drive needed.
+
+After TU-8, plan M5.
 For M5, read the M5 row and V-01 to V-15 ("M0 verdicts") in `docs/REQUIREMENTS.md`, propose small steps, and get the owner's approval before coding. Exit gate: each rule has a passing and failing fixture.
 
 Still unverified after M4:
