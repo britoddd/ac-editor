@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using AcMod.Core.Formats;
 
 namespace AcMod.Core.Workspaces;
@@ -189,6 +190,92 @@ public sealed class Workspace
         if (beforeId == null) return (null, error);
         WithRollback(carId, beforeId, () => MatchSnapshot(carId, snapshotId));
         return (beforeId, null);
+    }
+
+    /// <summary>
+    /// Imports one car from a folder or a .zip file into cars\ (WS-4). The car is the folder that holds data.acd or a data folder, at any
+    /// depth, so content\cars\&lt;id&gt;\ inside a mod ZIP works. Its folder name is the car ID, or the ZIP's name when the car files sit at
+    /// the top of the ZIP. Files outside the car folder, such as a readme, are left out. Files stream to disk one at a time (QS-7) into
+    /// import.tmp\, and the car appears in cars\ only once complete (QS-8).
+    /// </summary>
+    /// <returns>The car ID.</returns>
+    public (string? CarId, string? Error) ImportCar(string source)
+    {
+        source = Path.TrimEndingDirectorySeparator(Path.GetFullPath(source));
+        var isZip = File.Exists(source);
+        if (!isZip && !Directory.Exists(source)) return (null, $"{source} doesn't exist.");
+        if (isZip && !source.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) return (null, "Only folders and .zip files can be imported. Extract other archives first.");
+        if (!isZip && (IsSameOrInside(source, Root) || IsSameOrInside(Root, source))) return (null, "Choose a folder outside the workspace.");
+
+        try
+        {
+            using var zip = isZip ? ZipFile.OpenRead(source) : null;
+            // Every file as its path relative to the source, with / separators, and a way to copy it to a destination.
+            var files = zip != null
+                ? [.. zip.Entries.Select(e => (Path: e.FullName.Replace('\\', '/'), Copy: (Action<string>)(dest => e.ExtractToFile(dest)))).Where(f => !f.Path.EndsWith('/'))]
+                : Directory.EnumerateFiles(source, "*", NoLinks).Select(f => (Path: Path.GetRelativePath(source, f).Replace('\\', '/'), Copy: (Action<string>)(dest => File.Copy(f, dest)))).ToArray();
+
+            var roots = CarRoots(files.Select(f => f.Path));
+            if (roots.Length == 0) return (null, $"No car found in {Path.GetFileName(source)}. A car folder holds data.acd or a data folder.");
+            if (roots.Length > 1)
+            {
+                return (null, $"{Path.GetFileName(source)} holds {roots.Length} cars ({string.Join(", ", roots.Select(r => r == "" ? "(top level)" : r))}). Import one car folder at a time.");
+            }
+
+            var root = roots[0];
+            var carId = root != "" ? root[(root.LastIndexOf('/') + 1)..] : isZip ? Path.GetFileNameWithoutExtension(source) : Path.GetFileName(source);
+            var (car, carError) = CarFile(carId, ".");
+            if (car == null) return (null, carError);
+            if (Directory.Exists(car)) return (null, $"A car {carId} is already in the workspace. Delete or rename it first.");
+            var (temp, tempError) = Resolve(Path.Combine("import.tmp", carId));
+            if (temp == null) return (null, tempError);
+
+            var tempRoot = Path.GetDirectoryName(temp)!;
+            try
+            {
+                if (Directory.Exists(tempRoot)) DeleteFolder(tempRoot); // left over from an import that crashed
+                var prefix = root == "" ? "" : root + "/";
+                foreach (var (path, copy) in files.Where(f => f.Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+                {
+                    // A ZIP entry can name any path, such as ../../evil.dll ("zip slip"), so each one must stay inside the car folder.
+                    var (dest, destError) = Resolve(Path.Combine("import.tmp", carId, path[prefix.Length..]));
+                    if (dest == null || dest == temp || !IsSameOrInside(dest, temp))
+                    {
+                        return (null, $"Refused {path}: {destError ?? "it points outside the car folder"}. The source may be unsafe, so nothing was imported.");
+                    }
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+                    copy(dest);
+                    File.SetAttributes(dest, File.GetAttributes(dest) & ~FileAttributes.ReadOnly); // cars in the workspace must stay editable
+                }
+
+                Directory.CreateDirectory(temp);
+                Directory.Move(temp, car);
+                return (carId, null);
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot)) DeleteFolder(tempRoot);
+            }
+        }
+        catch (Exception e) when (e is InvalidDataException or NotSupportedException)
+        {
+            return (null, $"Can't read {Path.GetFileName(source)}: {e.Message}");
+        }
+    }
+
+    /// <summary>The car folders among relative paths with / separators: each folder that holds data.acd or a data folder, minus any inside another.</summary>
+    private static string[] CarRoots(IEnumerable<string> paths)
+    {
+        var roots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var parts in paths.Select(p => p.Split('/')))
+        {
+            var data = Array.FindIndex(parts, s => s.Equals("data", StringComparison.OrdinalIgnoreCase));
+            if (data >= 0 && data < parts.Length - 1) roots.Add(string.Join('/', parts[..data]));
+            else if (parts[^1].Equals("data.acd", StringComparison.OrdinalIgnoreCase)) roots.Add(string.Join('/', parts[..^1]));
+        }
+
+        return [.. roots.Where(r => !roots.Any(o => o != r && (o == "" || r.StartsWith(o + "/", StringComparison.OrdinalIgnoreCase)))).Order(StringComparer.OrdinalIgnoreCase)];
     }
 
     /// <summary>Moves a car to trash\&lt;car ID&gt;_&lt;UTC time&gt; (WS-6). The move is one rename, so it either happens fully or not at all.</summary>
