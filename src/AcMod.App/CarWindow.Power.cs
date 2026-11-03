@@ -12,6 +12,9 @@ namespace AcMod.App;
 /// <summary>One row of the power table. Setting Torque (by editing the cell) hands the typed text back to the window.</summary>
 public sealed class PowerRow(int rowIndex, string rpm, string torque, string power, Action<int, string> setTorque)
 {
+    /// <summary>The row's index in the file's rows, which <see cref="CarEdit.SetLutValues"/> expects.</summary>
+    public int RowIndex { get; } = rowIndex;
+
     public string Rpm { get; } = rpm;
 
     public string Power { get; } = power;
@@ -19,7 +22,7 @@ public sealed class PowerRow(int rowIndex, string rpm, string torque, string pow
     public string Torque
     {
         get => torque;
-        set => setTorque(rowIndex, value);
+        set => setTorque(RowIndex, value);
     }
 }
 
@@ -53,7 +56,10 @@ public partial class CarWindow
             _chartPoints.Add((rpm, rows[i].Value, hp));
         }
 
+        // Rebuilding the table drops its selection, so select the same rows again.
+        var keep = PowerGrid.SelectedItems.OfType<PowerRow>().Select(r => r.RowIndex).ToHashSet();
         PowerGrid.ItemsSource = grid;
+        foreach (var row in grid.Where(r => keep.Contains(r.RowIndex))) PowerGrid.SelectedItems.Add(row);
         PowerGrid.IsReadOnly = _edit.ReadOnly;
         var turbos = estimate.TurboCount == 0 ? "no turbo" : $"{estimate.TurboCount} turbo(s), so torque × {Number(estimate.BoostFactor)}";
         // Invariant(...) formats numbers with '.', whatever the Windows number settings are.
@@ -70,8 +76,7 @@ public partial class CarWindow
     {
         if (_edit.ReadOnly || PowerEstimate.CurveFile(_edit.CurrentFiles) is not { } curveName) return;
 
-        // AC files always use '.', but Indonesian Windows types ',' for decimals, so accept either (QS-11).
-        if (!double.TryParse(text.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out var torque) || !double.IsFinite(torque))
+        if (!TryNumber(text, out var torque))
         {
             Status.Text = $"\"{text}\" isn't a number, so it wasn't changed.";
         }
@@ -85,6 +90,37 @@ public partial class CarWindow
         // Rebuild the table after the grid finishes its edit; rebuilding during the edit isn't allowed.
         Dispatcher.BeginInvoke(ShowPower);
     }
+
+    private void Scale_Click(object sender, RoutedEventArgs e) => ApplyToSelected(CurveEdits.Scale, "scaled by {0}%");
+
+    private void Add_Click(object sender, RoutedEventArgs e) => ApplyToSelected(CurveEdits.Add, "changed by {0} Nm");
+
+    /// <summary>TU-8: applies Scale % or Add Nm, with the amount in the box, to every selected row as one change.</summary>
+    private void ApplyToSelected(Func<IReadOnlyList<LutRow>, IEnumerable<int>, double, Dictionary<int, double>> change, string done)
+    {
+        if (_edit.ReadOnly || PowerEstimate.CurveFile(_edit.CurrentFiles) is not { } curveName) return;
+        var selected = PowerGrid.SelectedItems.OfType<PowerRow>().Select(r => r.RowIndex).ToList();
+        if (selected.Count == 0)
+        {
+            Status.Text = "Select rows in the table first (Ctrl or Shift click to pick several).";
+            return;
+        }
+
+        if (!TryNumber(AmountBox.Text, out var amount))
+        {
+            Status.Text = $"\"{AmountBox.Text}\" isn't a number.";
+            return;
+        }
+
+        _edit.SetLutValues(curveName, change(LutFile.Parse(_edit.Current(curveName)).Rows, selected, amount));
+        Status.Text = $"{selected.Count} row(s) " + string.Format(CultureInfo.InvariantCulture, done, amount) + ".";
+        MarkChanged();
+        ShowPower();
+    }
+
+    /// <summary>A typed number. AC files always use '.', but Indonesian Windows types ',' for decimals, so accept either (QS-11).</summary>
+    private static bool TryNumber(string text, out double number) =>
+        double.TryParse(text.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out number) && double.IsFinite(number);
 
     private void Chart_SizeChanged(object sender, SizeChangedEventArgs e) => DrawChart();
 
