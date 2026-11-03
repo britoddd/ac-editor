@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using AcMod.Core.Formats;
@@ -29,7 +30,15 @@ public sealed class PowerRow(int rowIndex, string rpm, string torque, string pow
 /// <summary>The power curve tab (TU-4): edit power.lut's torque values as a table and see the curve and the estimates change.</summary>
 public partial class CarWindow
 {
-    private List<(double Rpm, double Torque, double Hp)> _chartPoints = [];
+    private const double ChartPad = 30;
+    private List<(int Row, double Rpm, double Torque)> _chartPoints = [];
+    private double _boostFactor = 1;
+
+    // While a point is dragged: where the drag started, the torque scale at that moment (kept fixed so the curve doesn't jump), and the change so far.
+    private (double StartY, double MaxTorque)? _drag;
+    private double _dragDelta;
+
+    private HashSet<int> SelectedPowerRows => PowerGrid.SelectedItems.OfType<PowerRow>().Select(r => r.RowIndex).ToHashSet();
 
     private void ShowPower()
     {
@@ -48,16 +57,17 @@ public partial class CarWindow
         var rows = LutFile.Parse(_edit.Current(curveName)).Rows;
         var grid = new List<PowerRow>();
         _chartPoints = [];
+        _boostFactor = estimate.BoostFactor;
         for (var i = 0; i < rows.Count; i++)
         {
             if (rows[i].KeyAsNumber is not { } rpm) continue;
             var hp = PowerEstimate.PowerW(rpm, rows[i].Value, estimate.BoostFactor) / 745.699872;
             grid.Add(new PowerRow(i, rows[i].Key, Number(rows[i].Value), hp.ToString("0.0", CultureInfo.InvariantCulture), SetTorque));
-            _chartPoints.Add((rpm, rows[i].Value, hp));
+            _chartPoints.Add((i, rpm, rows[i].Value));
         }
 
         // Rebuilding the table drops its selection, so select the same rows again.
-        var keep = PowerGrid.SelectedItems.OfType<PowerRow>().Select(r => r.RowIndex).ToHashSet();
+        var keep = SelectedPowerRows;
         PowerGrid.ItemsSource = grid;
         foreach (var row in grid.Where(r => keep.Contains(r.RowIndex))) PowerGrid.SelectedItems.Add(row);
         PowerGrid.IsReadOnly = _edit.ReadOnly;
@@ -124,32 +134,115 @@ public partial class CarWindow
 
     private void Chart_SizeChanged(object sender, SizeChangedEventArgs e) => DrawChart();
 
-    /// <summary>Torque (blue) and power (orange), each scaled to its own peak, against rpm from 0 to the last row.</summary>
+    private void PowerGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_drag == null) DrawChart(); // the dots show the table's selection
+    }
+
+    /// <summary>
+    /// Torque (blue, with a dot per row; filled dots are selected) and power (orange), each scaled to its own peak, against rpm from 0 to the last row.
+    /// During a drag the selected points are drawn moved by the drag so far.
+    /// </summary>
     private void DrawChart()
     {
         Chart.Children.Clear();
         if (_chartPoints.Count < 2 || Chart.ActualWidth < 50 || Chart.ActualHeight < 50) return;
 
-        const double pad = 30;
+        const double pad = ChartPad;
         var (width, height) = (Chart.ActualWidth - 2 * pad, Chart.ActualHeight - 2 * pad);
-        var maxRpm = Math.Max(1, _chartPoints.Max(p => p.Rpm));
-        var maxTorque = Math.Max(1e-9, _chartPoints.Max(p => p.Torque));
-        var maxHp = Math.Max(1e-9, _chartPoints.Max(p => p.Hp));
-
-        Polyline Curve(Func<(double Rpm, double Torque, double Hp), double> value, double max, Brush brush) => new()
-        {
-            Stroke = brush,
-            StrokeThickness = 2,
-            Points = [.. _chartPoints.Select(p => new Point(pad + p.Rpm / maxRpm * width, pad + height - value(p) / max * height))],
-        };
+        var selected = SelectedPowerRows;
+        var points = _chartPoints
+            .Select(p => (p.Row, p.Rpm, Torque: _drag != null && selected.Contains(p.Row) ? p.Torque + _dragDelta : p.Torque))
+            .Select(p => (p.Row, p.Rpm, p.Torque, Hp: PowerEstimate.PowerW(p.Rpm, p.Torque, _boostFactor) / 745.699872))
+            .ToList();
+        var maxRpm = Math.Max(1, points.Max(p => p.Rpm));
+        var maxTorque = _drag?.MaxTorque ?? Math.Max(1e-9, points.Max(p => p.Torque));
+        var maxHp = Math.Max(1e-9, points.Max(p => p.Hp));
+        Point At(double rpm, double value, double max) => new(pad + rpm / maxRpm * width, pad + height - value / max * height);
 
         Chart.Children.Add(new Line { X1 = pad, Y1 = pad + height, X2 = pad + width, Y2 = pad + height, Stroke = Brushes.Gray });
-        Chart.Children.Add(Curve(p => p.Torque, maxTorque, Brushes.SteelBlue));
-        Chart.Children.Add(Curve(p => p.Hp, maxHp, Brushes.DarkOrange));
-        AddText($"torque, peak {Number(maxTorque)}", 4, 4, Brushes.SteelBlue);
+        Chart.Children.Add(new Polyline { Stroke = Brushes.SteelBlue, StrokeThickness = 2, Points = [.. points.Select(p => At(p.Rpm, p.Torque, maxTorque))] });
+        Chart.Children.Add(new Polyline { Stroke = Brushes.DarkOrange, StrokeThickness = 2, Points = [.. points.Select(p => At(p.Rpm, p.Hp, maxHp))] });
+
+        foreach (var p in points)
+        {
+            var at = At(p.Rpm, p.Torque, maxTorque);
+            var dot = new Ellipse
+            {
+                Width = 10, Height = 10, Tag = p.Row, Cursor = _edit.ReadOnly ? null : Cursors.SizeNS,
+                Stroke = Brushes.SteelBlue, StrokeThickness = 2, Fill = selected.Contains(p.Row) ? Brushes.SteelBlue : Brushes.White,
+            };
+            dot.MouseLeftButtonDown += Point_MouseLeftButtonDown;
+            Canvas.SetLeft(dot, at.X - 5);
+            Canvas.SetTop(dot, at.Y - 5);
+            Chart.Children.Add(dot);
+        }
+
+        AddText($"torque, peak {Number(maxTorque)}  (drag a dot; Ctrl-click to pick several)", 4, 4, Brushes.SteelBlue);
         AddText(Invariant($"power, peak {maxHp:0.0} hp"), 4, 20, Brushes.DarkOrange);
         AddText("0 rpm", pad, pad + height + 4, Brushes.Gray);
         AddText(Invariant($"{maxRpm:0} rpm"), pad + width - 60, pad + height + 4, Brushes.Gray);
+        if (_drag != null) AddText(Invariant($"{_dragDelta:+0.0;-0.0;0.0} Nm on {selected.Count} point(s)"), pad + width / 2 - 60, 4, Brushes.Black);
+    }
+
+    /// <summary>A click picks the point (Ctrl-click adds or removes it), then starts a drag of every selected point.</summary>
+    private void Point_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (_edit.ReadOnly || sender is not Ellipse { Tag: int row }) return;
+        var item = PowerGrid.Items.OfType<PowerRow>().First(r => r.RowIndex == row);
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            if (PowerGrid.SelectedItems.Contains(item)) PowerGrid.SelectedItems.Remove(item);
+            else PowerGrid.SelectedItems.Add(item);
+        }
+        else if (!PowerGrid.SelectedItems.Contains(item))
+        {
+            PowerGrid.SelectedItems.Clear();
+            PowerGrid.SelectedItems.Add(item);
+        }
+
+        e.Handled = true;
+        if (!PowerGrid.SelectedItems.Contains(item)) return; // Ctrl-click just removed it, so there's nothing to drag
+
+        _drag = (e.GetPosition(Chart).Y, Math.Max(1e-9, _chartPoints.Max(p => p.Torque)));
+        _dragDelta = 0;
+        Chart.CaptureMouse(); // keep getting mouse moves even outside the chart
+    }
+
+    private void Chart_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (_drag is not { } drag) return;
+        var plotHeight = Chart.ActualHeight - 2 * ChartPad;
+        _dragDelta = (drag.StartY - e.GetPosition(Chart).Y) / plotHeight * drag.MaxTorque;
+        DrawChart();
+    }
+
+    /// <summary>Releasing the mouse makes the drag one unsaved change, with values rounded to 0.1 Nm (owner decision).</summary>
+    private void Chart_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_drag == null) return;
+        var delta = _dragDelta;
+        _drag = null;
+        Chart.ReleaseMouseCapture();
+        if (Math.Abs(delta) >= 0.05 && PowerEstimate.CurveFile(_edit.CurrentFiles) is { } curveName)
+        {
+            var selected = SelectedPowerRows;
+            _edit.SetLutValues(curveName, CurveEdits.Drag(LutFile.Parse(_edit.Current(curveName)).Rows, selected, delta));
+            Status.Text = Invariant($"{selected.Count} point(s) moved by {delta:+0.0;-0.0} Nm.");
+            MarkChanged();
+            ShowPower();
+        }
+        else
+        {
+            DrawChart();
+        }
+    }
+
+    private void Chart_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        if (_drag == null) return; // released normally
+        _drag = null; // capture taken away, for example by another window: cancel the drag
+        DrawChart();
     }
 
     private void AddText(string text, double x, double y, Brush brush)

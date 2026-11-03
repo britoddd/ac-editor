@@ -46,7 +46,7 @@
                             <Button Content="Add Nm" Click="Add_Click" Padding="8,2" Margin="6,0,0,0" />
                         </StackPanel>
                         <!-- Only the Torque column is editable. Adding or removing rows is done on the Raw files tab. -->
-                        <DataGrid x:Name="PowerGrid" AutoGenerateColumns="False" SelectionMode="Extended"
+                        <DataGrid x:Name="PowerGrid" AutoGenerateColumns="False" SelectionMode="Extended" SelectionChanged="PowerGrid_SelectionChanged"
                                   CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" FontFamily="Consolas">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="rpm" Binding="{Binding Rpm}" IsReadOnly="True" />
@@ -56,7 +56,8 @@
                         </DataGrid>
                     </DockPanel>
                     <Border BorderBrush="Gray" BorderThickness="1" Margin="8,0,0,0">
-                        <Canvas x:Name="Chart" ClipToBounds="True" Background="White" SizeChanged="Chart_SizeChanged" />
+                        <Canvas x:Name="Chart" ClipToBounds="True" Background="White" SizeChanged="Chart_SizeChanged"
+                                MouseMove="Chart_MouseMove" MouseLeftButtonUp="Chart_MouseLeftButtonUp" LostMouseCapture="Chart_LostMouseCapture" />
                     </Border>
                 </DockPanel>
             </TabItem>
