@@ -558,3 +558,13 @@ The owner used the app's Save as new car on `acm_tutorial_basic` (new ID `acm_tu
   So a later app install of this car ID is refused until that folder is moved, as WS-11 intends.
 - The log ends with `CLEAN EXIT`, with only the 4 known `Variable type cannot be found` lines plus Python app and stats errors that aren't about car data.
 - The Content Manager step (drag the ZIP onto its window) from the community tutorial is now confirmed on BRITOD-DESK.
+
+## Kunos SDK documents and the formula_k sample (BRITOD-DESK, 2026-11-03, M7 step 1)
+
+- The AC install's SDK holds `sdk\dev\car_pipeline_2.0rev\AC_Pipeline_PUB_Rev2.0.pdf` (car pipeline) and `sdk\audio\AC Audio Pipeline 1.9.pdf`. Both are password-protected,
+  so this project only links to them and never extracts or quotes them. `sdk\modding_changelog.txt` is plain text (31 lines of SDK version notes).
+  `sdk\editor\docs\` holds only `fbx_max_export_settings.png`.
+- `sdk\dev\content\cars\formula_k\data` holds 60 files. Its seven tuning files have commented keys: `car.ini` 23, `engine.ini` 23, `drivetrain.ini` 24, `brakes.ini` 5,
+  `suspensions.ini` 43, `tyres.ini` 25, `aero.ini` 26.
+- Method: `scratch/m7_help_survey` (not committed). Across the 230 readable installed cars, using formula_k's comment when the car's own file has none leaves these fields
+  without any explanation: `brakes.ini` 65%, `tyres.ini` 49%, `car.ini` 36%, `drivetrain.ini` 34%, `engine.ini` 8%, `suspensions.ini` 6%, `aero.ini` 5%.
