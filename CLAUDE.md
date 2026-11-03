@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 7 is in progress** (plan in "Next" below).
+**Milestone 7 is built (steps 1 to 4d, 2026-11-03); only its exit gate is left** (see "Next session starts here" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -31,7 +31,20 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 - **M6 (2026-11-03):** `Workspace.SaveAsNewCar` (WS-7: new folder, renamed bank, `GuidsFile.WithCarId`, `data.acd` repacked for the new ID, display name; KN5 and `lods.ini` unchanged; other mentions of the old ID listed, not rewritten), `ReplacePrevious` (WS-8: only when the copy validates without errors), and `ExportZip(pack: true)` (PK-1: verified `data.acd` in the ZIP, `data\` left out; the workspace car keeps `data\`). PK-3 also leaves out the leftover file types found in real cars. App: Save as new car dialog and a Pack box; CLI: `acmod save-as`, `acmod export --pack`. Exit gate: the owner saved the tutorial car as `acm_tutorial_basic_v2`, exported packed, installed through Content Manager, and drove it (log `PW` within 0.02% of the estimate). 526 tests pass, with 0 warnings.
 
-## Next: Milestone 7 (Learning aids)
+## Next session starts here (handoff written 2026-11-03)
+
+State: `main` at the commit "Main window: Install to AC and Export ZIP in the footer too", not pushed (the owner pushes). 557 tests pass, with 0 warnings.
+Everything M7 plans is built; the owner has not yet tried the M7 additions (4a to 4d) on screen.
+
+1. **Ask the owner how the new screens behaved**, then fix what they report. They were built and compiled, but only partly tried:
+   New car (empty and complete), the checklist's buttons (Copy data from `formula_k`, Copy sound from…, Open ksEditor), Rename, Delete, Trash, Snapshots, and Tools > Choose / Start Content Manager.
+2. **M7 exit gate:** the owner builds a second car (suggested ID `acm_second`) with only the dashboard: Car > New car (empty) → First-car checklist → Blender body and collider → ksEditor KN5 into `D:\ACModding\cars\acm_second\` (keep the name `lods.ini` gives, or change `lods.ini` on Raw files) → Validate at 0 errors → Export ZIP (packed) → drag onto Content Manager → drive → AC log window.
+   Record where the guidance fell short; that is what the gate is for. Then mark M7 done here and in `docs/REQUIREMENTS.md` if anything changed.
+3. **Then plan M8** (Claude Code integration, CC-1 to CC-11): read the M8 row in `docs/REQUIREMENTS.md`, propose small steps, get approval.
+
+App layout now (owner requests): a menu bar (Car, Workspace, Release, Tools) holds every action; the footer keeps New car, Open, Rename, Delete, Refresh, Install to AC and Export ZIP. The car window's tabs: Forms, Power curve, Gears, Validate, Raw files.
+
+## Milestone 7 (Learning aids)
 
 Exit gate: the owner can build a second car using only the dashboard and its links.
 Plan approved by the owner (2026-11-03). One commit per step, prefixed `M7 step N`.
@@ -47,7 +60,7 @@ M7 additions, approved by the owner (2026-11-03) after trying steps 1 to 4, done
 Owner decisions: "Copy data from…" offers workspace cars and Kunos's `formula_k`; Content Manager is launched from a path the user picks once (saved in settings).
 - **4a. Template and copy-awareness (WS-13):** `NewEmptyCar`; Save as new car records the source car, so the model and collider steps say "copied from …" until ticked as the user's own; copy data or sound from another car.
 - **4b. Checklist actions (LE-2):** each step's buttons open the car folder, ksEditor, Forms or Validate, or copy data or sound.
-- **4c. CRUD in the app (WS-4, WS-6, WS-9):** New car (empty or complete), Import, Rename (save-as plus replace), Delete, Trash (restore, permanent delete), Snapshots (list, restore).
+- **4c. CRUD in the app (WS-4, WS-6, WS-9):** New car (empty or complete), Import, Rename (`RenameCar`: save-as, the checklist state moves along, the old folder goes to the trash; no validation needed, unlike Replace previous), Delete, Trash (restore, permanent delete), Snapshots (list, compare, restore).
 - **4d. Launchers (WS-12, WS-14):** ksEditor, the car folder, the SDK folder, AC through `steam://rungameid/244210`, and Content Manager from a picked path.
 Open from M5: V-07 flags 22 installed cars as errors; whether they break in game is untested, so V-07 may become a warning.
 Also pending from TU-9: how AC treats `LIMITER` above the last `power.lut` row (not tested).
@@ -63,8 +76,9 @@ Still unverified after M4:
 - **Workspace API:** every car write goes through `Workspace.WriteCarFiles(carId, files)`, which snapshots first, writes through temp files, and rolls back on failure (QS-3, QS-8).
   Paths must be in the snapshot scope: `data.acd`, `data\`, `ui\`, `sfx\GUIDs.txt`. Methods return `(Value, Error)` tuples. File system failures throw `IOException` or `UnauthorizedAccessException`.
 - **Deleting folders:** use `Workspace.DeleteFolder`, never `Directory.Delete(path, recursive: true)`. Without admin rights the recursive version throws on a junction, and it refuses read-only files.
-- **ZIP export built early (2026-11-03, owner request):** `Workspace.ExportZip` (PK-2) writes `exports\<id>_<time>.zip` with a top-level `<id>\` folder, skipping the install marker and the V-15 dev files (part of PK-3). The app's Export ZIP button and `acmod export` use it. M6 still owes the validator gate (PK-4), the Content Manager install step check, and the rest of PK-3.
-  Reason: installs kept failing with "access denied" even with AC and Content Manager closed. No file in the car was held open, so likely something held the folder itself; the cause is not found yet.
+- **Folders held open:** an Explorer window (or Content Manager) on a car's folder makes Windows refuse to move it, so install, delete and rename fail with "access denied". The app's messages say so; tell the owner to close the window.
+- **Checklist state:** `checklists.json` in the workspace root holds per-car ticks and `CopiedFrom` (`Workspace.Checklist.cs`); it still reads the first format (a list of ticks per car).
+- **Learning aids in Core:** `Learning/FieldHelp` (explanations with sources), `Learning/AcLog` (log reader, known harmless lines), `Learning/OutsideSteps` (Blender/ksEditor steps per rule), `Learning/FirstCarChecklist`. Only cite sources that exist in `docs/`; never write explanations from memory.
 - **Install marker:** WS-11 writes `acmod_install.json` into each car it installs. A car imported back from `content\cars` carries it, so M6 exports (PK-3) must leave it out.
 - **Owner's workspace:** `D:\ACModding`, with the imported `cars\acm_tutorial_basic`. The owner's own folders sit next to it: `acm_tutorial_basic` (loose; its `car.ini` says `SCREEN_NAME=ACM Testing` from a test edit), `acm_tutorial_basic_FOR_LATER_USE`, and `installed_backup\acm_tutorial_basic` (the old hand copy from `content\cars`). Leave those alone.
 - **Running the CLI with the owner:** some of the owner's `!` lines arrive as plain messages and don't run. Check for a `<bash-input>` block before assuming a command ran.
