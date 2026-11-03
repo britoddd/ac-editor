@@ -156,6 +156,17 @@ public partial class MainWindow : Window
         Refresh();
     }
 
+    private void Checklist_Click(object sender, RoutedEventArgs e)
+    {
+        if (_workspace == null || CarGrid.SelectedItem is not CarRow row)
+        {
+            Status.Text = "Choose a car in the list first.";
+            return;
+        }
+
+        new ChecklistWindow(_workspace, row.Id) { Owner = this }.Show(); // non-modal: keep it open while you work
+    }
+
     private void Log_Click(object sender, RoutedEventArgs e)
     {
         if (_workspace != null) new LogWindow(_workspace) { Owner = this }.Show(); // non-modal: it can stay open beside the car list
