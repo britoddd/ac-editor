@@ -116,6 +116,44 @@ public sealed class CarEditTests : IDisposable
     }
 
     [Fact]
+    public void Text_edits_keep_the_files_line_breaks()
+    {
+        File.WriteAllText(Path.Combine(Car, "data", "lf.ini"), "[A]\nX=1\n");
+        var edit = Open();
+
+        Assert.Null(edit.SetText("lf.ini", "[A]\r\nX=2\r\nY=3\r\n")); // what a Windows text box returns
+        Assert.Null(edit.SetText("car.ini", "[INFO]\r\nSCREEN_NAME=edited\r\n"));
+
+        Assert.Equal("[A]\nX=2\nY=3\n", Text(edit.Current("lf.ini")));
+        Assert.Equal("[INFO]\r\nSCREEN_NAME=edited\r\n", Text(edit.Current("car.ini")));
+        Assert.Equal("[A]\nX=2\nY=3\n", edit.Text("lf.ini"));
+    }
+
+    [Fact]
+    public void Text_edits_keep_the_BOM_and_unchanged_text_is_no_change()
+    {
+        File.WriteAllBytes(Path.Combine(Car, "data", "bom.ini"), [0xEF, 0xBB, 0xBF, .. Bytes("[A]\r\nX=1\r\n")]);
+        var edit = Open();
+
+        Assert.Null(edit.SetText("bom.ini", edit.Text("bom.ini")));
+        Assert.Empty(edit.ChangedFiles);
+
+        Assert.Null(edit.SetText("bom.ini", "[A]\r\nX=2\r\n"));
+        Assert.Equal([0xEF, 0xBB, 0xBF, .. Bytes("[A]\r\nX=2\r\n")], edit.Current("bom.ini"));
+    }
+
+    [Fact]
+    public void A_character_the_files_encoding_cannot_hold_is_refused()
+    {
+        File.WriteAllBytes(Path.Combine(Car, "data", "latin1.ini"), [.. Bytes("[A]\r\nNAME=Caf"), 0xE9, .. Bytes("\r\n")]); // not UTF-8
+        var edit = Open();
+
+        Assert.Contains("U+00FF", edit.SetText("latin1.ini", "[A]\r\nNAME=日本\r\n"));
+        Assert.Empty(edit.ChangedFiles);
+        Assert.Null(edit.SetText("latin1.ini", "[A]\r\nNAME=Cafés\r\n")); // up to U+00FF is fine
+    }
+
+    [Fact]
     public void Discard_drops_unsaved_changes()
     {
         var edit = Open();

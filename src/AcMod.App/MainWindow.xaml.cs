@@ -54,6 +54,25 @@ public partial class MainWindow : Window
         }
     }
 
+    private void Open_Click(object sender, RoutedEventArgs e)
+    {
+        if (_workspace == null || CarGrid.SelectedItem is not CarRow row)
+        {
+            Status.Text = "Choose a car in the list first.";
+            return;
+        }
+
+        var (edit, error) = _workspace.OpenCar(row.Id);
+        if (edit == null)
+        {
+            Status.Text = error;
+            return;
+        }
+
+        new CarWindow(edit) { Owner = this }.ShowDialog(); // waits until the car window closes
+        Refresh(); // size and last change may have moved
+    }
+
     private void Install_Click(object sender, RoutedEventArgs e)
     {
         if (_workspace == null || CarGrid.SelectedItem is not CarRow row)

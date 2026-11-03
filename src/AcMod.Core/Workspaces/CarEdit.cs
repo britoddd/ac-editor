@@ -1,5 +1,6 @@
 using AcMod.Core.Acd;
 using AcMod.Core.Formats;
+using AcMod.Core.Text;
 
 namespace AcMod.Core.Workspaces;
 
@@ -66,6 +67,29 @@ public sealed class CarEdit
         if (ReadOnly) throw new InvalidOperationException($"{CarId} is read-only: {Data.Error}");
         if (Original(name).AsSpan().SequenceEqual(bytes)) _changes.Remove(name);
         else _changes[name] = bytes;
+    }
+
+    /// <summary>A data file as text, with any unsaved change (TU-3).</summary>
+    public string Text(string name) => TextDocument.Parse(Current(name)).Text;
+
+    /// <summary>
+    /// Changes a data file from edited text (TU-3), keeping its encoding and BOM. A file with no "\r\n" keeps plain "\n" line breaks,
+    /// because a Windows text box types "\r\n" for Enter.
+    /// </summary>
+    /// <returns>Why the text can't be stored in this file, or null.</returns>
+    public string? SetText(string name, string text)
+    {
+        var saved = TextDocument.Parse(Original(name));
+        if (!saved.Text.Contains("\r\n")) text = text.Replace("\r\n", "\n");
+        try
+        {
+            Set(name, saved.WithText(text).ToBytes());
+            return null;
+        }
+        catch (ArgumentException e)
+        {
+            return e.Message; // a character the file's encoding can't hold
+        }
     }
 
     /// <summary>Drops every unsaved change.</summary>
