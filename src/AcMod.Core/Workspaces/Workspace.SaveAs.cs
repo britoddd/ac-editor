@@ -78,6 +78,22 @@ public sealed partial class Workspace
     }
 
     /// <summary>
+    /// Renames a car: Save as new car to the new ID (bank, GUIDs, data.acd key follow it), the old ID's checklist state moves along, and the old folder
+    /// goes to the trash, so it can be restored. Unlike <see cref="ReplacePrevious"/>, the copy needn't validate: it is the same car.
+    /// </summary>
+    /// <returns>The save-as result and the old folder's trash ID.</returns>
+    public (SaveAsResult? Result, string? TrashId, string? Error) RenameCar(string carId, string newId)
+    {
+        var (result, error) = SaveAsNewCar(carId, newId, null);
+        if (result == null) return (null, null, error);
+        var notes = result.Notes.ToList();
+        if (MoveChecklist(carId, newId) is { } checklistError) notes.Add($"The checklist ticks didn't move: {checklistError}");
+        var (trashId, trashError) = DeleteCar(carId);
+        if (trashId == null) notes.Add($"{newId} was created, but {carId} couldn't be moved to the trash: {trashError}");
+        return (result with { Notes = notes }, trashId, null);
+    }
+
+    /// <summary>
     /// WS-8: moves the old car to the trash, but only when the new copy validates without errors, so the old one is never lost for a broken copy.
     /// </summary>
     /// <returns>The old car's trash ID.</returns>

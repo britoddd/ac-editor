@@ -107,6 +107,22 @@ public sealed class NewCarTests : IDisposable
     }
 
     [Fact]
+    public void Rename_moves_the_car_its_checklist_and_trashes_the_old_folder_even_with_validation_errors()
+    {
+        _workspace.NewEmptyCar("acm_draft", "Draft"); // full of validation errors, which a rename doesn't care about
+        _workspace.SetChecklistTick("acm_draft", "dummies", true);
+
+        var (result, trashId, error) = _workspace.RenameCar("acm_draft", "acm_final");
+
+        Assert.Null(error);
+        Assert.Equal("acm_final", result!.CarId);
+        Assert.StartsWith("acm_draft_", trashId);
+        Assert.False(Directory.Exists(Car("acm_draft")));
+        Assert.Equal(["dummies"], _workspace.ChecklistTicks("acm_final"));
+        Assert.Null(_workspace.CopiedFrom("acm_final")); // a rename isn't a copy
+    }
+
+    [Fact]
     public void Ticks_saved_in_the_first_checklist_format_are_still_read()
     {
         File.WriteAllText(Path.Combine(_workspace.Root, "checklists.json"), "{ \"acm_a\": [\"dummies\"] }");

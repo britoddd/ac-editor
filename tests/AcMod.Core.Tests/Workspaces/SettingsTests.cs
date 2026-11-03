@@ -22,6 +22,16 @@ public sealed class SettingsTests : IDisposable
     }
 
     [Fact]
+    public void The_Content_Manager_path_is_remembered_and_old_files_without_it_still_load()
+    {
+        new Settings(@"D:\ACModding", null, @"C:\Tools\Content Manager.exe").Save(SettingsPath);
+        Assert.Equal(@"C:\Tools\Content Manager.exe", Settings.Load(SettingsPath).Settings.ContentManagerPath);
+
+        File.WriteAllText(SettingsPath, "{\"WorkspaceFolder\": \"D:\\\\ACModding\", \"AcFolder\": null}"); // written before WS-14
+        Assert.Equal((new Settings(@"D:\ACModding", null), null), Settings.Load(SettingsPath));
+    }
+
+    [Fact]
     public void A_missing_file_gives_empty_settings()
     {
         Assert.Equal((new Settings(null, null), null), Settings.Load(SettingsPath));

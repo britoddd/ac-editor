@@ -7,7 +7,8 @@ namespace AcMod.Core.Workspaces;
 /// %LOCALAPPDATA%\AcMod\settings.json, the one write outside the workspace besides WS-11 installs (QS-6, owner decision 2026-11-03).
 /// It never holds car data.
 /// </summary>
-public sealed record Settings(string? WorkspaceFolder, string? AcFolder)
+/// <param name="ContentManagerPath">Content Manager.exe, picked once by the user (WS-14), or null.</param>
+public sealed record Settings(string? WorkspaceFolder, string? AcFolder, string? ContentManagerPath = null)
 {
     public static string DefaultPath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AcMod", "settings.json");

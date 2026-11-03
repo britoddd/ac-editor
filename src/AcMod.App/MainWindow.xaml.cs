@@ -92,7 +92,7 @@ public partial class MainWindow : Window
         if (!ConfirmDespiteErrors(row.Id, "Export")) return;
         try
         {
-            var (zipPath, error) = _workspace.ExportZip(row.Id, ignoreErrors: true, pack: PackBox.IsChecked == true); // the user has seen any errors above
+            var (zipPath, error) = _workspace.ExportZip(row.Id, ignoreErrors: true, pack: PackItem.IsChecked); // the user has seen any errors above
             if (zipPath == null)
             {
                 MessageBox.Show(this, error, "Export ZIP", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -154,6 +154,147 @@ public partial class MainWindow : Window
         }
 
         Refresh();
+    }
+
+    /// <summary>The selected car's ID, or null with a hint in the status line.</summary>
+    private string? SelectedCar()
+    {
+        if (_workspace != null && CarGrid.SelectedItem is CarRow row) return row.Id;
+        Status.Text = "Choose a car in the list first.";
+        return null;
+    }
+
+    /// <summary>Runs a file operation and turns a Windows refusal into a message (an Explorer window on the folder is the usual cause).</summary>
+    private void Try(string title, Func<string?> action)
+    {
+        try
+        {
+            if (action() is { } message) MessageBox.Show(this, message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            MessageBox.Show(this, $"{ex.Message}\n\nClose any Explorer window or program using the car's folder and try again.", title, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        Refresh();
+    }
+
+    /// <summary>WS-13: an empty template by default, or a copy of a complete car.</summary>
+    private void New_Click(object sender, RoutedEventArgs e)
+    {
+        if (_workspace == null) return;
+        var dialog = new NewCarWindow([.. _workspace.Cars().Select(c => c.Id)]) { Owner = this };
+        if (dialog.ShowDialog() != true) return;
+        Try("New car", () =>
+        {
+            if (dialog.Source == null) return _workspace.NewEmptyCar(dialog.CarId, dialog.DisplayName) ?? $"Created {dialog.CarId}. Open Car > First-car checklist to build it.";
+            var (result, error) = _workspace.SaveAsNewCar(dialog.Source, dialog.CarId, dialog.DisplayName);
+            return error ?? $"Created {result!.CarId} as a copy of {dialog.Source}. Its checklist marks the copied model and collider until you replace them.";
+        });
+    }
+
+    private void ImportFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = "Choose a car folder (or a folder holding one car)" };
+        if (_workspace != null && dialog.ShowDialog(this) == true) Import(dialog.FolderName);
+    }
+
+    private void ImportZip_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Title = "Choose a car ZIP", Filter = "ZIP files (*.zip)|*.zip" };
+        if (_workspace != null && dialog.ShowDialog(this) == true) Import(dialog.FileName);
+    }
+
+    /// <summary>WS-4, and VA-1: the validator runs after import.</summary>
+    private void Import(string source) => Try("Import", () =>
+    {
+        var (carId, error) = _workspace!.ImportCar(source);
+        if (carId == null) return error;
+        var findings = _workspace.Validate(carId).Findings ?? [];
+        return $"Imported {carId}. Validation: {CarWindow.Summary(findings)}";
+    });
+
+    private void Rename_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedCar() is not { } carId) return;
+        if (AskWindow.Ask(this, "Rename", $"New car ID for {carId} (lowercase letters, digits and _). The old folder goes to the trash.", carId, "Rename") is not { } newId || newId == carId) return;
+        Try("Rename", () =>
+        {
+            var (result, trashId, error) = _workspace!.RenameCar(carId, newId);
+            if (result == null) return error;
+            var notes = result.Notes.Concat(result.MentionsOfOldId.Count > 0 ? [$"These files still mention {carId}: {string.Join(", ", result.MentionsOfOldId)}"] : []);
+            return string.Join("\n\n", new[] { $"Renamed {carId} to {result.CarId}; the old folder is in the trash as {trashId}." }.Concat(notes));
+        });
+    }
+
+    /// <summary>WS-6: delete moves the car to the trash, where it can be restored.</summary>
+    private void Delete_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedCar() is not { } carId) return;
+        if (MessageBox.Show(this, $"Move {carId} to the trash? You can restore it from Workspace > Trash.", "Delete", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        Try("Delete", () =>
+        {
+            var (trashId, error) = _workspace!.DeleteCar(carId);
+            return error ?? $"Moved {carId} to the trash as {trashId}.";
+        });
+    }
+
+    private void Trash_Click(object sender, RoutedEventArgs e)
+    {
+        if (_workspace == null) return;
+        new TrashWindow(_workspace) { Owner = this }.ShowDialog();
+        Refresh();
+    }
+
+    private void Snapshots_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedCar() is not { } carId) return;
+        new SnapshotsWindow(_workspace!, carId) { Owner = this }.ShowDialog();
+        Refresh();
+    }
+
+    private void WorkspaceFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (_workspace != null) Launch.Folder(_workspace.Root);
+    }
+
+    private void KsEditor_Click(object sender, RoutedEventArgs e) => Status.Text = Launch.KsEditor(_workspace?.AcFolder) ?? "Started ksEditor.";
+
+    private void CarFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedCar() is { } carId) Launch.Folder(Path.Combine(_workspace!.Root, "cars", carId));
+    }
+
+    private void SdkFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var sdk = _workspace?.AcFolder == null ? null : Path.Combine(_workspace.AcFolder, "sdk");
+        if (sdk != null && Directory.Exists(sdk)) Launch.Folder(sdk);
+        else Status.Text = "AC's sdk folder wasn't found.";
+    }
+
+    /// <summary>WS-12: Steam starts AC by its app ID, 244210 (docs/VERIFIED_FACTS.md).</summary>
+    private void StartAc_Click(object sender, RoutedEventArgs e) => Launch.Open("steam://rungameid/" + AcInstall.SteamAppId);
+
+    /// <summary>WS-12, WS-14: Content Manager from the path the user chose once (owner decision, 2026-11-03).</summary>
+    private void StartCm_Click(object sender, RoutedEventArgs e)
+    {
+        var path = Settings.Load(Settings.DefaultPath).Settings.ContentManagerPath;
+        if (path == null || !File.Exists(path))
+        {
+            Status.Text = "Choose Content Manager first: Tools > Choose Content Manager...";
+            return;
+        }
+
+        Launch.Open(path);
+    }
+
+    private void ChooseCm_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Title = "Find Content Manager.exe", Filter = "Programs (*.exe)|*.exe" };
+        if (dialog.ShowDialog(this) != true) return;
+        var (settings, _) = Settings.Load(Settings.DefaultPath);
+        (settings with { ContentManagerPath = dialog.FileName }).Save(Settings.DefaultPath);
+        Status.Text = $"Content Manager: {dialog.FileName}";
     }
 
     private void Checklist_Click(object sender, RoutedEventArgs e)

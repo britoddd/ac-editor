@@ -60,7 +60,7 @@ static int Setup(string root, string? acFolder)
 
     var (ws, error) = Workspace.Open(root, ac);
     if (ws == null) return Fail(error!);
-    new Settings(ws.Root, ws.AcFolder).Save(Settings.DefaultPath);
+    (Settings.Load(Settings.DefaultPath).Settings with { WorkspaceFolder = ws.Root, AcFolder = ws.AcFolder }).Save(Settings.DefaultPath); // keeps a chosen Content Manager
     return Done($"Workspace: {ws.Root}\nAC: {ws.AcFolder}\nSaved to {Settings.DefaultPath}");
 }
 

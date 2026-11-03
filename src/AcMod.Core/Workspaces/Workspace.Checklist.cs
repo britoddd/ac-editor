@@ -37,6 +37,10 @@ public sealed partial class Workspace
 
     private string? SetCopiedFrom(string carId, string sourceId) => UpdateChecklist(carId, state => state with { CopiedFrom = sourceId });
 
+    /// <summary>Gives a renamed car the old ID's checklist state (its ticks and its source car).</summary>
+    private string? MoveChecklist(string oldId, string newId) =>
+        LoadChecklists().TryGetValue(oldId, out var old) ? UpdateChecklist(newId, _ => old) : UpdateChecklist(newId, state => state with { CopiedFrom = null });
+
     private string? UpdateChecklist(string carId, Func<CarChecklist, CarChecklist> change)
     {
         var all = LoadChecklists();

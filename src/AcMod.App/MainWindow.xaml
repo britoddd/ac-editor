@@ -1,26 +1,54 @@
 <Window x:Class="AcMod.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="AC Car Mod Dashboard" Width="960" Height="540">
+        Title="AC Car Mod Dashboard" Width="1000" Height="560">
     <!-- DockPanel stacks children against its edges; the last child (the car list) fills what is left. -->
-    <DockPanel Margin="8">
-        <TextBlock x:Name="Header" DockPanel.Dock="Top" Margin="0,0,0,8" />
+    <DockPanel>
+        <!-- The menu bar: every action on the workspace's cars (create, read, update, delete) and the tools around them. -->
+        <Menu DockPanel.Dock="Top" Padding="2">
+            <MenuItem Header="_Car">
+                <MenuItem Header="_New car..." Click="New_Click" />
+                <MenuItem Header="Import from a _folder..." Click="ImportFolder_Click" />
+                <MenuItem Header="Import from a _ZIP..." Click="ImportZip_Click" />
+                <Separator />
+                <MenuItem Header="_Open" Click="Open_Click" />
+                <MenuItem Header="First-car _checklist..." Click="Checklist_Click" />
+                <MenuItem Header="_Snapshots..." Click="Snapshots_Click" />
+                <Separator />
+                <MenuItem Header="_Rename..." Click="Rename_Click" />
+                <MenuItem Header="Save _as new car..." Click="SaveAs_Click" />
+                <MenuItem Header="_Delete (to the trash)" Click="Delete_Click" />
+            </MenuItem>
+            <MenuItem Header="_Workspace">
+                <MenuItem Header="_Trash..." Click="Trash_Click" />
+                <MenuItem Header="_Compare cars or snapshots..." Click="Compare_Click" />
+                <MenuItem Header="Open workspace _folder" Click="WorkspaceFolder_Click" />
+                <Separator />
+                <MenuItem Header="_Refresh" Click="Refresh_Click" />
+            </MenuItem>
+            <MenuItem Header="_Release">
+                <MenuItem Header="_Install to AC" Click="Install_Click" />
+                <MenuItem Header="Export _ZIP for Content Manager" Click="Export_Click" />
+                <MenuItem x:Name="PackItem" Header="_Pack data into data.acd when exporting" IsCheckable="True" IsChecked="True" />
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="Open _ksEditor" Click="KsEditor_Click" />
+                <MenuItem Header="Open the car's _folder" Click="CarFolder_Click" />
+                <MenuItem Header="Open AC's _SDK folder" Click="SdkFolder_Click" />
+                <Separator />
+                <MenuItem Header="Start _AC (through Steam)" Click="StartAc_Click" />
+                <MenuItem Header="Start Content _Manager" Click="StartCm_Click" />
+                <MenuItem Header="Choose Content Manager..." Click="ChooseCm_Click" />
+                <Separator />
+                <MenuItem Header="AC _log..." Click="Log_Click" />
+            </MenuItem>
+        </Menu>
 
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
-            <Button Content="Refresh" Click="Refresh_Click" Padding="12,4" />
-            <Button Content="Open..." Click="Open_Click" Padding="12,4" Margin="8,0,0,0" />
-            <Button Content="Compare..." Click="Compare_Click" Padding="12,4" Margin="8,0,0,0" />
-            <Button Content="Install to AC" Click="Install_Click" Padding="12,4" Margin="8,0,0,0" />
-            <Button Content="Export ZIP" Click="Export_Click" Padding="12,4" Margin="8,0,0,0" />
-            <CheckBox x:Name="PackBox" Content="Pack data into data.acd" IsChecked="True" VerticalAlignment="Center" Margin="6,0,0,0" />
-            <Button Content="Save as new car..." Click="SaveAs_Click" Padding="12,4" Margin="8,0,0,0" />
-            <Button Content="AC log..." Click="Log_Click" Padding="12,4" Margin="8,0,0,0" />
-            <Button Content="First-car checklist..." Click="Checklist_Click" Padding="12,4" Margin="8,0,0,0" />
-            <TextBlock x:Name="Status" VerticalAlignment="Center" Margin="12,0,0,0" />
-        </StackPanel>
+        <TextBlock x:Name="Header" DockPanel.Dock="Top" Margin="8,6,8,6" />
+        <TextBlock x:Name="Status" DockPanel.Dock="Bottom" Margin="8,4,8,6" TextWrapping="Wrap" />
 
         <!-- Each column shows one property of a CarRow; {Binding Id} reads CarRow.Id. -->
-        <DataGrid x:Name="CarGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" MouseDoubleClick="Open_Click">
+        <DataGrid x:Name="CarGrid" Margin="8,0,8,0" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" MouseDoubleClick="Open_Click">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Car ID" Binding="{Binding Id}" />
                 <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
