@@ -14,11 +14,11 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 6 is in progress** (plan in "Next" below).
+**Milestone 6 is done (2026-11-03). Next: plan Milestone 7** (see "Next" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
-Done so far. Git history has the details: one commit per step, prefixed `M0` to `M5`.
+Done so far. Git history has the details: one commit per step, prefixed `M0` to `M6`.
 - **M0 (2026-11-02):** the tutorial car `acm_tutorial_basic` was built and drives in AC. Facts about real AC data are in `docs/VERIFIED_FACTS.md`, the ACD format is in `docs/ACD.md`, and the V-01 to V-15 verdicts are in `docs/REQUIREMENTS.md` ("M0 verdicts"). The license is MIT, and no AcTools code is ported.
 - **M1 (2026-11-03):** `src/AcMod.Core` has `Text/TextDocument` (the lossless base) and `Formats/` with `LutFile` (.lut and .rto), `IniFile`, `UiCarJson`, and `GuidsFile`. `FixtureRunnerTests` checks QS-1 and every single-value edit (QS-2) on all 168 fixture files. 223 tests pass, with 0 warnings.
 - **M2 (2026-11-03):** `src/AcMod.Core/Acd/` has `AcdKey` (written clean-room from `docs/ACD.md`), `AcdFile` (`Parse` reports unreadable files per V-13, `Pack`, and `PackVerified` for PK-1), and `CarData` (effective data per TU-1 and V-12, and `PackFolder`). Core matches acd.py in both directions, and AC loaded a Core-packed `data.acd` (the log's `PW` matched the prediction exactly). 294 tests pass, with 0 warnings.
@@ -29,18 +29,11 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 - **M5 (2026-11-03):** `src/AcMod.Core/Validation/Validator` runs V-01, V-02, V-04 to V-15 (V-03 dropped) with severity, file, message, fix (VA-2) and an evidence label (VA-3). `Formats/Kn5Probe` reads only the KN5 header, texture table and first material for V-14. It runs on the Validate tab, in the car list, via `acmod validate`, and after `acmod import`. Errors block install and export unless the user continues anyway (PK-4, owner decision). A V-14 car asks before Save. Exit gate: each rule has a passing and a failing test fixture; a run over 252 installed cars matched M0 (V-14 exactly 36 files in 10 folders); the owner saw the tutorial car at 0 errors, 0 warnings, 5 info in the app. V-05 now uses `engine.ini` `POWER_CURVE`. 509 tests pass, with 0 warnings.
 
-## Next: Milestone 6 (Packaging)
+- **M6 (2026-11-03):** `Workspace.SaveAsNewCar` (WS-7: new folder, renamed bank, `GuidsFile.WithCarId`, `data.acd` repacked for the new ID, display name; KN5 and `lods.ini` unchanged; other mentions of the old ID listed, not rewritten), `ReplacePrevious` (WS-8: only when the copy validates without errors), and `ExportZip(pack: true)` (PK-1: verified `data.acd` in the ZIP, `data\` left out; the workspace car keeps `data\`). PK-3 also leaves out the leftover file types found in real cars. App: Save as new car dialog and a Pack box; CLI: `acmod save-as`, `acmod export --pack`. Exit gate: the owner saved the tutorial car as `acm_tutorial_basic_v2`, exported packed, installed through Content Manager, and drove it (log `PW` within 0.02% of the estimate). 526 tests pass, with 0 warnings.
 
-Exit gate: the ZIP installs through Content Manager and drives in AC.
-Plan approved by the owner (2026-11-03). One commit per step, prefixed `M6 step N`.
-Owner decisions: pack `data.acd` at export only (the workspace car keeps `data\`); Save as new car asks for a display name (default: old name + " v2"); KN5 files and `lods.ini` stay unchanged (V-03 was dropped).
-1. **Survey:** where a car's own ID appears inside its files, and which editor persistence files exist (PK-3).
-2. **Save as new car (WS-7):** copy to a new ID in a temp folder; rename `sfx\<old>.bank`; `GuidsFile.WithCarId`; repack `data.acd` with the new ID's key; whatever step 1 finds. Refuse V-13, V-14, non-lowercase IDs, taken IDs.
-3. **Replace previous (WS-8):** after the new copy validates without errors, move the old car to the trash.
-4. **Pack on export (PK-1):** optional `data.acd` in the ZIP via `PackVerified`, leaving `data\` out; leave out the persistence files from step 1 (PK-3).
-5. **App and CLI:** Save as new car dialog (new ID, display name, replace previous); pack option on Export; `acmod save-as`, `acmod export --pack`.
-6. **Exit gate:** the owner saves the tutorial car as a new ID, exports packed, installs through Content Manager, and drives; check the log.
-Already built: PK-2 ZIP export, part of PK-3 (dev files and the install marker are left out), and PK-4 (validation errors block export unless overridden).
+## Next: Milestone 7 (Learning aids)
+
+Read the M7 row and LE-1 to LE-4 in `docs/REQUIREMENTS.md`, propose small steps, and get the owner's approval before coding. Exit gate: the owner can build a second car using only the dashboard and its links.
 Open from M5: V-07 flags 22 installed cars as errors; whether they break in game is untested, so V-07 may become a warning.
 Also pending from TU-9: how AC treats `LIMITER` above the last `power.lut` row (not tested).
 

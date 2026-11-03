@@ -247,7 +247,7 @@ The tool and code facts are confirmed from primary sources, but most AC facts ar
 | `data.acd` sits in the car root | Verified on BRITOD-DESK: all 177 Kunos cars and all 52 mods that have one keep it in the root; none uses `data/data.acd` | `docs/VERIFIED_FACTS.md` |
 | `power.lut` is `rpm\|torque`, with torque in Nm at the wheels | Community | [GTPlanet](https://www.gtplanet.net/forum/threads/assetto-corsa-pc-mods-general-discussion.307899/post-12788964) |
 | Rated torque is about `power.lut` torque ÷ 0.85 without a turbo | Community estimate, show as an estimate | [GTPlanet](https://www.gtplanet.net/forum/threads/assetto-corsa-pc-mods-general-discussion.307899/post-12788964) |
-| Content Manager accepts a dropped ZIP | Community tutorial | [DEV Community](https://dev.to/kazuslu/how-to-download-and-install-assetto-corsa-car-mods-1hcd) |
+| Content Manager accepts a dropped ZIP | Verified on BRITOD-DESK (M6 exit gate, 2026-11-03; see `docs/VERIFIED_FACTS.md`) | [DEV Community](https://dev.to/kazuslu/how-to-download-and-install-assetto-corsa-car-mods-1hcd) |
 | Changing `data.acd` can break heavily encrypted models | Single forum post | [Steam](https://steamcommunity.com/app/244210/discussions/0/3759977302532019084) |
 
 **Rule for building:** a community fact can guide a feature, but only a test against a real car can confirm it.

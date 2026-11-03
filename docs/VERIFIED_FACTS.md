@@ -546,3 +546,15 @@ Method: `scratch/m6_id_survey` (not committed) searched the text files (`.ini`, 
 - `.knh` files (250) are `driver_base_pos.knh`, the driver's position, which every car has. Keep them.
 - Leftover types also found in car folders: `.pdn` (Paint.NET, 6), `.xcf` (GIMP, 3), `.zip` (28) and `.rar` (1), `.backup` (4), and one each of `.old`, `.log`, and `.lnk`. Unclear: `.tuned` (2), `.candidate` (1), `.org` (1).
 - The tutorial car, built with ksEditor, holds no editor files besides `.blend`, `.blend1`, and `.fbx`.
+
+## New car ID through a Content Manager ZIP (BRITOD-DESK, 2026-11-03, M6 exit gate)
+
+The owner used the app's Save as new car on `acm_tutorial_basic` (new ID `acm_tutorial_basic_v2`, name "ACM Tutorial Basic v2"), exported it with Pack data into data.acd
+(`exports\acm_tutorial_basic_v2_20261103-073914-772.zip`, 20.6 MB), dragged the ZIP onto Content Manager, and drove the car. The owner reported that everything worked.
+
+- **Result: Content Manager installs the app's ZIP, and AC loads the new car ID from the packed `data.acd`.** The log shows `Creating car: acm_tutorial_basic_v2` and
+  `PW:325407.593750 (436.378082 HP)`, within 0.02% of the app's estimate (325,469 W). So the `data.acd` packed with the new ID's key loaded.
+- Content Manager's install holds `data.acd` and no `data\` folder, the renamed `sfx\acm_tutorial_basic_v2.bank`, and no `acmod_install.json` (only the app's own installs get the marker).
+  So a later app install of this car ID is refused until that folder is moved, as WS-11 intends.
+- The log ends with `CLEAN EXIT`, with only the 4 known `Variable type cannot be found` lines plus Python app and stats errors that aren't about car data.
+- The Content Manager step (drag the ZIP onto its window) from the community tutorial is now confirmed on BRITOD-DESK.
