@@ -20,6 +20,13 @@
             <TabItem x:Name="FormsTab" Header="Forms">
                 <DockPanel Margin="0,8,0,0">
                     <ListBox x:Name="GroupList" DockPanel.Dock="Left" Width="150" SelectionChanged="GroupList_SelectionChanged" />
+                    <!-- LE-1: where to read more. The Kunos PDF is password-protected, so the app only opens it, never quotes it. -->
+                    <TextBlock DockPanel.Dock="Top" Margin="8,0,0,6" TextWrapping="Wrap">
+                        <Run Text="Read more:" />
+                        <Hyperlink x:Name="PipelineLink" Click="OpenLink_Click">Kunos car pipeline (PDF in your AC's SDK)</Hyperlink>
+                        <Run Text="  ·  " />
+                        <Hyperlink NavigateUri="https://assettocorsamods.net/threads/your-first-car-in-assetto-corsa-basic-guide.1019/" Click="OpenLink_Click">Community first-car guide (web)</Hyperlink>
+                    </TextBlock>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8,0,0,8">
                         <TextBlock Text="Section" VerticalAlignment="Center" />
                         <ComboBox x:Name="SectionBox" Width="260" Margin="8,0,0,0" SelectionChanged="SectionBox_SelectionChanged" />
@@ -32,7 +39,9 @@
                             <DataGridTextColumn Header="" Binding="{Binding Mark}" IsReadOnly="True" />
                             <DataGridTextColumn Header="Field" Binding="{Binding Key}" IsReadOnly="True" FontFamily="Consolas" />
                             <DataGridTextColumn Header="Value" Binding="{Binding Value}" FontFamily="Consolas" />
-                            <DataGridTextColumn Header="Hint (from the file's own comments)" Binding="{Binding Hint}" IsReadOnly="True" Width="*" />
+                            <DataGridTextColumn Header="Explanation [source]" Binding="{Binding Hint}" IsReadOnly="True" Width="*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap" /></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

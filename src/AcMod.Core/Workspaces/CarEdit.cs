@@ -51,6 +51,9 @@ public sealed class CarEdit
     public IReadOnlyList<string> WriteTargets =>
         _changes.Count == 0 ? [] : Data.Source == DataSource.Acd ? ["data.acd"] : [.. ChangedFiles.Select(n => Path.Combine("data", n))];
 
+    /// <summary>The workspace's AC folder, or null; the learning aids read Kunos's SDK from it (LE-1).</summary>
+    public string? AcFolder => _workspace.AcFolder;
+
     /// <summary>Runs the validator on the car's saved files (VA-1). Unsaved changes aren't included.</summary>
     public IReadOnlyList<Validation.Finding> Validate() => _workspace.Validate(CarId).Findings ?? [];
 

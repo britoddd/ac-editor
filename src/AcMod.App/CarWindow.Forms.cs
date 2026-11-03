@@ -1,4 +1,9 @@
+using System.Diagnostics;
+using System.IO;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
+using AcMod.Core.Learning;
 using AcMod.Core.Tuning;
 
 namespace AcMod.App;
@@ -26,12 +31,28 @@ public sealed class FormRow(int lineIndex, string key, string text, string hint,
 public partial class CarWindow
 {
     private bool _formLoading; // true while the code fills the section list, so that isn't taken as a user choice
+    private FieldHelp _help = FieldHelp.Load(null);
 
     private void InitForms()
     {
+        _help = FieldHelp.Load(_edit.AcFolder == null ? null : FieldHelp.SampleCarFolder(_edit.AcFolder));
+        var pdf = _edit.AcFolder == null ? null : Path.Combine(_edit.AcFolder, "sdk", "dev", "car_pipeline_2.0rev", "AC_Pipeline_PUB_Rev2.0.pdf");
+        if (pdf != null && File.Exists(pdf)) PipelineLink.NavigateUri = new Uri(pdf);
+        else PipelineLink.IsEnabled = false;
+
         GroupList.ItemsSource = TuningForms.Groups.Select(g => g.Group).ToList();
         GroupList.SelectedIndex = 0;
     }
+
+    /// <summary>Opens a link in the user's own browser or PDF viewer, only when clicked.</summary>
+    private void OpenLink_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Hyperlink { NavigateUri: { } uri }) Process.Start(new ProcessStartInfo(uri.IsFile ? uri.LocalPath : uri.AbsoluteUri) { UseShellExecute = true });
+    }
+
+    /// <summary>Every explanation, each followed by its source, one per line (LE-1).</summary>
+    private string Explain(string file, FormField field) =>
+        string.Join("\n", _help.For(file, field).Select(x => $"{x.Text}  [{x.SourceLabel}]"));
 
     /// <summary>The car's own name for the selected group's file (data file names can differ in case), or null when the car has none.</summary>
     private string? FormFile =>
@@ -80,7 +101,7 @@ public partial class CarWindow
                 f.LineIndex,
                 f.Key,
                 f.Value,
-                f.Hint == null ? "" : f.HintFrom == null ? f.Hint : $"{f.Hint}   (from {f.HintFrom})",
+                Explain(file, f),
                 saved.GetValueOrDefault(f.Id) == f.Value ? "" : "*",
                 SetField))
             .ToList();
