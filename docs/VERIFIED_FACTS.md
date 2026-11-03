@@ -535,3 +535,14 @@ Method: `scratch/m5_gate` (not committed) ran `Validator.Run` with the AC folder
 - **V-05 correction:** the M0 list names `power.lut`, but 4 installed cars (the VRC Formula Alpha cars among them) name another curve in `engine.ini` `[HEADER] POWER_CURVE`.
   V-05 now requires the file `POWER_CURVE` names, with `power.lut` as the default. With that, no installed car fails V-05.
 - 44 cars have at least one error, 22 of them only because their data can't be read (V-13).
+
+## Where a car's ID appears, and file types in car folders (BRITOD-DESK, 2026-11-03, M6 step 1)
+
+Method: `scratch/m6_id_survey` (not committed) searched the text files (`.ini`, `.json`, `.txt`, `.lut`, `.rto`, `.cfg` under 2 MB) of all 252 folders in `content\cars`, and the entries of readable `data.acd` files, for the folder's own name (ignoring case). It also counted file extensions. Read-only.
+
+- The car's own ID appears in `sfx\GUIDs.txt` (72 cars) and `lods.ini` (69 cars, because model file names often contain the ID).
+  Rarer: `ui\ui_car.json` (7), Kunos `ui\dlc_ui_car.json` (4), Content Manager's `skins\*\cm_skin_for.json` (4), CSP `ext_config.ini` files in the car and skin folders (12, one F1 mod), `ui\cm_paintshop.json` (1), and single cases in `damage.ini`, `digital_instruments.ini`, `proview_nodes.ini`, and `tyres.ini`.
+  What those rarer mentions do is not verified, so Save as new car lists them instead of rewriting them.
+- `.knh` files (250) are `driver_base_pos.knh`, the driver's position, which every car has. Keep them.
+- Leftover types also found in car folders: `.pdn` (Paint.NET, 6), `.xcf` (GIMP, 3), `.zip` (28) and `.rar` (1), `.backup` (4), and one each of `.old`, `.log`, and `.lnk`. Unclear: `.tuned` (2), `.candidate` (1), `.org` (1).
+- The tutorial car, built with ksEditor, holds no editor files besides `.blend`, `.blend1`, and `.fbx`.
