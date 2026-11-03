@@ -87,17 +87,20 @@ public sealed class WorkspaceTests : IDisposable
         var workspace = Open();
         var outside = Directory.CreateDirectory(Path.Combine(_temp, "outside")).FullName;
         var link = Path.Combine(workspace.Root, "cars", "acm_link");
-        // A junction needs no admin rights, unlike Directory.CreateSymbolicLink. .NET has no API to make one.
-        using (var mklink = Process.Start(new ProcessStartInfo("cmd.exe", ["/c", "mklink", "/J", link, outside]) { RedirectStandardOutput = true })!)
-        {
-            mklink.WaitForExit();
-            Assert.Equal(0, mklink.ExitCode);
-        }
+        MakeJunction(link, outside);
 
         var (path, error) = workspace.Resolve(@"cars\acm_link\data\car.ini");
 
         Directory.Delete(link); // removes only the junction, not the folder it points to
         Assert.Null(path);
         Assert.Contains("junction or symlink", error);
+    }
+
+    /// <summary>A junction needs no admin rights, unlike Directory.CreateSymbolicLink. .NET has no API to make one.</summary>
+    internal static void MakeJunction(string link, string target)
+    {
+        using var mklink = Process.Start(new ProcessStartInfo("cmd.exe", ["/c", "mklink", "/J", link, target]) { RedirectStandardOutput = true })!;
+        mklink.WaitForExit();
+        Assert.Equal(0, mklink.ExitCode);
     }
 }

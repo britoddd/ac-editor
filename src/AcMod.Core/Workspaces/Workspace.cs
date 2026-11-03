@@ -86,14 +86,12 @@ public sealed class Workspace
     {
         if (!Folders.Contains(workspaceFolder)) throw new ArgumentException($"Not a workspace folder: {workspaceFolder}", nameof(workspaceFolder));
 
-        var top = new EnumerationOptions { AttributesToSkip = FileAttributes.ReparsePoint };
-        var all = new EnumerationOptions { AttributesToSkip = FileAttributes.ReparsePoint, RecurseSubdirectories = true };
-        return [.. new DirectoryInfo(Path.Combine(Root, workspaceFolder)).EnumerateDirectories("*", top)
+        return [.. new DirectoryInfo(Path.Combine(Root, workspaceFolder)).EnumerateDirectories("*", new EnumerationOptions { AttributesToSkip = FileAttributes.ReparsePoint })
             .Select(dir =>
             {
                 // A folder's own time changes when it is created, so a car imported with old files still counts as recent.
                 var (size, last) = (0L, dir.LastWriteTimeUtc);
-                foreach (var entry in dir.EnumerateFileSystemInfos("*", all))
+                foreach (var entry in dir.EnumerateFileSystemInfos("*", NoLinks))
                 {
                     if (entry is FileInfo file) size += file.Length;
                     if (entry.LastWriteTimeUtc > last) last = entry.LastWriteTimeUtc;
@@ -224,21 +222,74 @@ public sealed class Workspace
         return (carId, null);
     }
 
+    /// <summary>The warning every front end shows before <see cref="DeletePermanently"/>, naming what will be lost (WS-6).</summary>
+    public (string? Warning, string? Error) PermanentDeleteWarning(string trashId)
+    {
+        var (entry, carId, error) = TrashEntry(trashId);
+        if (entry == null) return (null, error);
+
+        var size = Subfolders("trash").Single(f => f.Name == trashId).Size;
+        var snapshots = Snapshots(carId!);
+        var snapshotSize = Subfolders("snapshots").FirstOrDefault(f => f.Name.Equals(carId, StringComparison.OrdinalIgnoreCase))?.Size ?? 0;
+        var what = snapshots.Length == 0 ? "" :
+            SnapshotsGoToo(trashId, carId!) ? $" and its {snapshots.Length} snapshot(s) ({Megabytes(snapshotSize)})" :
+            $". Its {snapshots.Length} snapshot(s) are kept, because another car {carId} is still in the workspace or the trash";
+        return ($"WARNING: this permanently deletes {trashId} ({Megabytes(size)}){what}. " +
+                $"This can't be undone, and the files don't go to the Windows Recycle Bin. Type {carId} to confirm.", null);
+    }
+
     /// <summary>
-    /// Deletes a trash entry for good (WS-6, hard rule 4). <paramref name="typedCarId"/> is what the user typed to confirm,
-    /// and it must match the car ID exactly. The car's snapshots are kept.
+    /// Deletes a trash entry for good, with the car's snapshots (WS-6, hard rule 4). Show <see cref="PermanentDeleteWarning"/> first.
+    /// <paramref name="typedCarId"/> is what the user typed to confirm, and it must match the car ID exactly.
+    /// The snapshots are kept while another car with the same ID is in cars\ or the trash, because they may be that car's history.
     /// </summary>
     public string? DeletePermanently(string trashId, string typedCarId)
     {
         var (entry, carId, error) = TrashEntry(trashId);
-        if (entry == null) return error;
+        if (entry == null || carId == null) return error;
         if (typedCarId != carId) return $"Type the car ID {carId} exactly to delete it permanently.";
 
-        // Directory.Delete refuses read-only files, which some mods ship with.
-        foreach (var file in Directory.EnumerateFiles(entry, "*", SearchOption.AllDirectories)) File.SetAttributes(file, FileAttributes.Normal);
-        Directory.Delete(entry, recursive: true);
+        var (snapshots, snapshotsError) = Resolve(Path.Combine("snapshots", carId));
+        if (snapshots == null) return snapshotsError;
+        var snapshotsGo = SnapshotsGoToo(trashId, carId);
+        DeleteFolder(entry);
+        if (snapshotsGo && Directory.Exists(snapshots)) DeleteFolder(snapshots);
         return null;
     }
+
+    /// <summary>True when no other car with this ID is in cars\ or the trash. Car IDs ignore case, like Windows folder names.</summary>
+    private bool SnapshotsGoToo(string trashId, string carId) =>
+        !Directory.Exists(Path.Combine(Root, "cars", carId)) &&
+        !Directory.GetDirectories(Path.Combine(Root, "trash")).Select(Path.GetFileName).Any(n =>
+            n != trashId && n!.LastIndexOf('_') > 0 && n[..n.LastIndexOf('_')].Equals(carId, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Deletes a folder and everything in it, read-only files included (some mods ship them). Junctions and symlinks inside are removed
+    /// as links, and nothing they point to is touched. Directory.Delete(recursive) isn't used, because without admin rights it throws on
+    /// a junction (it first tries to unmount it as a volume mount point).
+    /// </summary>
+    private static void DeleteFolder(string folder)
+    {
+        foreach (var entry in new DirectoryInfo(folder).EnumerateFileSystemInfos("*", new EnumerationOptions { AttributesToSkip = 0 }))
+        {
+            var isLink = entry.Attributes.HasFlag(FileAttributes.ReparsePoint);
+            if (entry is DirectoryInfo && !isLink)
+            {
+                DeleteFolder(entry.FullName);
+                continue;
+            }
+
+            if (!isLink) entry.Attributes = FileAttributes.Normal;
+            entry.Delete();
+        }
+
+        Directory.Delete(folder);
+    }
+
+    /// <summary>Everything in a folder tree, hidden files included, without following junctions or symlinks out of it.</summary>
+    private static readonly EnumerationOptions NoLinks = new() { AttributesToSkip = FileAttributes.ReparsePoint, RecurseSubdirectories = true };
+
+    private static string Megabytes(long bytes) => (bytes / 1048576.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " MB";
 
     /// <summary>The full path and car ID of a trash entry, or an error.</summary>
     private (string? Path, string? CarId, string? Error) TrashEntry(string trashId)
@@ -297,7 +348,7 @@ public sealed class Workspace
         foreach (var folder in SnapshotFolders.Where(f => !Directory.Exists(Path.Combine(snapshot, f))))
         {
             var path = Checked(CarFile(carId, folder));
-            if (Directory.Exists(path)) Directory.Delete(path, recursive: true);
+            if (Directory.Exists(path)) DeleteFolder(path);
         }
 
         foreach (var file in ScopeFiles(car).Where(f => !File.Exists(Path.Combine(snapshot, f))))

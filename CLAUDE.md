@@ -41,6 +41,8 @@ Plan approved by the owner (2026-11-03). All logic lives in Core; one commit per
 
 ### Notes for the next agent
 
+- **Deleting folders:** use `Workspace.DeleteFolder`, never `Directory.Delete(path, recursive: true)`. Without admin rights the recursive version throws on a junction, and it refuses read-only files.
+
 - **Branches:** work happens on `main`. The owner switched to it during M2 and pushes it themselves, so never push. The local `milestone-0` branch is stale.
 - **Backslashes:** the Bash tool collapses `\\` into `\`, so Windows paths inside Python string literals get mangled (`\f` and `\a` become control characters).
   Write doc text with the Edit tool or a `cat <<'EOF'` heredoc, build a backslash with `chr(92)` in Python, and afterwards scan edited docs for bytes `0x00`–`0x1F` other than tab, CR, and LF.

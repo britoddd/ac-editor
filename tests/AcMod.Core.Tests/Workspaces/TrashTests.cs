@@ -103,7 +103,7 @@ public sealed class TrashTests : IDisposable
     }
 
     [Fact]
-    public void Permanent_delete_removes_the_entry_even_with_read_only_files_and_keeps_snapshots()
+    public void Permanent_delete_removes_the_entry_and_its_snapshots_even_with_read_only_files()
     {
         _workspace.Snapshot(CarId);
         File.SetAttributes(Path.Combine(Car, "car.kn5"), FileAttributes.ReadOnly);
@@ -112,7 +112,65 @@ public sealed class TrashTests : IDisposable
         Assert.Null(_workspace.DeletePermanently(trashId, CarId));
 
         Assert.Empty(_workspace.Subfolders("trash"));
+        Assert.Empty(_workspace.Subfolders("snapshots"));
+    }
+
+    [Fact]
+    public void Permanent_delete_keeps_snapshots_while_the_car_ID_is_back_in_cars()
+    {
+        var trashId = Delete();
+        Put(@"data\car.ini", "imported again");
+        _workspace.Snapshot(CarId); // the new car's history
+
+        Assert.Contains("are kept", _workspace.PermanentDeleteWarning(trashId).Warning);
+        Assert.Null(_workspace.DeletePermanently(trashId, CarId));
+
         Assert.Single(_workspace.Snapshots(CarId));
+    }
+
+    [Fact]
+    public void Permanent_delete_keeps_snapshots_while_another_trash_entry_has_the_car_ID()
+    {
+        _workspace.Snapshot(CarId);
+        var first = Delete();
+        Put(@"data\car.ini", "second");
+        Delete();
+
+        Assert.Null(_workspace.DeletePermanently(first, CarId));
+
+        Assert.Single(_workspace.Snapshots(CarId));
+    }
+
+    [Fact]
+    public void The_warning_says_the_delete_is_permanent_and_names_the_snapshots()
+    {
+        _workspace.Snapshot(CarId);
+        _workspace.Snapshot(CarId);
+        var trashId = Delete();
+
+        var (warning, error) = _workspace.PermanentDeleteWarning(trashId);
+
+        Assert.Null(error);
+        Assert.StartsWith($"WARNING: this permanently deletes {trashId} (0.0 MB) and its 2 snapshot(s) (0.0 MB).", warning);
+        Assert.Contains("can't be undone", warning);
+        Assert.EndsWith("Type acm_my_car to confirm.", warning);
+        Assert.NotNull(_workspace.PermanentDeleteWarning("acm_my_car_20990101-000000-000").Error);
+    }
+
+    [Fact]
+    public void Permanent_delete_removes_a_junction_but_not_what_it_points_to()
+    {
+        var outside = Directory.CreateDirectory(Path.Combine(_temp, "outside")).FullName;
+        File.WriteAllText(Path.Combine(outside, "keep.txt"), "keep");
+        File.SetAttributes(Path.Combine(outside, "keep.txt"), FileAttributes.ReadOnly);
+        WorkspaceTests.MakeJunction(Path.Combine(Car, "linked"), outside);
+        var trashId = Delete();
+
+        Assert.Null(_workspace.DeletePermanently(trashId, CarId));
+
+        Assert.Equal("keep", File.ReadAllText(Path.Combine(outside, "keep.txt")));
+        Assert.True(File.GetAttributes(Path.Combine(outside, "keep.txt")).HasFlag(FileAttributes.ReadOnly)); // not even its attributes
+        File.SetAttributes(Path.Combine(outside, "keep.txt"), FileAttributes.Normal); // so Dispose can clean up
     }
 
     [Theory]

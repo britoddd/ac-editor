@@ -68,7 +68,7 @@ The workspace layout is `cars/<car_id>/`, `snapshots/`, `trash/`, and `exports/`
 | WS-3 | List cars with display name, folder ID, size, last changed, and validation status | P1 |
 | WS-4 | Import a car from a ZIP or a user-selected folder into `cars/` | P1 |
 | WS-5 | Show unused folders: cars not changed for a chosen period, plus snapshots and trash, with their disk size | P1 |
-| WS-6 | Delete moves a car to `trash/`; **Empty trash** deletes permanently after the user types the car ID | P1 |
+| WS-6 | Delete moves a car to `trash/`; **Empty trash** shows a warning that it can't be undone, then deletes permanently, with the car's snapshots, after the user types the car ID. Snapshots stay while another car with that ID is in `cars/` or `trash/` (owner decision, 2026-11-03) | P1 |
 | WS-7 | **Save as new car** copies to a new ID and rewrites the folder, KN5, `lods.ini`, sound bank, GUIDs, and `.acd` references | P1 |
 | WS-8 | **Replace previous** runs after a new copy passes validation, then moves the old folder to `trash/` | P1 |
 | WS-9 | Editing a car keeps the same folder and creates a snapshot, because a new folder is only needed for a new car ID | P1 |
