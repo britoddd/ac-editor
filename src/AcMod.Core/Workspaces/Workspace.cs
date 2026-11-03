@@ -13,31 +13,31 @@ public sealed record CarInfo(string Id, string? DisplayName, long Size, DateTime
 /// The Mod Workspace (WS-1): cars\, snapshots\, trash\, and exports\ under one root folder.
 /// Every write must get its path from <see cref="Resolve"/>, so nothing lands outside the root (QS-6, hard rule 5).
 /// </summary>
-public sealed class Workspace
+public sealed partial class Workspace
 {
     public static readonly string[] Folders = ["cars", "snapshots", "trash", "exports"];
 
     /// <summary>The full path of the workspace folder, without a trailing separator (except for a drive root).</summary>
     public string Root { get; }
 
-    private Workspace(string root) => Root = root;
+    /// <summary>The AC install folder given to <see cref="Open"/>, as a full path, or null when it isn't known.</summary>
+    public string? AcFolder { get; }
+
+    private Workspace(string root, string? acFolder) => (Root, AcFolder) = (root, acFolder);
 
     /// <summary>Opens a workspace, creating any missing workspace folders. Refuses a folder that overlaps the AC install (WS-2).</summary>
     /// <param name="acFolder">The AC install folder, or null when it isn't known yet.</param>
     public static (Workspace? Workspace, string? Error) Open(string root, string? acFolder)
     {
         root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
-        if (acFolder != null)
+        var ac = acFolder == null ? null : Path.TrimEndingDirectorySeparator(Path.GetFullPath(acFolder));
+        if (ac != null && (IsSameOrInside(root, ac) || IsSameOrInside(ac, root)))
         {
-            var ac = Path.TrimEndingDirectorySeparator(Path.GetFullPath(acFolder));
-            if (IsSameOrInside(root, ac) || IsSameOrInside(ac, root))
-            {
-                return (null, $"The workspace {root} overlaps the AC folder {ac}. Choose a folder outside AC, such as D:\\ACModding.");
-            }
+            return (null, $"The workspace {root} overlaps the AC folder {ac}. Choose a folder outside AC, such as D:\\ACModding.");
         }
 
         foreach (var folder in Folders) Directory.CreateDirectory(Path.Combine(root, folder));
-        return (new Workspace(root), null);
+        return (new Workspace(root, ac), null);
     }
 
     /// <summary>

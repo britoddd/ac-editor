@@ -42,6 +42,7 @@ Plan approved by the owner (2026-11-03). All logic lives in Core; one commit per
 ### Notes for the next agent
 
 - **Deleting folders:** use `Workspace.DeleteFolder`, never `Directory.Delete(path, recursive: true)`. Without admin rights the recursive version throws on a junction, and it refuses read-only files.
+- **Install marker:** WS-11 writes `acmod_install.json` into each car it installs. A car imported back from `content\cars` carries it, so M6 exports (PK-3) must leave it out.
 
 - **Branches:** work happens on `main`. The owner switched to it during M2 and pushes it themselves, so never push. The local `milestone-0` branch is stale.
 - **Backslashes:** the Bash tool collapses `\\` into `\`, so Windows paths inside Python string literals get mangled (`\f` and `\a` become control characters).
