@@ -27,7 +27,13 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 - **After M4 (2026-11-03), owner requests:** TU-8 (power curve drag and multi-select, a shared torque/power scale with a grid) and TU-9 (edit gear ratios and FINAL, add or remove gears with their `setup.ini` sections, extend `power.lut`). Also PK-2 ZIP export, built early. AC's garage replaces a ratio that isn't in its `ratios.rto` list with the list's first option, so a gear with a list offers only those ratios (owner decision). 477 tests pass, with 0 warnings.
 
-## Next: Milestone 5 (Validator)
+## Next: TU-10, then Milestone 5 (Validator)
+
+**TU-10 (P2, owner request, in progress):** plan approved 2026-11-03. One commit per step, prefixed `TU-10 step N`.
+1. **Core:** add a ratio to a `.rto` list (label `driver//driven`: the smallest driver gear, 10 to 40 teeth, whose ratio rounds to the typed one; the list stays largest ratio first; a duplicate is refused) and remove one (at least one stays). Find which `.rto` file a `[GEARS]` key uses.
+2. **Gears tab:** a "Garage ratio list" panel with Add ratio and Remove; the drop-downs follow it.
+3. **Game check:** add 2.26 (`19//43`), pick it for 1st, and check that the garage shows 19/43 with the matching top speed.
+Checked in the tutorial car's files: labels are tooth pairs and the ratio is driven ÷ driver (`14//33` = 2.357, listed 2.36). Unverified: that AC uses only the number after `|`.
 
 Read the M5 row and V-01 to V-15 ("M0 verdicts") in `docs/REQUIREMENTS.md`, propose small steps, and get the owner's approval before coding. Exit gate: each rule has a passing and failing fixture.
 Also pending from TU-9: how AC treats `LIMITER` above the last `power.lut` row (not tested).

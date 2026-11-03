@@ -89,6 +89,7 @@ The workspace layout is `cars/<car_id>/`, `snapshots/`, `trash/`, and `exports/`
 | TU-7 | Mark changes as unsaved and show exactly which files will change before writing | P1 |
 | TU-8 | Edit the power curve directly on the chart: drag a point to change its torque, and select several points to change them together (for example scale by a percentage or add a fixed amount). Requested by the owner during M4 step 6 (2026-11-03); planned for after the M4 exit gate. Done 2026-11-03 | P2 |
 | TU-9 | On the Gears tab, edit gear ratios and the final drive, add a gear or remove the last one (also adding or removing its `setup.ini` `[GEAR_n]` section), and on the Power curve tab add or remove rows at the top of `power.lut` so the engine can rev higher with power. Requested by the owner (2026-11-03). Done 2026-11-03: AC replaces a ratio missing from the garage's list with the list's first option, so a gear with a list offers only those ratios (owner decision) | P2 |
+| TU-10 | Edit the garage's ratio lists (the `.rto` files that `setup.ini` names for gears and the final drive): add a ratio, labelled with the closest realistic tooth pair, or remove one. Requested by the owner (2026-11-03) | P2 |
 
 ### Validator
 
