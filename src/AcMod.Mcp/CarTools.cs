@@ -13,7 +13,7 @@ namespace AcMod.Mcp;
 /// A car whose data can't be read (V-13, such as a protected data.acd) returns only its status, never its bytes (CC-9).
 /// </summary>
 [McpServerToolType]
-public static class CarTools
+public static partial class CarTools
 {
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
 

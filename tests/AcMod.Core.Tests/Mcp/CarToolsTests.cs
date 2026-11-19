@@ -5,6 +5,7 @@ using AcMod.Mcp;
 namespace AcMod.Core.Tests.Mcp;
 
 /// <summary>The MCP read tools (CC-3) on a temporary workspace, and CC-9: unreadable data returns only its status.</summary>
+[Collection("CarTools.Open")] // every class that swaps the static CarTools.Open runs in this collection, so never in parallel
 public sealed class CarToolsTests : IDisposable
 {
     private readonly string _temp = Directory.CreateTempSubdirectory("acm_mcp_").FullName;

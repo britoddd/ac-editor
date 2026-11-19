@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 8 is in progress: its plan was approved 2026-11-19, and steps 1 and 2 are built** (see "Next session starts here" below).
+**Milestone 8 is in progress: its plan was approved 2026-11-19, and steps 1 to 3 are built** (see "Next session starts here" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -43,7 +43,8 @@ State: M7 is merged and pushed (`main` at `5ef55f8`). M8 work happens on worktre
       Smoke test: pipe `initialize`, `notifications/initialized` and a `tools/call` JSON-RPC line into the DLL. A running Claude Code session holds the DLL open, so restart it (or `/mcp`) after a rebuild.
    2. **Done:** read tools `read_car` (file list, or one data file's text), `validate`, `gears`, `list_snapshots`, `compare_snapshots` (a snapshot against the car now or another snapshot, through `DataDiff`), `read_ac_log` (with the workspace estimate) (CC-3).
       CC-9: `RunCar` returns only `status: unreadable` for a car whose data can't be read; snapshots with unreadable data return only an error. Tests in `tests/AcMod.Core.Tests/Mcp/` swap `CarTools.Open` for a temporary workspace (`InternalsVisibleTo`), so they never touch the owner's settings.
-   3. `preview_change` (single-value edits → diff, writes nothing) and `apply_change` through `CarEdit`/`WriteCarFiles` (CC-4, CC-5).
+   3. **Done:** `preview_change` and `apply_change` (CC-4, CC-5) in `CarTools.Changes.cs` take `DataEdit`s: an .ini value by section and key (a key that appears twice is refused), or a .lut/.rto row (0-based). Both stage the edits in a `CarEdit` session; preview returns `Changes` and `WriteTargets` and writes nothing.
+      Apply refuses a V-14 car (the app asks first) and read-only data, saves through `CarEdit.Save` (snapshot first, `data.acd` repacked), then validates again and returns the snapshot ID, the errors now, and new findings. Test classes that swap `CarTools.Open` share the xUnit collection `CarTools.Open`.
    4. `restore_snapshot`, `export_zip` (packed); no purge or empty-trash tool; change tools left out of the allow list (CC-4, CC-6).
    5. `.claude/settings.json` denies Edit/Write and shell writes on `D:/ACModding/cars/**` (CC-7).
    6. `activity.jsonl` in the workspace root, an app Activity window with one-click Restore, and reloading open cars (CC-8).
@@ -170,7 +171,7 @@ dotnet build AcMod.slnx      # must finish with 0 warnings; warnings are errors 
 dotnet test AcMod.slnx
 ```
 
-The CLI (M3) runs as `src\AcMod.Cli\bin\Debug\net10.0\acmod.exe` after a build; with no arguments it lists its commands. It reads and writes the owner's real settings in `%LOCALAPPDATA%\AcMod\settings.json`, so run it only when the owner asks. The WPF app (M4) is `src\AcMod.App\bin\Debug\net10.0-windows\AcMod.App.exe`; the owner starts it, because Claude can't see its window. There is no MCP server yet. `LutReader/` is the warm-up and is not part of the solution.
+The CLI (M3) runs as `src\AcMod.Cli\bin\Debug\net10.0\acmod.exe` after a build; with no arguments it lists its commands. It reads and writes the owner's real settings in `%LOCALAPPDATA%\AcMod\settings.json`, so run it only when the owner asks. The WPF app (M4) is `src\AcMod.App\bin\Debug\net10.0-windows\AcMod.App.exe`; the owner starts it, because Claude can't see its window. The MCP server (M8) is `src\AcMod.Mcp`, which Claude Code starts from `.mcp.json`; a running server locks its build output, so disable `acmod` in `/mcp` in every open session before a full build. `LutReader/` is the warm-up and is not part of the solution.
 
 ## Windows constraints
 
