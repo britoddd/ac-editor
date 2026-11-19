@@ -9,6 +9,7 @@ public sealed partial class Workspace
     /// <summary>
     /// Files left out of an export (PK-3): the app's install marker, the development files of V-15, and the leftovers the M6 step 1 survey found in
     /// car folders: image editor files (.pdn, .xcf), archives, backups, logs and shortcuts. texture\NULL.dds and .knh files are kept: a model may need them.
+    /// Top-level models nothing names (V-16) are left out too (owner request, M7 gate).
     /// </summary>
     private static readonly string[] ExportSkips =
         [".blend", ".blend1", ".fbx", ".psd", ".tmp", ".bak", ".pdn", ".xcf", ".zip", ".rar", ".backup", ".old", ".log", ".lnk"];
@@ -40,6 +41,8 @@ public sealed partial class Workspace
             if (packed == null) return (null, $"The data couldn't be packed into data.acd: {packError}");
         }
 
+        var unused = Validation.Validator.UnusedModels(car, data).ToHashSet(StringComparer.OrdinalIgnoreCase); // V-16, top-level names only
+
         var name = UniqueName(Path.Combine(Root, "exports"), carId + "_") + ".zip";
         var (zipPath, zipError) = Resolve(Path.Combine("exports", name));
         if (zipPath == null) return (null, zipError);
@@ -60,7 +63,7 @@ public sealed partial class Workspace
                     var relative = Path.GetRelativePath(car, file);
                     if (relative.Equals(InstallMarker, StringComparison.OrdinalIgnoreCase)) continue;
                     if (pack && relative.StartsWith("data" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue; // data.acd replaces it
-                    if (ExportSkips.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase)) continue;
+                    if (ExportSkips.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase) || unused.Contains(relative)) continue;
                     zip.CreateEntryFromFile(file, $"{carId}/{relative.Replace('\\', '/')}", CompressionLevel.Optimal); // streams the file (QS-7)
                 }
             }

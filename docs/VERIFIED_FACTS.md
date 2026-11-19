@@ -579,6 +579,8 @@ The owner made `acm_second` with Save as new car from `acm_tutorial_basic` (the 
 - The only warning is `flames.ini not found`; every `ERROR:` line is in the log reader's known-harmless list.
 - **`log.txt` can stay open in another program after AC exits.** `File.ReadAllLines` failed with "being used by another process" while a plain read worked,
   so the log reader now opens the file sharing read and write. Which program held it (AC, Content Manager, or CSP) was not checked.
-- Gaps the gate showed:
-  - Save as new car leaves `car.ini` `SCREEN_NAME` at the old name (`ACM Tutorial Basic`); only `ui_car.json` `name` changes. Where AC shows `SCREEN_NAME` was not checked.
-  - The copied `acm_tutorial_basic.kn5` and `.fbx` stayed in the folder, and the `.kn5` went into the release although `lods.ini` no longer names it.
+- Gaps the gate showed, both fixed on 2026-11-19 (owner request):
+  - Save as new car left `car.ini` `SCREEN_NAME` at the old name (`ACM Tutorial Basic`), changing only `ui_car.json` `name`. It now sets both. Where AC shows `SCREEN_NAME` was not checked.
+  - The copied `acm_tutorial_basic.kn5` went into the release although `lods.ini` no longer names it. The new rule V-16 warns about such a model, and Export ZIP leaves it out.
+- **KN5 files nothing names, survey of installed cars (read-only):** among 235 cars with a readable `lods.ini`, 11 mods keep extra models in `extension\` or `skins\<skin>\`, which no AC file names.
+  CSP probably loads them through its own configs (not checked). So V-16 checks only the car's top folder. It flags 6 files in 4 cars: `acm_second`, the two `az3d` traffic cars, and `vitz_rs_2007_track`'s LOD_B to LOD_D.

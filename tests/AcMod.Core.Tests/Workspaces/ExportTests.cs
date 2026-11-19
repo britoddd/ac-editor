@@ -89,6 +89,24 @@ public sealed class ExportTests : IDisposable
     }
 
     [Fact]
+    public void A_top_level_model_nothing_names_stays_out_of_the_ZIP()
+    {
+        foreach (var (path, text) in new[] { (@"data\lods.ini", "[LOD_0]\r\nFILE=car.kn5\r\n"), ("old_car.kn5", "copied"), (@"extension\led.kn5", "csp") })
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(Car, path))!);
+            File.WriteAllText(Path.Combine(Car, path), text);
+        }
+
+        using var zip = ZipFile.OpenRead(_workspace.ExportZip(CarId, ignoreErrors: true).ZipPath!);
+
+        var names = zip.Entries.Select(e => e.FullName).ToList();
+        Assert.DoesNotContain($"{CarId}/old_car.kn5", names);
+        Assert.Contains($"{CarId}/car.kn5", names);
+        Assert.Contains($"{CarId}/extension/led.kn5", names); // subfolders are never left out
+        Assert.True(File.Exists(Path.Combine(Car, "old_car.kn5"))); // the workspace car is unchanged
+    }
+
+    [Fact]
     public void Validation_errors_block_the_export_unless_the_user_overrides()
     {
         var (zipPath, error) = _workspace.ExportZip(CarId); // this car has no collider.kn5, mandatory data files, or bank

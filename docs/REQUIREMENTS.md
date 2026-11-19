@@ -160,6 +160,7 @@ The first rule set comes from one community tutorial, so every rule must be test
 | V-13 | `data.acd` cannot be read with the standard method | Error, read-only | Community library behaviour |
 | V-14 | The car may use model encryption | Warning, read-only | [Steam post](https://steamcommunity.com/app/244210/discussions/0/3759977302532019084); detection method is an open question |
 | V-15 | Development files remain in the car folder | Info | Tutorial |
+| V-16 | A top-level `.kn5` that nothing names (not `collider.kn5`, not in `lods.ini`, not in any of the car's text files) | Warning; Export ZIP leaves it out | M7 exit gate (owner request, 2026-11-19) |
 
 ### M0 verdicts (2026-11-02, BRITOD-DESK)
 
@@ -183,6 +184,7 @@ Each rule was checked against 250 installed cars, the tutorial car in game, and 
 | V-13 | Confirmed | Error, read-only. "Can't read" means the container doesn't parse or the decrypted entries aren't plausible text | A key built from public notes reads the tutorial car and a Kunos `-1111` header file. |
 | V-14 | Changed | Warning, read-only. Flag `*_encrypted*.kn5`, or a KN5 whose header is valid but whose texture or material table doesn't parse. The message says "may be encrypted" | 36 KN5 files in 10 mod folders fail the table parse. Every Kunos file passes. Encryption is not proven. |
 | V-15 | Confirmed | Info for `*.blend`, `*.blend1`, `*.fbx`, `*.psd`, `*.tmp`, `*.bak`, and `texture\NULL.dds` | The tutorial car loads with `.blend`, `.fbx`, and `NULL.dds` present. Installed cars hold 26 `.psd`, 12 `.fbx`, 22 `NULL.dds`, 17 `.tmp`, and 2 `.bak` files. |
+| V-16 | Added after M0 | Warning. Only the car's top folder; `extension\` and `skins\<skin>\` models are never flagged | The M7 gate's `acm_second` shipped a copied, unused `acm_tutorial_basic.kn5`. On BRITOD-DESK it flags 6 files in 4 installed cars. 11 mods keep models in `extension\` or `skins\<skin>\`. That AC never loads such a file is unverified, because its log doesn't list model loads. |
 
 ## Quality and safety requirements
 
@@ -213,7 +215,7 @@ Brian builds one car by hand before the app work starts, because that car become
 | M2: ACD | Read and write `data.acd` in C#, with key code built from public format notes | Files match `acd.py` output when unpacked, and a repacked car loads in AC |
 | M3: Workspace | Workspace setup, car list, import, snapshots, trash, and folder manager | Install to AC refuses unsafe targets, and delete and restore work end to end |
 | M4: Tuning | Guided forms, raw editor, power curve, gear calculator, and diff | A tuned car loads in AC with the intended change visible in-game |
-| M5: Validator | V-01 to V-15, with fixes and explanations | Each rule has a passing and failing fixture |
+| M5: Validator | V-01 to V-16 (V-16 added after M7), with fixes and explanations | Each rule has a passing and failing fixture |
 | M6: Packaging | New car IDs, repacking, and ZIP export | The ZIP installs through Content Manager and drives in AC |
 | M7: Learning aids | First-car checklist and sourced field explanations | Brian can build a second car using only the dashboard and its links |
 | M8: Claude Code integration | MCP server, permission rules, activity log, and project guide | Claude Code finds a problem on a test car, previews a fix, applies it after approval, and Brian confirms it in AC; restore also works |

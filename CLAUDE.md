@@ -31,7 +31,7 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 - **M6 (2026-11-03):** `Workspace.SaveAsNewCar` (WS-7: new folder, renamed bank, `GuidsFile.WithCarId`, `data.acd` repacked for the new ID, display name; KN5 and `lods.ini` unchanged; other mentions of the old ID listed, not rewritten), `ReplacePrevious` (WS-8: only when the copy validates without errors), and `ExportZip(pack: true)` (PK-1: verified `data.acd` in the ZIP, `data\` left out; the workspace car keeps `data\`). PK-3 also leaves out the leftover file types found in real cars. App: Save as new car dialog and a Pack box; CLI: `acmod save-as`, `acmod export --pack`. Exit gate: the owner saved the tutorial car as `acm_tutorial_basic_v2`, exported packed, installed through Content Manager, and drove it (log `PW` within 0.02% of the estimate). 526 tests pass, with 0 warnings.
 
-- **M7 (2026-11-19):** `Learning/` has `FieldHelp` (LE-1), `AcLog` (LE-4), `OutsideSteps` (LE-3) and `FirstCarChecklist` (LE-2); the app gained the menu bar with car CRUD, Trash, Snapshots and launchers (4a to 4d). Guides: `docs/FIRST_CAR_GUIDE.md` and `docs/KSEDITOR_GUIDE.md` (its Material tab "layers" step is a TODO until the owner sends a screenshot). Exit gate: the owner built `acm_second` (Save as new car from the tutorial car, own KN5 and collider), validated at 0 errors, exported packed, installed through Content Manager and drove it; log `PW` within 0.02% of the estimate, `CLEAN EXIT`. The gate found that `log.txt` can stay locked after AC exits (fixed: shared read). 558 tests pass, with 0 warnings.
+- **M7 (2026-11-19):** `Learning/` has `FieldHelp` (LE-1), `AcLog` (LE-4), `OutsideSteps` (LE-3) and `FirstCarChecklist` (LE-2); the app gained the menu bar with car CRUD, Trash, Snapshots and launchers (4a to 4d). Guides: `docs/FIRST_CAR_GUIDE.md` and `docs/KSEDITOR_GUIDE.md` (its Material tab "layers" step is a TODO until the owner sends a screenshot). Exit gate: the owner built `acm_second` (Save as new car from the tutorial car, own KN5 and collider), validated at 0 errors, exported packed, installed through Content Manager and drove it; log `PW` within 0.02% of the estimate, `CLEAN EXIT`. The gate found that `log.txt` can stay locked after AC exits (fixed: shared read). 558 tests pass, with 0 warnings (562 after the gate fixes).
 
 ## Next session starts here (handoff written 2026-11-19)
 
@@ -48,7 +48,8 @@ State: the branch `worktree-kseditor-guide` (the ksEditor guide, the log-lock fi
    8. A mod-loop guide for Claude (CC-11).
    9. Exit gate.
    Open questions put to the owner: exclusions in a workspace-root `claude_exclude.json` (recommended) or in settings; commit the `D:/ACModding` deny rule in `.claude/settings.json` (recommended) or keep it local.
-2. **Gaps from the M7 gate, not fixed yet (ask the owner):** Save as new car leaves `car.ini` `SCREEN_NAME` at the old name; a copied, no longer referenced `acm_tutorial_basic.kn5` ships in the export (a validator info rule could list KN5 files `lods.ini` doesn't name).
+2. **Gaps from the M7 gate, fixed 2026-11-19:** Save as new car now also sets `car.ini` `[INFO] SCREEN_NAME`, in `data\` and in a repacked `data.acd`. The new rule V-16 (`Validator.UnusedModels`) warns about a top-level `.kn5` that nothing names, and Export ZIP leaves it out. 562 tests pass.
+   The owner may delete the leftover `D:\ACModding\cars\acm_second\acm_tutorial_basic.kn5` and `.fbx` themselves.
 
 App layout now (owner requests): a menu bar (Car, Workspace, Release, Tools) holds every action; the footer keeps New car, Open, Rename, Delete, Refresh, Install to AC and Export ZIP. The car window's tabs: Forms, Power curve, Gears, Validate, Raw files.
 

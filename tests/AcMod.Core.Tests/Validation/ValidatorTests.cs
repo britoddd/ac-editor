@@ -239,6 +239,7 @@ public sealed class ValidatorTests : IDisposable
     {
         var car = GoodCar();
         File.WriteAllBytes(Path.Combine(car, "car_main_encrypted.kn5"), Kn5());
+        Put(car, @"data\lods.ini", "[LOD_0]\r\nFILE=Car_Main.kn5\r\n[LOD_1]\r\nFILE=car_main_encrypted.kn5\r\n"); // named, so not also V-16
 
         Assert.Equal(["V-14 Warning car_main_encrypted.kn5"], Rules(car));
     }
@@ -282,6 +283,18 @@ public sealed class ValidatorTests : IDisposable
         Put(car, @"skins\default\livery.PSD", "x");
 
         Assert.Equal(["V-15 Info car.blend", @"V-15 Info skins\default\livery.PSD", @"V-15 Info texture\NULL.dds"], Rules(car));
+    }
+
+    [Fact]
+    public void V16_a_top_level_model_nothing_names_is_a_warning()
+    {
+        var car = GoodCar();
+        Put(car, "acm_old.kn5", "kn5"); // copied along by Save as new car, as in the M7 gate
+        Put(car, "named_elsewhere.kn5", "kn5");
+        Put(car, @"extension\notes.txt", "uses Named_Elsewhere.kn5\r\n"); // any text file that names it keeps it, ignoring case (not a real CSP field)
+        Put(car, @"extension\led.kn5", "kn5"); // subfolders are never flagged
+
+        Assert.Equal(["V-16 Warning acm_old.kn5"], Rules(car));
     }
 
     [Fact]

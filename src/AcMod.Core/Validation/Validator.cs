@@ -104,6 +104,12 @@ public static class Validator
                 Evidence.Unverified);
         }
 
+        foreach (var name in UnusedModels(carFolder, data))
+        {
+            Add("V-16", Severity.Warning, name, $"{name} isn't named in lods.ini or any other file of the car, so it looks unused.",
+                $"Export ZIP leaves it out. Delete {name} if it's left over from a copied car, or name it in lods.ini if the car should load it.", Evidence.Unverified);
+        }
+
         // V-12: in game, AC used data.acd and ignored data\ while both existed.
         if (data.FolderIgnored)
         {
@@ -189,6 +195,31 @@ public static class Validator
     }
 
     private static readonly byte[] PngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+    private static readonly string[] TextExtensions = [".ini", ".json", ".txt", ".cfg"];
+
+    /// <summary>
+    /// V-16: .kn5 files in the car folder's top level that aren't collider.kn5, aren't named in lods.ini, and aren't named in any of the car's text files
+    /// or data entries (CSP configs may name models). Subfolders are never listed: 11 installed mods keep models in extension\ or skins\&lt;skin&gt;\.
+    /// Empty when the data or lods.ini can't be read. That AC never loads such a file is unverified (its log doesn't list model loads); the M7 gate's
+    /// acm_second had a copied acm_tutorial_basic.kn5 like this, and 3 other installed cars have one (M7 gate survey, 2026-11-19).
+    /// </summary>
+    public static IReadOnlyList<string> UnusedModels(string carFolder, CarData data)
+    {
+        var lods = data.Error == null ? data.Files.FirstOrDefault(f => f.Name.Equals("lods.ini", StringComparison.OrdinalIgnoreCase)) : null;
+        if (lods == null) return [];
+
+        var candidates = Directory.EnumerateFiles(carFolder, "*.kn5").Select(f => Path.GetFileName(f))
+            .Where(n => !n.Equals("collider.kn5", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (candidates.Count == 0) return [];
+
+        var texts = data.Files.Select(f => f.Data)
+            .Concat(Directory.EnumerateFiles(carFolder, "*", AllFiles)
+                .Where(f => TextExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase) && new FileInfo(f).Length < 2_000_000)
+                .Select(File.ReadAllBytes))
+            .Select(b => System.Text.Encoding.Latin1.GetString(b)).ToList();
+        return [.. candidates.Where(n => !texts.Any(t => t.Contains(n, StringComparison.OrdinalIgnoreCase))).Order(StringComparer.OrdinalIgnoreCase)];
+    }
 
     /// <summary>
     /// V-02: every .kn5 that lods.ini names exists in the car folder (all 781 such references on BRITOD-DESK exist when case is ignored).
