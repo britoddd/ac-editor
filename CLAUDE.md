@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 7 is done (exit gate passed 2026-11-19). Milestone 8 is next: its plan waits for the owner's approval** (see "Next session starts here" below).
+**Milestone 8 is in progress: its plan was approved 2026-11-19, and step 1 is built** (see "Next session starts here" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -35,10 +35,12 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 ## Next session starts here (handoff written 2026-11-19)
 
-State: the branch `worktree-kseditor-guide` (the ksEditor guide, the log-lock fix, and the M7 gate notes) is not merged into `main` yet; the owner merges and pushes.
+State: M7 is merged and pushed (`main` at `5ef55f8`). M8 work happens on worktree branches that the owner merges and pushes.
 
-1. **M8 plan, proposed 2026-11-19, waiting for approval** (one commit per step, `M8 step N`):
-   1. `src/AcMod.Mcp` skeleton with the `ModelContextProtocol` package, `.mcp.json`, one `list_cars` tool (CC-2).
+1. **M8 plan, approved by the owner 2026-11-19** (one commit per step, `M8 step N`).
+   Owner decisions: per-car exclusions live in the workspace root `claude_exclude.json`, written through the guarded file service like `checklists.json`; the deny rule for `D:/ACModding/cars/**` is committed in `.claude/settings.json`.
+   1. **Done:** `src/AcMod.Mcp` (`acmod-mcp`) with `ModelContextProtocol` 2.4.0 and `Microsoft.Extensions.Hosting` (the SDK's documented stdio setup runs in the generic host), registered in `.mcp.json` as `dotnet src/AcMod.Mcp/bin/Debug/net10.0/acmod-mcp.dll`, so it needs a build first. One tool, `list_cars` (CC-2). Tools are `[McpServerTool]` methods in `[McpServerToolType]` classes, found by `WithToolsFromAssembly`; each opens the workspace from the app's settings, as the CLI does. Logs go to stderr, because stdout carries the protocol.
+      Smoke test: pipe `initialize`, `notifications/initialized` and a `tools/call` JSON-RPC line into the DLL. A running Claude Code session holds the DLL open, so restart it (or `/mcp`) after a rebuild.
    2. Read tools: `read_car` (status only for protected cars), `validate`, `gears`, `list_snapshots`/`compare_snapshots`, `read_ac_log` (CC-3, CC-9).
    3. `preview_change` (single-value edits → diff, writes nothing) and `apply_change` through `CarEdit`/`WriteCarFiles` (CC-4, CC-5).
    4. `restore_snapshot`, `export_zip` (packed); no purge or empty-trash tool; change tools left out of the allow list (CC-4, CC-6).

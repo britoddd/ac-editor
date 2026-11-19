@@ -3,6 +3,7 @@
     <Project Path="src/AcMod.App/AcMod.App.csproj" />
     <Project Path="src/AcMod.Cli/AcMod.Cli.csproj" />
     <Project Path="src/AcMod.Core/AcMod.Core.csproj" />
+    <Project Path="src/AcMod.Mcp/AcMod.Mcp.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/AcMod.Core.Tests/AcMod.Core.Tests.csproj" />

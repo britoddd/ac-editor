@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "acmod": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": ["src/AcMod.Mcp/bin/Debug/net10.0/acmod-mcp.dll"]
+    }
+  }
+}
