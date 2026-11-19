@@ -568,3 +568,17 @@ The owner used the app's Save as new car on `acm_tutorial_basic` (new ID `acm_tu
   `suspensions.ini` 43, `tyres.ini` 25, `aero.ini` 26.
 - Method: `scratch/m7_help_survey` (not committed). Across the 230 readable installed cars, using formula_k's comment when the car's own file has none leaves these fields
   without any explanation: `brakes.ini` 65%, `tyres.ini` 49%, `car.ini` 36%, `drivetrain.ini` 34%, `engine.ini` 8%, `suspensions.ini` 6%, `aero.ini` 5%.
+
+## A second car built with the dashboard (BRITOD-DESK, 2026-11-19, M7 exit gate)
+
+The owner made `acm_second` with Save as new car from `acm_tutorial_basic` (the checklist records `CopiedFrom: acm_tutorial_basic`), built a new model and collider in Blender and ksEditor
+(`acm_second.kn5` 21,870 bytes, `collider.kn5` 1,422 bytes), pointed `lods.ini` `[LOD_0] FILE=` at `acm_second.kn5`, validated at 0 errors, exported packed, installed through Content Manager, and drove it.
+
+- **Result: the car loads with its own model and collider.** The log shows `Creating car: acm_second`, `LOADING COLLIDER MESH FILE: content/cars/acm_second/collider.kn5`,
+  `USING PHYSICS DRIVEN SUSPENSIONS`, and `CLEAN EXIT`. `PW:325407.593750` is within 0.02% of the app's estimate (325,469 W), so the packed `data.acd` loaded.
+- The only warning is `flames.ini not found`; every `ERROR:` line is in the log reader's known-harmless list.
+- **`log.txt` can stay open in another program after AC exits.** `File.ReadAllLines` failed with "being used by another process" while a plain read worked,
+  so the log reader now opens the file sharing read and write. Which program held it (AC, Content Manager, or CSP) was not checked.
+- Gaps the gate showed:
+  - Save as new car leaves `car.ini` `SCREEN_NAME` at the old name (`ACM Tutorial Basic`); only `ui_car.json` `name` changes. Where AC shows `SCREEN_NAME` was not checked.
+  - The copied `acm_tutorial_basic.kn5` and `.fbx` stayed in the folder, and the `.kn5` went into the release although `lods.ini` no longer names it.

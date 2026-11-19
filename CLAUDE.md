@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 7 is built (steps 1 to 4d, 2026-11-03); only its exit gate is left** (see "Next session starts here" below).
+**Milestone 7 is done (exit gate passed 2026-11-19). Milestone 8 is next: its plan waits for the owner's approval** (see "Next session starts here" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -31,16 +31,24 @@ Done so far. Git history has the details: one commit per step, prefixed `M0` to 
 
 - **M6 (2026-11-03):** `Workspace.SaveAsNewCar` (WS-7: new folder, renamed bank, `GuidsFile.WithCarId`, `data.acd` repacked for the new ID, display name; KN5 and `lods.ini` unchanged; other mentions of the old ID listed, not rewritten), `ReplacePrevious` (WS-8: only when the copy validates without errors), and `ExportZip(pack: true)` (PK-1: verified `data.acd` in the ZIP, `data\` left out; the workspace car keeps `data\`). PK-3 also leaves out the leftover file types found in real cars. App: Save as new car dialog and a Pack box; CLI: `acmod save-as`, `acmod export --pack`. Exit gate: the owner saved the tutorial car as `acm_tutorial_basic_v2`, exported packed, installed through Content Manager, and drove it (log `PW` within 0.02% of the estimate). 526 tests pass, with 0 warnings.
 
-## Next session starts here (handoff written 2026-11-03)
+- **M7 (2026-11-19):** `Learning/` has `FieldHelp` (LE-1), `AcLog` (LE-4), `OutsideSteps` (LE-3) and `FirstCarChecklist` (LE-2); the app gained the menu bar with car CRUD, Trash, Snapshots and launchers (4a to 4d). Guides: `docs/FIRST_CAR_GUIDE.md` and `docs/KSEDITOR_GUIDE.md` (its Material tab "layers" step is a TODO until the owner sends a screenshot). Exit gate: the owner built `acm_second` (Save as new car from the tutorial car, own KN5 and collider), validated at 0 errors, exported packed, installed through Content Manager and drove it; log `PW` within 0.02% of the estimate, `CLEAN EXIT`. The gate found that `log.txt` can stay locked after AC exits (fixed: shared read). 558 tests pass, with 0 warnings.
 
-State: `main` at the commit "Main window: Install to AC and Export ZIP in the footer too", not pushed (the owner pushes). 557 tests pass, with 0 warnings.
-Everything M7 plans is built; the owner has not yet tried the M7 additions (4a to 4d) on screen.
+## Next session starts here (handoff written 2026-11-19)
 
-1. **Ask the owner how the new screens behaved**, then fix what they report. They were built and compiled, but only partly tried:
-   New car (empty and complete), the checklist's buttons (Copy data from `formula_k`, Copy sound from…, Open ksEditor), Rename, Delete, Trash, Snapshots, and Tools > Choose / Start Content Manager.
-2. **M7 exit gate:** the owner builds a second car (suggested ID `acm_second`) with only the dashboard: Car > New car (empty) → First-car checklist → Blender body and collider → ksEditor KN5 into `D:\ACModding\cars\acm_second\` (keep the name `lods.ini` gives, or change `lods.ini` on Raw files) → Validate at 0 errors → Export ZIP (packed) → drag onto Content Manager → drive → AC log window.
-   Record where the guidance fell short; that is what the gate is for. Then mark M7 done here and in `docs/REQUIREMENTS.md` if anything changed.
-3. **Then plan M8** (Claude Code integration, CC-1 to CC-11): read the M8 row in `docs/REQUIREMENTS.md`, propose small steps, get approval.
+State: the branch `worktree-kseditor-guide` (the ksEditor guide, the log-lock fix, and the M7 gate notes) is not merged into `main` yet; the owner merges and pushes.
+
+1. **M8 plan, proposed 2026-11-19, waiting for approval** (one commit per step, `M8 step N`):
+   1. `src/AcMod.Mcp` skeleton with the `ModelContextProtocol` package, `.mcp.json`, one `list_cars` tool (CC-2).
+   2. Read tools: `read_car` (status only for protected cars), `validate`, `gears`, `list_snapshots`/`compare_snapshots`, `read_ac_log` (CC-3, CC-9).
+   3. `preview_change` (single-value edits → diff, writes nothing) and `apply_change` through `CarEdit`/`WriteCarFiles` (CC-4, CC-5).
+   4. `restore_snapshot`, `export_zip` (packed); no purge or empty-trash tool; change tools left out of the allow list (CC-4, CC-6).
+   5. `.claude/settings.json` denies Edit/Write and shell writes on `D:/ACModding/cars/**` (CC-7).
+   6. `activity.jsonl` in the workspace root, an app Activity window with one-click Restore, and reloading open cars (CC-8).
+   7. Privacy notice and a per-car exclude that every tool honours (CC-10).
+   8. A mod-loop guide for Claude (CC-11).
+   9. Exit gate.
+   Open questions put to the owner: exclusions in a workspace-root `claude_exclude.json` (recommended) or in settings; commit the `D:/ACModding` deny rule in `.claude/settings.json` (recommended) or keep it local.
+2. **Gaps from the M7 gate, not fixed yet (ask the owner):** Save as new car leaves `car.ini` `SCREEN_NAME` at the old name; a copied, no longer referenced `acm_tutorial_basic.kn5` ships in the export (a validator info rule could list KN5 files `lods.ini` doesn't name).
 
 App layout now (owner requests): a menu bar (Car, Workspace, Release, Tools) holds every action; the footer keeps New car, Open, Rename, Delete, Refresh, Install to AC and Export ZIP. The car window's tabs: Forms, Power curve, Gears, Validate, Raw files.
 
