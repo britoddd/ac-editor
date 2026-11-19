@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 8 is in progress: its plan was approved 2026-11-19, and step 1 is built** (see "Next session starts here" below).
+**Milestone 8 is in progress: its plan was approved 2026-11-19, and steps 1 and 2 are built** (see "Next session starts here" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -41,7 +41,8 @@ State: M7 is merged and pushed (`main` at `5ef55f8`). M8 work happens on worktre
    Owner decisions: per-car exclusions live in the workspace root `claude_exclude.json`, written through the guarded file service like `checklists.json`; the deny rule for `D:/ACModding/cars/**` is committed in `.claude/settings.json`.
    1. **Done:** `src/AcMod.Mcp` (`acmod-mcp`) with `ModelContextProtocol` 2.4.0 and `Microsoft.Extensions.Hosting` (the SDK's documented stdio setup runs in the generic host), registered in `.mcp.json` as `dotnet src/AcMod.Mcp/bin/Debug/net10.0/acmod-mcp.dll`, so it needs a build first. One tool, `list_cars` (CC-2). Tools are `[McpServerTool]` methods in `[McpServerToolType]` classes, found by `WithToolsFromAssembly`; each opens the workspace from the app's settings, as the CLI does. Logs go to stderr, because stdout carries the protocol.
       Smoke test: pipe `initialize`, `notifications/initialized` and a `tools/call` JSON-RPC line into the DLL. A running Claude Code session holds the DLL open, so restart it (or `/mcp`) after a rebuild.
-   2. Read tools: `read_car` (status only for protected cars), `validate`, `gears`, `list_snapshots`/`compare_snapshots`, `read_ac_log` (CC-3, CC-9).
+   2. **Done:** read tools `read_car` (file list, or one data file's text), `validate`, `gears`, `list_snapshots`, `compare_snapshots` (a snapshot against the car now or another snapshot, through `DataDiff`), `read_ac_log` (with the workspace estimate) (CC-3).
+      CC-9: `RunCar` returns only `status: unreadable` for a car whose data can't be read; snapshots with unreadable data return only an error. Tests in `tests/AcMod.Core.Tests/Mcp/` swap `CarTools.Open` for a temporary workspace (`InternalsVisibleTo`), so they never touch the owner's settings.
    3. `preview_change` (single-value edits → diff, writes nothing) and `apply_change` through `CarEdit`/`WriteCarFiles` (CC-4, CC-5).
    4. `restore_snapshot`, `export_zip` (packed); no purge or empty-trash tool; change tools left out of the allow list (CC-4, CC-6).
    5. `.claude/settings.json` denies Edit/Write and shell writes on `D:/ACModding/cars/**` (CC-7).

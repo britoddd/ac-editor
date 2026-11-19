@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AcMod.Core\AcMod.Core.csproj" />
+    <ProjectReference Include="..\..\src\AcMod.Mcp\AcMod.Mcp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
