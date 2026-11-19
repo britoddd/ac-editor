@@ -137,6 +137,11 @@ public sealed class ChangeToolsTests : IDisposable
         string[] readTools = ["list_cars", "read_car", "validate", "gears", "list_snapshots", "compare_snapshots", "read_ac_log"];
         Assert.All(allowed.Where(a => a!.StartsWith("mcp__acmod", StringComparison.Ordinal)), a => Assert.Contains(a!["mcp__acmod__".Length..], readTools));
         Assert.DoesNotContain("mcp__acmod", allowed.Where(a => !a!.StartsWith("mcp__acmod__", StringComparison.Ordinal))); // no wildcard for the whole server
+
+        // CC-7: Claude's file tools may not write workspace cars, and a hook guards shell commands (native Windows has no sandbox).
+        Assert.Contains("Edit(//d/ACModding/cars/**)", settings.GetProperty("permissions").GetProperty("deny").EnumerateArray().Select(d => d.GetString()));
+        Assert.Contains("guard-cars.ps1", settings.GetProperty("hooks").GetProperty("PreToolUse").GetRawText());
+        Assert.True(File.Exists(Path.Combine(folder, ".claude", "hooks", "guard-cars.ps1")));
     }
 
     [Fact]

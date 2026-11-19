@@ -8,6 +8,23 @@
       "mcp__acmod__list_snapshots",
       "mcp__acmod__compare_snapshots",
       "mcp__acmod__read_ac_log"
+    ],
+    "deny": [
+      "Edit(//d/ACModding/cars/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-cars.ps1"]
+          }
+        ]
+      }
     ]
   }
 }

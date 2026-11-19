@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 8 is in progress: its plan was approved 2026-11-19, and steps 1 to 4 are built** (see "Next session starts here" below).
+**Milestone 8 is in progress: its plan was approved 2026-11-19, and steps 1 to 5 are built** (see "Next session starts here" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -47,7 +47,9 @@ State: M7 is merged and pushed (`main` at `5ef55f8`). M8 work happens on worktre
       Apply refuses a V-14 car (the app asks first) and read-only data, saves through `CarEdit.Save` (snapshot first, `data.acd` repacked), then validates again and returns the snapshot ID, the errors now, and new findings. Test classes that swap `CarTools.Open` share the xUnit collection `CarTools.Open`.
    4. **Done:** `restore_snapshot` (returns `undoWith`, the snapshot of the state it replaced) and `export_zip` (packed by default; validation errors refuse it, with no override) (CC-4). No purge or empty-trash tool exists.
       CC-6: the committed `.claude/settings.json` allows only the 7 read tools, so Claude Code asks before every change tool (`preview_change` too, though it writes nothing); a test keeps that list read-only. `.claude/settings.local.json` is gitignored.
-   5. `.claude/settings.json` denies Edit/Write and shell writes on `D:/ACModding/cars/**` (CC-7).
+   5. **Done (CC-7):** `.claude/settings.json` denies `Edit(//d/ACModding/cars/**)`, which covers Edit, Write and NotebookEdit (Windows paths match in POSIX form, `/d/...`).
+      Native Windows has no Claude Code sandbox, so a PreToolUse hook, `.claude/hooks/guard-cars.ps1`, refuses any Bash or PowerShell command whose text names `ACModding\cars` (exit 2). It's a text check: a variable or `cd` slips past (`ponytail:` note in the script).
+      **For Claude:** inspect workspace cars with Read, Glob, Grep or the acmod read tools, never with shell commands that name the cars folder.
    6. `activity.jsonl` in the workspace root, an app Activity window with one-click Restore, and reloading open cars (CC-8).
    7. Privacy notice and a per-car exclude that every tool honours (CC-10).
    8. A mod-loop guide for Claude (CC-11).
