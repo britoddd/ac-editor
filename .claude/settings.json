@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__acmod__list_cars",
+      "mcp__acmod__read_car",
+      "mcp__acmod__validate",
+      "mcp__acmod__gears",
+      "mcp__acmod__list_snapshots",
+      "mcp__acmod__compare_snapshots",
+      "mcp__acmod__read_ac_log"
+    ]
+  }
+}

@@ -14,7 +14,7 @@ Full requirements: `docs/REQUIREMENTS.md`. Read it before planning any feature. 
 
 ## Current stage
 
-**Milestone 8 is in progress: its plan was approved 2026-11-19, and steps 1 to 3 are built** (see "Next session starts here" below).
+**Milestone 8 is in progress: its plan was approved 2026-11-19, and steps 1 to 4 are built** (see "Next session starts here" below).
 
 Milestones must be done in order. A milestone is done only when its exit gate passes. Anything that requires the game must be checked by the owner, so ask for that result and never assume it. Small inspection scripts belong in the gitignored `scratch/` folder.
 
@@ -45,7 +45,8 @@ State: M7 is merged and pushed (`main` at `5ef55f8`). M8 work happens on worktre
       CC-9: `RunCar` returns only `status: unreadable` for a car whose data can't be read; snapshots with unreadable data return only an error. Tests in `tests/AcMod.Core.Tests/Mcp/` swap `CarTools.Open` for a temporary workspace (`InternalsVisibleTo`), so they never touch the owner's settings.
    3. **Done:** `preview_change` and `apply_change` (CC-4, CC-5) in `CarTools.Changes.cs` take `DataEdit`s: an .ini value by section and key (a key that appears twice is refused), or a .lut/.rto row (0-based). Both stage the edits in a `CarEdit` session; preview returns `Changes` and `WriteTargets` and writes nothing.
       Apply refuses a V-14 car (the app asks first) and read-only data, saves through `CarEdit.Save` (snapshot first, `data.acd` repacked), then validates again and returns the snapshot ID, the errors now, and new findings. Test classes that swap `CarTools.Open` share the xUnit collection `CarTools.Open`.
-   4. `restore_snapshot`, `export_zip` (packed); no purge or empty-trash tool; change tools left out of the allow list (CC-4, CC-6).
+   4. **Done:** `restore_snapshot` (returns `undoWith`, the snapshot of the state it replaced) and `export_zip` (packed by default; validation errors refuse it, with no override) (CC-4). No purge or empty-trash tool exists.
+      CC-6: the committed `.claude/settings.json` allows only the 7 read tools, so Claude Code asks before every change tool (`preview_change` too, though it writes nothing); a test keeps that list read-only. `.claude/settings.local.json` is gitignored.
    5. `.claude/settings.json` denies Edit/Write and shell writes on `D:/ACModding/cars/**` (CC-7).
    6. `activity.jsonl` in the workspace root, an app Activity window with one-click Restore, and reloading open cars (CC-8).
    7. Privacy notice and a per-car exclude that every tool honours (CC-10).

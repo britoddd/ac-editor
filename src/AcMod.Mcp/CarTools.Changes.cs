@@ -48,6 +48,27 @@ public static partial class CarTools
             };
         });
 
+    [McpServerTool(Name = "restore_snapshot"), Description(
+        "Puts a car's data, ui folder and sfx\\GUIDs.txt back as they were in a snapshot. The current state is snapshotted first, so the restore can be undone " +
+        "with the returned snapshot ID. Ask the owner before calling it.")]
+    public static string RestoreSnapshot([Description("The car ID.")] string carId, [Description("The snapshot ID, from list_snapshots.")] string snapshotId) =>
+        Run(ws =>
+        {
+            var (beforeId, error) = ws.RestoreSnapshot(carId, snapshotId); // a restore writes files only; it shows no content, so unreadable data is no reason to refuse
+            return beforeId == null ? new { error } : new { carId, restored = snapshotId, undoWith = beforeId };
+        });
+
+    [McpServerTool(Name = "export_zip"), Description(
+        "Writes a release ZIP of a car to the workspace's exports folder, as the app's Export ZIP does: development files and unused models are left out, " +
+        "and by default the data is packed into a verified data.acd. Validation errors refuse the export; only the owner can override that, in the app.")]
+    public static string ExportZip([Description("The car ID.")] string carId,
+                                   [Description("Pack the data into data.acd, as released cars ship. Default true.")] bool pack = true) =>
+        Run(ws =>
+        {
+            var (zipPath, error) = ws.ExportZip(carId, ignoreErrors: false, pack: pack);
+            return zipPath == null ? new { error } : new { carId, zipPath, packed = pack };
+        });
+
     /// <summary>Stages the edits in the session, in memory. Returns the first problem, or null when every edit applied.</summary>
     private static string? Stage(CarEdit edit, IReadOnlyList<DataEdit> edits)
     {

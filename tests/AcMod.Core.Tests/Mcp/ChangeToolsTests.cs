@@ -99,6 +99,47 @@ public sealed class ChangeToolsTests : IDisposable
     }
 
     [Fact]
+    public void Restore_puts_a_snapshot_back_and_can_itself_be_undone()
+    {
+        var applied = CarTools.ApplyChange(CarId, [Limiter]);
+        var snapshotId = Parse(applied).GetProperty("snapshotId").GetString()!; // taken before the change, so it holds 6500
+
+        var restored = Parse(CarTools.RestoreSnapshot(CarId, snapshotId));
+        Assert.Contains("LIMITER=6500", Read(@"data\engine.ini"));
+
+        Assert.Null(_workspace.RestoreSnapshot(CarId, restored.GetProperty("undoWith").GetString()!).Error);
+        Assert.Contains("LIMITER=7000", Read(@"data\engine.ini"));
+        Assert.Contains("no snapshot", Parse(CarTools.RestoreSnapshot(CarId, "20990101-000000-000")).GetProperty("error").GetString());
+    }
+
+    [Fact]
+    public void Export_writes_a_packed_ZIP_and_validation_errors_refuse_it()
+    {
+        var zipPath = Parse(CarTools.ExportZip(CarId)).GetProperty("zipPath").GetString()!;
+        using (var zip = System.IO.Compression.ZipFile.OpenRead(zipPath))
+        {
+            Assert.Contains(zip.Entries, e => e.FullName == $"{CarId}/data.acd");
+            Assert.DoesNotContain(zip.Entries, e => e.FullName.StartsWith($"{CarId}/data/", StringComparison.Ordinal));
+        }
+
+        File.Delete(Path.Combine(Car, "collider.kn5")); // V-04 is an error
+        Assert.Contains("V-04", Parse(CarTools.ExportZip(CarId)).GetProperty("error").GetString());
+    }
+
+    [Fact]
+    public void The_project_allow_list_holds_only_read_tools()
+    {
+        var folder = AppContext.BaseDirectory;
+        while (!File.Exists(Path.Combine(folder, "AcMod.slnx"))) folder = Path.GetDirectoryName(folder)!;
+        var settings = Parse(File.ReadAllText(Path.Combine(folder, ".claude", "settings.json")));
+
+        var allowed = settings.GetProperty("permissions").GetProperty("allow").EnumerateArray().Select(a => a.GetString()).ToList();
+        string[] readTools = ["list_cars", "read_car", "validate", "gears", "list_snapshots", "compare_snapshots", "read_ac_log"];
+        Assert.All(allowed.Where(a => a!.StartsWith("mcp__acmod", StringComparison.Ordinal)), a => Assert.Contains(a!["mcp__acmod__".Length..], readTools));
+        Assert.DoesNotContain("mcp__acmod", allowed.Where(a => !a!.StartsWith("mcp__acmod__", StringComparison.Ordinal))); // no wildcard for the whole server
+    }
+
+    [Fact]
     public void A_car_that_may_be_encrypted_or_has_unreadable_data_is_not_changed()
     {
         Put("car_main_encrypted.kn5", "kn5");

@@ -8,5 +8,6 @@ obj/
 fixtures/local/
 scratch/
 
-# Claude Code background-job worktrees
+# Claude Code background-job worktrees, and each user's own Claude Code settings (.claude/settings.json is shared and committed)
 .claude/worktrees/
+.claude/settings.local.json
