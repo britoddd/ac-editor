@@ -43,6 +43,15 @@ public sealed class AcLogTests : IDisposable
     }
 
     [Fact]
+    public void A_log_another_program_still_holds_open_for_writing_can_be_read()
+    {
+        var path = Log(Clean);
+        using var writer = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+
+        Assert.True(AcLog.Read(path).CleanExit);
+    }
+
+    [Fact]
     public void Unknown_errors_are_problems_and_a_missing_clean_exit_is_reported()
     {
         var crashed = Clean.Replace("CLEAN EXIT\r\n", "") + "ERROR: cannot load content/cars/acm_tutorial_basic/data/tyres.ini\r\nUnhandled exception at 0x0000\r\n";

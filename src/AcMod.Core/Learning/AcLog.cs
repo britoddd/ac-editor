@@ -42,7 +42,10 @@ public static partial class AcLog
 
     public static LogReport Read(string path)
     {
-        var lines = File.ReadAllLines(path);
+        // AC or Content Manager can still hold log.txt open for writing, and ReadAllLines refuses to share with a writer (M7 exit gate, 2026-11-19).
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var reader = new StreamReader(stream);
+        var lines = reader.ReadToEnd().Split('\n');
         string? carId = null;
         double? power = null;
         var cleanExit = false;
