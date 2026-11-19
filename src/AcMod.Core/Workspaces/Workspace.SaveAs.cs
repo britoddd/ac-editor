@@ -56,15 +56,20 @@ public sealed partial class Workspace
             var guids = Path.Combine(sfx, "GUIDs.txt");
             if (File.Exists(guids)) File.WriteAllBytes(guids, GuidsFile.Parse(File.ReadAllBytes(guids)).WithCarId(carId, newId).ToBytes());
 
+            var files = data.Files.ToList();
+            if (displayName != null)
+            {
+                SetDisplayName(Path.Combine(temp, "ui", "ui_car.json"), displayName, notes);
+                SetScreenName(Path.Combine(temp, "data", "car.ini"), files, displayName, notes);
+            }
+
             var acd = Path.Combine(temp, "data.acd");
             if (File.Exists(acd))
             {
-                var (packed, packError) = AcdFile.PackVerified(data.Files, newId);
+                var (packed, packError) = AcdFile.PackVerified(files, newId);
                 if (packed == null) return (null, $"data.acd couldn't be repacked for {newId}: {packError}");
                 File.WriteAllBytes(acd, packed);
             }
-
-            if (displayName != null) SetDisplayName(Path.Combine(temp, "ui", "ui_car.json"), displayName, notes);
 
             var mentions = MentionsOf(temp, carId, newId);
             Directory.Move(temp, target);
@@ -117,6 +122,44 @@ public sealed partial class Workspace
         var ui = File.Exists(json) ? UiCarJson.Parse(File.ReadAllBytes(json)) : null;
         if (ui is { Error: null } && ui.GetString("/name") != null) File.WriteAllBytes(json, ui.WithString("/name", displayName).ToBytes());
         else notes.Add("ui\\ui_car.json has no readable \"name\", so the display name wasn't set. Set it on the Raw files tab.");
+    }
+
+    /// <summary>
+    /// Sets car.ini [INFO] SCREEN_NAME to the display name in the copy's data\car.ini and in the effective data that data.acd is repacked from, so the
+    /// copy doesn't keep the old car's name (M7 gate, 2026-11-19). Where AC shows SCREEN_NAME is unverified (docs/VERIFIED_FACTS.md).
+    /// </summary>
+    private static void SetScreenName(string folderIni, List<AcdEntry> files, string displayName, List<string> notes)
+    {
+        byte[]? Renamed(byte[] bytes)
+        {
+            var ini = IniFile.Parse(bytes);
+            var lines = ini.Find("INFO", "SCREEN_NAME").Select(e => e.LineIndex).ToList();
+            if (lines.Count == 0) return null;
+            foreach (var line in lines) ini = ini.WithValue(ini.Entries.Single(e => e.LineIndex == line), displayName);
+            return ini.ToBytes();
+        }
+
+        if (displayName.Contains(';') || displayName.Contains("//") || displayName.Contains('\n') || displayName.Contains('\r') || displayName != displayName.Trim())
+        {
+            notes.Add("car.ini SCREEN_NAME wasn't changed, because the name has ';', '//', a line break, or spaces at either end. Set it on the Forms or Raw files tab.");
+            return;
+        }
+
+        var renamed = false;
+        if (File.Exists(folderIni) && Renamed(File.ReadAllBytes(folderIni)) is { } edited)
+        {
+            File.WriteAllBytes(folderIni, edited);
+            renamed = true;
+        }
+
+        var index = files.FindIndex(f => f.Name.Equals("car.ini", StringComparison.OrdinalIgnoreCase));
+        if (index >= 0 && Renamed(files[index].Data) is { } data)
+        {
+            files[index] = files[index] with { Data = data };
+            renamed = true;
+        }
+
+        if (!renamed) notes.Add("car.ini has no [INFO] SCREEN_NAME, so it wasn't set. Add it on the Raw files tab.");
     }
 
     /// <summary>

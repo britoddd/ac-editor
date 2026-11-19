@@ -50,6 +50,7 @@ public sealed class SaveAsTests : IDisposable
         var guids = GuidsFile.Parse(File.ReadAllBytes(Path.Combine(Car(NewId), "sfx", "GUIDs.txt"))).Entries.Select(e => $"{e.Kind}:{e.Path}");
         Assert.Equal(["bank:acm_new", "event:cars/acm_new/engine_ext", "bank:common"], guids); // other banks stay
         Assert.Equal("New car", UiCarJson.Parse(File.ReadAllBytes(Path.Combine(Car(NewId), "ui", "ui_car.json"))).GetString("/name"));
+        Assert.Equal("[INFO]\r\nSCREEN_NAME=New car\r\n", Read(NewId, @"data\car.ini")); // M7 gate: the old name stayed here
         Assert.Equal("[LOD_0]\r\nFILE=acm_old.kn5\r\n", Read(NewId, @"data\lods.ini")); // models keep their names
         Assert.True(File.Exists(Path.Combine(Car(NewId), "acm_old.kn5")));
         Assert.False(File.Exists(Path.Combine(Car(NewId), Workspace.InstallMarker)));
@@ -66,6 +67,28 @@ public sealed class SaveAsTests : IDisposable
         Assert.True(File.Exists(Path.Combine(Car(OldId), "sfx", "ACM_OLD.bank")));
         Assert.Contains("bank:/acm_old", Read(OldId, @"sfx\GUIDs.txt"));
         Assert.Contains("Old car", Read(OldId, @"ui\ui_car.json"));
+        Assert.Contains("SCREEN_NAME=Old", Read(OldId, @"data\car.ini"));
+    }
+
+    [Fact]
+    public void A_packed_copy_gets_the_display_name_as_SCREEN_NAME_inside_data_acd()
+    {
+        File.WriteAllBytes(Path.Combine(Car(OldId), "data.acd"), CarData.PackFolder(Car(OldId)).Bytes!);
+        Directory.Delete(Path.Combine(Car(OldId), "data"), recursive: true);
+
+        Assert.Null(_workspace.SaveAsNewCar(OldId, NewId, "New car").Error);
+
+        var carIni = CarData.Load(Car(NewId)).Files.Single(f => f.Name == "car.ini");
+        Assert.Equal("[INFO]\r\nSCREEN_NAME=New car\r\n", System.Text.Encoding.UTF8.GetString(carIni.Data));
+    }
+
+    [Fact]
+    public void A_name_car_ini_cant_hold_leaves_SCREEN_NAME_and_says_so()
+    {
+        var (result, _) = _workspace.SaveAsNewCar(OldId, NewId, "New; car");
+
+        Assert.Equal("[INFO]\r\nSCREEN_NAME=Old\r\n", Read(NewId, @"data\car.ini"));
+        Assert.Contains(result!.Notes, n => n.Contains("SCREEN_NAME wasn't changed"));
     }
 
     [Fact]
