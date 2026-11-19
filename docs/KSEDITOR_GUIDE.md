@@ -46,10 +46,19 @@ A one-colour image from Paint is enough. The app's New car (empty) doesn't creat
    If a `WHEEL_` name is missing or misspelled, fix it in Blender and export again.
 4. **Check the scale.** Click `WHEEL_LF`. Its Position should be in metres, such as `0.7575 0.275 1.325` for formula_k's wheel layout, with Scale `1 1 1`.
    Values 100 times too large mean the FBX was exported with the wrong Apply Scalings.
-5. **Add textures.** Open the **Material** tab at the top left and pick each material in turn.
-   - Keep the default shader, **`ksPerPixel`**.
-   - Click **`...`** next to **`txDiffuse`** (it shows NULL) and choose the PNG from `texture\`, for example `body.png` for `body`.
+5. **Add textures.** Open the **Material** tab at the top left. It lists one entry per Blender material, under the names you gave them in Blender.
+   Do this once for each material:
+
+   | Pick this material | It covers | Shader | Texture slot | Choose |
+   | --- | --- | --- | --- | --- |
+   | `body` | The body mesh | `ksPerPixel` (the default, keep it) | `txDiffuse` | `texture\body.png` |
+   | `tyre` | All four wheel cylinders (they share this one material) | `ksPerPixel` (the default, keep it) | `txDiffuse` | `texture\tyre.png` |
+
+   - On an imported material, `txDiffuse` is the only texture slot and shows **NULL**. Click **`...`** next to it and pick the PNG.
+   - Leave the number values (ksAmbient 0.0509, ksDiffuse 0.8, ksSpecular 0.8, ksSpecularEXP 10, and so on) at their defaults.
+   - If your Blender materials have other names, use those. The rule is one PNG per material, in `txDiffuse`.
    - The model now shows its colours.
+   - **Layers:** TODO, waiting for a screenshot of the Material tab. Until then, only change `txDiffuse`.
 6. **Save.** Choose **File > Save KN5 > Car** and save it as **`acm_second.kn5`** in the car folder.
    ksEditor embeds the textures in the KN5.
    The menu also has *Car (No Textures)*, *Track* and *Car (Experimental)*. We haven't tested those, so use **Car**.
